@@ -36,7 +36,6 @@ public class UserServiceImpl implements UserService {
 
         // 2. 生成验证码
         String code = RandomUtil.randomNumbers(6);
-        log.debug("验证码：{}", code);
 
         // 3. 保存到Redis
         stringRedisTemplate.opsForValue().set(RedisConstants.LOGIN_CODE_KEY + phone, code, RedisConstants.LOGIN_CODE_TTL, TimeUnit.MINUTES);
