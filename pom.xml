@@ -71,6 +71,12 @@
             <artifactId>commons-pool2</artifactId>
         </dependency>
 
+        <!-- spring security 安全认证 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
         <!-- Mysql驱动包 -->
         <dependency>
             <groupId>mysql</groupId>
@@ -108,7 +114,13 @@
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt</artifactId>
-            <version>0.7.0</version>
+            <version>0.9.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-config</artifactId>
+            <version>5.7.6</version>
         </dependency>
     </dependencies>
 

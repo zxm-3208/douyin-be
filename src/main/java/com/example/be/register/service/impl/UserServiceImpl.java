@@ -1,16 +1,30 @@
 package com.example.be.register.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.util.RandomUtil;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.be.common.constant.RedisConstants;
+import com.example.be.common.constant.SystemConstants;
 import com.example.be.common.core.domain.BaseResponse;
 import com.example.be.common.utils.RegexUtils;
+import com.example.be.register.domain.dto.LoginUserDTO;
+import com.example.be.register.domain.po.DyUser;
+import com.example.be.register.domain.vo.LoginUserVO;
+import com.example.be.register.mapper.DyUserMapper;
+import com.example.be.register.security.service.TokenService;
 import com.example.be.register.service.UserService;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -21,10 +35,16 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 @Slf4j
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implements UserService {
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private TokenService tokenService;
 
     @Override
     public BaseResponse send(String phone) {
@@ -33,6 +53,8 @@ public class UserServiceImpl implements UserService {
         if(RegexUtils.isPhoneInvalid(phone)) {   // 正则表达式校验
             return BaseResponse.fail("手机号格式错误");
         }
+
+        log.debug("手机号：{}", phone);
 
         // 2. 生成验证码
         String code = RandomUtil.randomNumbers(6);
@@ -44,5 +66,61 @@ public class UserServiceImpl implements UserService {
         log.debug("发送短信验证码成功，验证码：{}", code);
 
         return BaseResponse.success();
+    }
+
+    @Override
+    public BaseResponse login(LoginUserVO loginUserVO) {
+        String phone = loginUserVO.getPhone();
+        // 1. 从Redis中获取验证码并进行校验     TODO 后续会改成Token
+        String cacheCode = stringRedisTemplate.opsForValue().get(RedisConstants.LOGIN_CODE_KEY + phone);
+        String code = loginUserVO.getCode();
+        if(cacheCode==null || !cacheCode.equals(code)){
+            return BaseResponse.fail("验证码错误");              // TODO 需要统一跳转到错误页面
+        }
+
+        // 2. 一致则根据手机号查询用户
+        DyUser user = this.query().eq("phone", phone).one();
+
+        // 3. 判断用户是否存在
+        if (user == null){
+            user = createUserWithPhone(phone);
+        }
+
+        // TODO 4. 调用AuthenticationManager的authenticate方法，进行用户认证
+        Authentication usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(loginUserVO.getPhone(), loginUserVO.getCode());
+        Authentication authentication = authenticationManager.authenticate(usernamePasswordAuthenticationToken);
+
+        // TODO 5. 如果认证没有通过，给出错误信息
+        if(Objects.isNull(authentication)){
+            throw new RuntimeException("登录失败");
+        }
+
+        // TODO 6. 如果认证通过，使用userId生成一个JWT，并将其保存到ResponseResult对象中返回
+        LoginUserDTO loginUser = (LoginUserDTO) authentication.getPrincipal();
+        String jwt = tokenService.createToken(loginUser);
+
+        LoginUserDTO loginUserDTO = BeanUtil.copyProperties(user, LoginUserDTO.class);
+        Map<String, Object> userMap = BeanUtil.beanToMap(loginUserDTO, new HashMap<>(),
+                CopyOptions.create()
+                        .setIgnoreNullValue(true)
+                        .setFieldValueEditor((fieldName, fieldValue) -> fieldValue.toString()));//将Long型的id转换为string类型，否则StringRedis序列化器报错
+
+        // TODO 7. 将用户存储在Redis中，在下一次请求中能够识别出用户，userid作为key
+        stringRedisTemplate.opsForHash().putAll(jwt, userMap);
+
+
+        return null;
+    }
+
+
+
+
+
+    private DyUser createUserWithPhone(String phone){
+        DyUser user = new DyUser();
+        user.setPhone(phone);
+        user.setUserName(SystemConstants.USER_NICK_NAME_PREFIX + RandomUtil.randomString(10));
+        this.save(user);
+        return user;
     }
 }
