@@ -2,6 +2,7 @@ package com.example.be.register.domain.po;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -13,6 +14,7 @@ import java.util.Date;
  * @since 2024-03-20 11:22:01
  */
 @Data
+@TableName(value = "dy_user")
 public class DyUser implements Serializable {
     private static final long serialVersionUID = 546492953131891610L;
 /**
@@ -27,7 +29,13 @@ public class DyUser implements Serializable {
      * 密码，加密存储
      */
     private String password;
-/**
+
+    /**
+     * 验证码
+     */
+    private String code;
+
+    /**
      * 昵称，默认是用户id
      */
     private String userName;

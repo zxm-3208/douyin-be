@@ -31,3 +31,4 @@
 # 碰到的问题
 1. Spring中为什么没有tomcat (Spring boot内置了tomcat)
 2. WebSecurityConfigurerAdapter从 5.7.0-M2 起已经弃用，推荐使用基于组件的 security 配置 (为了组件化)
+3. 使用手机号+验证码登录会存在一个问题：手机号和验证码必须存放在UserDetails中，但是验证码存放在数据库中有点浪费。此外，authenticate中存入的原始值，UserDetails中的是加密值

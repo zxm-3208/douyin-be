@@ -3,8 +3,10 @@ package com.example.be.register.domain.dto;
 import com.example.be.register.domain.po.DyUser;
 import com.example.be.register.domain.vo.LoginUserVO;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Collection;
 
@@ -38,14 +40,18 @@ public class LoginUserDTO implements UserDetails {
         return dyUser.getPhone();
     }
 
+    public String getCode(){
+        return dyUser.getCode();
+    }
+
     @Override
     public String getPassword() {
-        return dyUser.getPassword();
+        return dyUser.getCode();
     }
 
     @Override
     public String getUsername() {
-        return dyUser.getUserName();
+        return dyUser.getPhone();
     }
 
     // 用于判断用户的账号是否未过期，可以实现账户的有效控制

@@ -1,14 +1,27 @@
 package com.example.be.register.security.config;
 
 import com.example.be.register.security.UserDetailsService.UserDetailServiceImplByPhone;
+import com.example.be.register.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.DefaultSecurityFilterChain;
 import org.springframework.security.web.SecurityFilterChain;
+
+import javax.servlet.DispatcherType;
+import java.security.KeyStore;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author : zxm
@@ -16,12 +29,31 @@ import org.springframework.security.web.SecurityFilterChain;
  * @Description: com.example.be.register.security.config
  * @version: 1.0
  */
-@EnableWebSecurity  // 包含了@Configuration 和 @springSecurityFilterChain
-@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true)
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+//@EnableWebSecurity  // 包含了@Configuration 和 @springSecurityFilterChain
+//@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true)
+@Configuration
+public class SecurityConfig {
+
+    @Autowired
+    UserDetailServiceImplByPhone userDetailServiceImplByPhone;
 
     @Bean
-    public SecurityFilterChain authenticationManager(HttpSecurity http, UserDetailServiceImplByPhone userDetailServiceImplByPhone)
+    UserDetailServiceImplByPhone customUserDetailsService() {
+        return new UserDetailServiceImplByPhone();
+    }
+
+    @Bean
+    AuthenticationManager authenticationManager(UserDetailServiceImplByPhone userDetailServiceImplByPhone,
+                                                PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
+        daoAuthenticationProvider.setUserDetailsService(userDetailServiceImplByPhone);
+        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder);
+        ProviderManager pm = new ProviderManager(daoAuthenticationProvider);
+        return pm;
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http)
             throws Exception {
         http
                 // CSRF禁用，因为不使用session
@@ -31,9 +63,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
         http
                 //过滤请求
-                .authorizeRequests()
-                // 对于登录login 验证码captchaImage 允许匿名访问
-                .mvcMatchers("/user/code","/user/login").anonymous()
+                .authorizeHttpRequests()
+                // 对于登录login 验证码code 允许匿名访问
+//                .antMatchers("/user/code","/user/login").permitAll()
+                .requestMatchers("/user/code","/user/login").permitAll()
                 // 除上面外的所有请求全部需要鉴权认证
                 .anyRequest().authenticated();
 
@@ -41,5 +74,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         return http.build();
     }
 
+    @Bean
+    public PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
+    }
 
 }

@@ -32,12 +32,6 @@ public class UserDetailServiceImplByPhone implements UserDetailsService {
         LambdaQueryWrapper<DyUser> wrapper = new LambdaQueryWrapper<>();        // TODO 可能不可以用LoginUserVO
         wrapper.eq(DyUser::getPhone, phone);
         DyUser user = userMapper.selectOne(wrapper);
-
-//        // 如果查不到数据就抛出异常,不过在service中为查到就自动注册
-//        if(Objects.isNull(user)){
-//            throw new RuntimeException("该手机号未注册");
-//        }
-
         return new LoginUserDTO(user);
 
     }

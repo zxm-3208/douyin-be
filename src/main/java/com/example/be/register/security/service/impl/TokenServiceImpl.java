@@ -11,10 +11,11 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.apache.tomcat.util.bcel.Const;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.token.Token;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
@@ -25,9 +26,11 @@ import java.util.concurrent.TimeUnit;
  * @Description: com.example.be.register.security.service.impl
  * @version: 1.0
  */
+@Component
 public class TokenServiceImpl implements TokenService {
 
     @Autowired
+    @Qualifier(value = "redisTemplate")
     private RedisTemplate RedisTemplate;
 
     @Value("${token.header}")
