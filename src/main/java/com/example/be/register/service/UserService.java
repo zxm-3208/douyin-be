@@ -18,4 +18,6 @@ public interface UserService extends IService<DyUser> {
 
     BaseResponse login(LoginUserVO loginUserVO);
 
+//    BaseResponse sign();
+
 }

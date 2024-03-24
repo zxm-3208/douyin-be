@@ -3,6 +3,7 @@ package com.example.be.register.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.util.RandomUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.be.common.constant.RedisConstants;
 import com.example.be.common.constant.SystemConstants;
@@ -42,7 +43,6 @@ import java.util.concurrent.TimeUnit;
 public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implements UserService {
 
     @Autowired
-    @Qualifier(value = "redisTemplate")
     private RedisTemplate redisTemplate;
 
     @Autowired
@@ -82,7 +82,7 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
     @Override
     public BaseResponse login(LoginUserVO loginUserVO) {
         String phone = loginUserVO.getPhone();
-        // 1. 从Redis中获取验证码并进行校验     TODO 后续会改成Token
+        // 1. 从Redis中获取验证码并进行校验
         String cacheCode = (String) redisTemplate.opsForValue().get(RedisConstants.LOGIN_CODE_KEY + phone);
         String code = loginUserVO.getCode();
         if(cacheCode==null || !cacheCode.equals(code)){
@@ -104,7 +104,6 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
 
         // 4. 调用AuthenticationManager的authenticate方法，进行用户认证
         Authentication usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(loginUserVO.getPhone(), loginUserVO.getCode());
-        System.out.println(loginUserVO.getPhone()+","+ loginUserVO.getCode() + "," + BC_code);
         Authentication authentication = authenticationManager.authenticate(usernamePasswordAuthenticationToken);
 
         // 5. 如果认证没有通过，给出错误信息
@@ -112,31 +111,18 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
             throw new RuntimeException("登录失败");
         }
 
-        // 6. 如果认证通过，使用userId生成一个JWT
+        // 6. 如果认证通过，使用userId生成一个JWT （tokenService.createToken方法中缓存了token）
         LoginUserDTO loginUser = (LoginUserDTO) authentication.getPrincipal();
         String jwt = tokenService.createToken(loginUser);
+        LoginUserDTO loginUserDTO = BeanUtil.copyProperties(loginUser, LoginUserDTO.class);
 
-        LoginUserDTO loginUserDTO = BeanUtil.copyProperties(user, LoginUserDTO.class);
-        Map<String, Object> userMap = BeanUtil.beanToMap(loginUserDTO, new HashMap<>(),
-                CopyOptions.create()
-                        .setIgnoreNullValue(true)
-                        .setFieldValueEditor((fieldName, fieldValue) -> {
-                            if (fieldValue == null) {
-                                fieldValue = "0";
-                            } else {
-                                fieldValue.toString();
-                            }
-                            return fieldValue;
-                        }));//将Long型的id转换为string类型，否则StringRedis序列化器报错
 
-        // 7. 将用户存储在Redis中，在下一次请求中能够识别出用户，userid作为key
-        redisTemplate.opsForHash().putAll(jwt, userMap);
-
-        // 8. 封装ResponseResult，并返回
+        // 7. 封装ResponseResult，并返回
         Map<String, String> map = new HashMap<>();
-        map.put("token", jwt);
-        log.debug("token：{}", jwt);
-        return BaseResponse.success(jwt);
+        map.put("authorization", jwt);
+        map.put("token_type", "jwt");
+        map.put("expire_time", String.valueOf(loginUser.getExpireTime()));
+        return BaseResponse.success(map);
 
     }
 

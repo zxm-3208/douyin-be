@@ -75,6 +75,13 @@ public class TokenServiceImpl implements TokenService {
         // 根据UUID缓存
         String userKey = getTokenKey(loginUserDTO.getToken());
         RedisTemplate.opsForValue().set(userKey, loginUserDTO, expireTime, TimeUnit.MINUTES);
+
+//        HashMap<String, Object> claims = new HashMap<>();
+//        claims.put(Constants.LOGIN_USER_KEY, userKey);
+//        String token = Jwts.builder()
+//                .setClaims(claims)
+//                .signWith(SignatureAlgorithm.HS256, secret).compact();
+//        return token;
     }
 
     private String getTokenKey(String uuid){

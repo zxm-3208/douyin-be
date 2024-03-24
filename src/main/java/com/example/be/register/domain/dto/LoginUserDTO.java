@@ -77,4 +77,5 @@ public class LoginUserDTO implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
 }
