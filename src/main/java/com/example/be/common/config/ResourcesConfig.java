@@ -25,8 +25,7 @@ public class ResourcesConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         // 设置访问源地址
-        // TODO 把"*"换成 CorsConfiguration.ALL 试试
-        config.setAllowedOriginPatterns(Collections.singletonList("*"));
+        config.setAllowedOriginPatterns(Collections.singletonList("http://localhost:8080"));
 
         // 设置访问源请求头
         config.addAllowedHeader(CorsConfiguration.ALL);

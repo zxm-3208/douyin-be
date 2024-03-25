@@ -1,27 +1,20 @@
 package com.example.be.register.security.config;
 
-import com.example.be.register.security.UserDetailsService.UserDetailServiceImplByPhone;
-import com.example.be.register.service.UserService;
+import com.example.be.register.security.filterf.JwtAuthenticationTokenFilter;
+import com.example.be.register.security.service.impl.UserDetailServiceImplByPhone;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.DefaultSecurityFilterChain;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
-
-import javax.servlet.DispatcherType;
-import java.security.KeyStore;
-import java.util.Collections;
-import java.util.List;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * @author : zxm
@@ -36,6 +29,12 @@ public class SecurityConfig {
 
     @Autowired
     UserDetailServiceImplByPhone userDetailServiceImplByPhone;
+
+    @Autowired
+    private JwtAuthenticationTokenFilter jwtAuthenticationTokenFilter;
+
+    @Autowired
+    private AuthenticationEntryPoint authenticationEntryPoint;
 
     @Bean
     UserDetailServiceImplByPhone customUserDetailsService() {
@@ -65,12 +64,17 @@ public class SecurityConfig {
                 //过滤请求
                 .authorizeHttpRequests()
                 // 对于登录login 验证码code 允许匿名访问
-//                .antMatchers("/user/code","/user/login").permitAll()
                 .requestMatchers("/user/code","/user/login").permitAll()
                 // 除上面外的所有请求全部需要鉴权认证
                 .anyRequest().authenticated();
 
-        // TODO 错误页面，跨域。。。。
+        // 将自定义认证过滤器添加到过滤器链中
+        http.addFilterBefore(jwtAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class);
+
+        // 配置异常处理器
+        http.exceptionHandling()
+                .authenticationEntryPoint(authenticationEntryPoint);    // 配置认证失败处理器
+
         return http.build();
     }
 

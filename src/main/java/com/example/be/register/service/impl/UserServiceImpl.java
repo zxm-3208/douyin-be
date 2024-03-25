@@ -5,6 +5,7 @@ import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.util.RandomUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.be.common.constant.Constants;
 import com.example.be.common.constant.RedisConstants;
 import com.example.be.common.constant.SystemConstants;
 import com.example.be.common.core.domain.BaseResponse;
@@ -23,6 +24,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -126,6 +128,25 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
 
     }
 
+    @Override
+    public BaseResponse logout() {
+
+        // 获取当前用户的认证信息
+        UsernamePasswordAuthenticationToken authenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+
+        if(Objects.isNull(authenticationToken)){
+            throw new RuntimeException("获取用户认证信息失败，请重新登录！");
+        }
+
+        LoginUserDTO loginUserDTO = (LoginUserDTO) authenticationToken.getPrincipal();
+        String userId = loginUserDTO.getToken();
+
+        // 删除Redis中的用户信息
+        redisTemplate.delete(Constants.LOGIN_TOKEN_KEY + userId);
+
+        return BaseResponse.success("注销成功");
+    }
+
 
     private DyUser createUserWithPhone(String phone, String code){
         DyUser user = new DyUser();
@@ -144,7 +165,6 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
         user.setUpdateTime(new Timestamp(System.currentTimeMillis()));
         user.setCode(code);
         dyUserMapper.UpdateUserByPhone(phone, code);
-        System.out.println(user);
         return user;
     }
 }

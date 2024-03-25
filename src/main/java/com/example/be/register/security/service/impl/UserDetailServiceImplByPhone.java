@@ -1,4 +1,4 @@
-package com.example.be.register.security.UserDetailsService;
+package com.example.be.register.security.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.be.register.domain.dto.LoginUserDTO;

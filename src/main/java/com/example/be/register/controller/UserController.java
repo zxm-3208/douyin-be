@@ -3,8 +3,10 @@ package com.example.be.register.controller;
 import com.example.be.common.core.domain.BaseResponse;
 import com.example.be.register.domain.vo.LoginUserVO;
 import com.example.be.register.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitterReturnValueHandler;
 
 /**
  * @author : zxm
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController     //@Controller + @ResponseBody
 @RequestMapping("/user")
+@Slf4j
 public class UserController {
 
     @Autowired
@@ -37,5 +40,11 @@ public class UserController {
     public BaseResponse login(@RequestBody LoginUserVO loginUserVO){
         return userService.login(loginUserVO);
     }
+
+    @GetMapping("/logout")
+    public BaseResponse logout(){
+        return userService.logout();
+    }
+
 
 }
