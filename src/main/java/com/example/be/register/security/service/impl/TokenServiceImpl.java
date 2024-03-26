@@ -50,28 +50,25 @@ public class TokenServiceImpl implements TokenService {
 
     private static final long MILLIS_MINUTE = MILLIS_SECOND * 60;
 
-    private static final long MILLIS_HOUR_24 = MILLIS_MINUTE * 60 * 24;
-
     @Override
     public String createToken(LoginUserDTO loginUserDTO) {
-
         // 设置uuid 用户唯一标识
         String userKey = UUIDUtils.randomUUID();
         loginUserDTO.setToken(userKey);
 
         // 保存用户信息，刷新令牌有效时间
-        refreshToken(loginUserDTO);
+        return refreshToken(loginUserDTO);
 
-        HashMap<String, Object> claims = new HashMap<>();
-        claims.put(Constants.LOGIN_USER_KEY, userKey);
-        String token = Jwts.builder()
-                .setClaims(claims)
-                .signWith(SignatureAlgorithm.HS256, secret).compact();
-        return token;
+//        HashMap<String, Object> claims = new HashMap<>();
+//        claims.put(Constants.LOGIN_USER_KEY, userKey);
+//        String token = Jwts.builder()
+//                .setClaims(claims)
+//                .signWith(SignatureAlgorithm.HS256, secret).compact();
+//        return token;
     }
 
     @Override
-    public void refreshToken(LoginUserDTO loginUserDTO) {
+    public String refreshToken(LoginUserDTO loginUserDTO) {
         // 更新时间
         loginUserDTO.setLoginTime(System.currentTimeMillis());
 
@@ -80,14 +77,15 @@ public class TokenServiceImpl implements TokenService {
 
         // 根据UUID缓存
         String userKey = getTokenKey(loginUserDTO.getToken());
-        redisTemplate.opsForValue().set(userKey, loginUserDTO, expireTime, TimeUnit.MINUTES);
+//        redisTemplate.opsForValue().set(userKey, loginUserDTO, expireTime, TimeUnit.MINUTES);
 
-//        HashMap<String, Object> claims = new HashMap<>();
-//        claims.put(Constants.LOGIN_USER_KEY, userKey);
-//        String token = Jwts.builder()
-//                .setClaims(claims)
-//                .signWith(SignatureAlgorithm.HS256, secret).compact();
-//        return token;
+        HashMap<String, Object> claims = new HashMap<>();
+        claims.put(Constants.LOGIN_USER_KEY, loginUserDTO.getToken());
+        String token = Jwts.builder()
+                .setClaims(claims)
+                .signWith(SignatureAlgorithm.HS256, secret).compact();
+
+        return token;
     }
 
     @Override
@@ -115,7 +113,7 @@ public class TokenServiceImpl implements TokenService {
         long expireTime = loginUserDTO.getExpireTime();
         long currentTimeMillis = System.currentTimeMillis();
         // 相差小于24小时，自动刷新缓存
-        if (expireTime-currentTimeMillis <= MILLIS_HOUR_24){
+        if (expireTime-currentTimeMillis <= expireTime * MILLIS_MINUTE / 2){
             refreshToken(loginUserDTO);
         }
     }

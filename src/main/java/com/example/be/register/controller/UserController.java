@@ -33,18 +33,23 @@ public class UserController {
     }
 
     /**
-     * 验证，登录/注册
-     * @param loginUserVO 登录参数，包含phone和code 或 phone和密码
+     * 手机号+验证码
+     * @param loginUserVO 登录参数，包含phone和code
      */
     @PostMapping("/login")
     public BaseResponse login(@RequestBody LoginUserVO loginUserVO){
         return userService.login(loginUserVO);
     }
 
-    @GetMapping("/logout")
-    public BaseResponse logout(){
-        return userService.logout();
-    }
 
+//    @GetMapping("/logout")
+//    public BaseResponse logout(){
+//        return userService.logout();
+//    }
+
+    @GetMapping("/hello")
+    public void hello(){
+        log.info("hello===============");
+    }
 
 }

@@ -1,5 +1,6 @@
 package com.example.be.register.security.filterf;
 
+import com.example.be.common.constant.HttpStatus;
 import com.example.be.register.domain.dto.LoginUserDTO;
 import com.example.be.register.security.service.TokenService;
 import io.jsonwebtoken.Claims;
@@ -7,6 +8,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -28,6 +30,7 @@ import java.util.Objects;
 
 // 继承OncePerRequestFilter可以简化过滤器编写，并确保每个请求只被过滤一次，避免多次过滤的问题。
 @Component
+@Slf4j
 public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
 
     @Autowired

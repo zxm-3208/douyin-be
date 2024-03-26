@@ -3,17 +3,20 @@
    1. 手机验证码发送 （问题：云平台短信网站需要备案）（√）
    2. 前后端分离项目，跳转需要跨域                 (√)
    3. 验证码登录注册  （UserDetailsSer`vice默认是使用用户名+密码进行验证，这里对该接口进行了魔改） (√)
-   4. Spring Security (目前不考虑用户权限问题，所有用户都是普通用户)`             （√）
+   4. Spring Security认证 (目前不考虑用户权限问题，所有用户都是普通用户)`             （√）
    5. 第一次登录完成前后端交互。     （√）
    6. Spring Security 认证过滤链，实现后续登录无需在通过手机号验证码登录。   （√）
-   7. 登出功能           (√)
+   7. 登出功能          (√)
    8. SpringSecurity异常处理   (√)
+   9. 刷新Jwt有效时间(有效时间48小时，再次访问时有效时间小于24小时时重置为48小时。长时间不登录，Jwt失效)    (√)
+   10. TODO: 密码+图形验证码登录，调用QQ微信等接口登录。
+
 
 
 
 # 功能列表
 1. 用户模块
-    - 注册、登录
+    - 注册、登录    （√）
     - 异常登录注册模块
     - 关注
     - 聊天
@@ -38,4 +41,6 @@
 1. WebSecurityConfigurerAdapter从 5.7.0-M2 起已经弃用，推荐使用基于组件的 security 配置 (为了组件化)。本项目采用了最新的组件
 2. 使用手机号+验证码登录会存在一个问题：手机号和验证码必须存放在UserDetails中，但是验证码存放在数据库中有点浪费。此外，authenticate中存入的原始值，UserDetails中的是加密值
 3. 自定义过滤链，在继承OncePerRequestFilter类时，出现了request 自动转换为org.springframework.security.web.header.HeaderWriterFilter$HeaderWriterRequest的BUG。要统一JwtAuthenticationTokenFilter文件和TokenService文件HttpServletRequest的包文件（jakarta.servlet.http.HttpServletRequest和javax.servlet.http.HttpServletRequest;javax.servlet在2018年之后就没有更新了。新版的Spring都用的是jakarta）
-4. TODO：Token在到达有效期前无法有效撤销。通过Redis作为撤销证书列表，将有异常行为的token写入Redis撤销证书列表（比如设置30分钟，表示30分钟内禁止该用户继续访问）
+4. 与后端认证对应的，在前端需要通过守护路由对页面访问进行限制，且在访问后端接口时，需要在请求头中携带token
+5. JWT是无状态的，不需要存储到Redis里面。这里主要是为了方便调试。
+6. 由于JWT的无状态性，当发现用户异常时需要采取措施。但这里一般是通过客户端的Https协议保障，为了进一步防止该情况的话，可以通过手机验证码进行二次验证。

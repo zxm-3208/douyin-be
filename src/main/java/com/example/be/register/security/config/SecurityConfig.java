@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
 /**
  * @author : zxm
@@ -35,6 +36,9 @@ public class SecurityConfig {
 
     @Autowired
     private AuthenticationEntryPoint authenticationEntryPoint;
+
+    @Autowired
+    private LogoutSuccessHandler logoutSuccessHandler;
 
     @Bean
     UserDetailServiceImplByPhone customUserDetailsService() {
@@ -74,6 +78,14 @@ public class SecurityConfig {
         // 配置异常处理器
         http.exceptionHandling()
                 .authenticationEntryPoint(authenticationEntryPoint);    // 配置认证失败处理器
+
+        // 自定义注销登录处理器
+        http.logout()
+//                .logoutUrl("/logout")
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .logoutSuccessHandler(logoutSuccessHandler);
+//                .logoutSuccessUrl("http://localhost:8080/sign");
 
         return http.build();
     }

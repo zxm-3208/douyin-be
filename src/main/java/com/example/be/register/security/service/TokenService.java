@@ -13,7 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 public interface TokenService {
     String createToken(LoginUserDTO loginUserDTO);
 
-    void refreshToken(LoginUserDTO loginUserDTO);
+    String refreshToken(LoginUserDTO loginUserDTO);
 
     LoginUserDTO getLoginUserDTO(HttpServletRequest request);
 

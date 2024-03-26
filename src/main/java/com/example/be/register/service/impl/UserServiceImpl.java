@@ -26,6 +26,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -88,7 +89,7 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
         String cacheCode = (String) redisTemplate.opsForValue().get(RedisConstants.LOGIN_CODE_KEY + phone);
         String code = loginUserVO.getCode();
         if(cacheCode==null || !cacheCode.equals(code)){
-            return BaseResponse.fail("验证码错误");              // TODO 需要统一跳转到错误页面
+            return BaseResponse.fail("验证码错误");
         }
 
         // 2. 一致则根据手机号查询用户
@@ -115,8 +116,9 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
 
         // 6. 如果认证通过，使用userId生成一个JWT （tokenService.createToken方法中缓存了token）
         LoginUserDTO loginUser = (LoginUserDTO) authentication.getPrincipal();
+        log.info(String.valueOf(loginUser));
         String jwt = tokenService.createToken(loginUser);
-        LoginUserDTO loginUserDTO = BeanUtil.copyProperties(loginUser, LoginUserDTO.class);
+//        LoginUserDTO loginUserDTO = BeanUtil.copyProperties(loginUser, LoginUserDTO.class);
 
 
         // 7. 封装ResponseResult，并返回
@@ -128,24 +130,24 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
 
     }
 
-    @Override
-    public BaseResponse logout() {
-
-        // 获取当前用户的认证信息
-        UsernamePasswordAuthenticationToken authenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-
-        if(Objects.isNull(authenticationToken)){
-            throw new RuntimeException("获取用户认证信息失败，请重新登录！");
-        }
-
-        LoginUserDTO loginUserDTO = (LoginUserDTO) authenticationToken.getPrincipal();
-        String userId = loginUserDTO.getToken();
-
-        // 删除Redis中的用户信息
-        redisTemplate.delete(Constants.LOGIN_TOKEN_KEY + userId);
-
-        return BaseResponse.success("注销成功");
-    }
+//    @Override
+//    public BaseResponse logout() {
+//
+//        // 获取当前用户的认证信息
+//        UsernamePasswordAuthenticationToken authenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+//
+//        if(Objects.isNull(authenticationToken)){
+//            throw new RuntimeException("获取用户认证信息失败，请重新登录！");
+//        }
+//
+//        LoginUserDTO loginUserDTO = (LoginUserDTO) authenticationToken.getPrincipal();
+//        String userId = loginUserDTO.getToken();
+//
+//        // 删除Redis中的用户信息
+//        redisTemplate.delete(Constants.LOGIN_TOKEN_KEY + userId);
+//
+//        return BaseResponse.success("注销成功");
+//    }
 
 
     private DyUser createUserWithPhone(String phone, String code){
