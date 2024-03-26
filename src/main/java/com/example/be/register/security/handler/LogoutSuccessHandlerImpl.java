@@ -35,16 +35,9 @@ public class LogoutSuccessHandlerImpl implements LogoutSuccessHandler {
 
     @Override
     public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        Map<String, Object> result = new HashMap<String, Object>();
-        result.put("msg", "注销成功");
-        result.put("status", 200);
-        response.setContentType("application/json;charset=UTF-8");
-        String s = new ObjectMapper().writeValueAsString(result);
-
-        log.info("注销成功");
-//
 //        // 获取当前用户的认证信息
 //        UsernamePasswordAuthenticationToken authenticationToken = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+//        log.info("xxxx{}",authenticationToken);
 //        if(Objects.isNull(authenticationToken)){
 //            throw new RuntimeException("获取用户认证信息失败，请重新登录！");
 //        }
@@ -52,6 +45,14 @@ public class LogoutSuccessHandlerImpl implements LogoutSuccessHandler {
 //        String userId = loginUserDTO.getToken();
 //        // 删除Redis中的用户信息
 //        redisTemplate.delete(Constants.LOGIN_TOKEN_KEY + userId);
+
+        Map<String, Object> result = new HashMap<String, Object>();
+        result.put("msg", "注销成功");
+        result.put("status", 200);
+        response.setContentType("application/json;charset=UTF-8");
+        String s = new ObjectMapper().writeValueAsString(result);
+
+        log.info("注销成功");
 
         response.getWriter().println(s);
     }

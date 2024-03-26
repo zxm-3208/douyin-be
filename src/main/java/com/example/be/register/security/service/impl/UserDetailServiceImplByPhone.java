@@ -29,7 +29,7 @@ public class UserDetailServiceImplByPhone implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String phone) throws UsernameNotFoundException {
         //根据用户名查询用户信息
-        LambdaQueryWrapper<DyUser> wrapper = new LambdaQueryWrapper<>();        // TODO 可能不可以用LoginUserVO
+        LambdaQueryWrapper<DyUser> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(DyUser::getPhone, phone);
         DyUser user = userMapper.selectOne(wrapper);
         return new LoginUserDTO(user);

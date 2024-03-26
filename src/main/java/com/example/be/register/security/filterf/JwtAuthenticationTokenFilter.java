@@ -40,6 +40,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
+        // 无状态，通过解析Token获取手机号，再通过数据库获取DyUser数据，同时刷新Token有效时间
         LoginUserDTO loginUser = tokenService.getLoginUserDTO(request);
 
         // 2. 在SecurityContextHolder中获取用户认证对象
@@ -47,7 +48,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
 
         if(!Objects.isNull(loginUser)&&Objects.isNull(authentication)) {
             // Token剩余时间小于XX，则刷新
-            tokenService.verifyToken(loginUser);
+//            tokenService.verifyToken(loginUser);
 
             // 保存用户认证信息
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(loginUser, null, loginUser.getAuthorities());

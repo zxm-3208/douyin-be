@@ -1,11 +1,14 @@
 package com.example.be.register.security.service.impl;
 
 import cn.hutool.jwt.JWTUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.be.common.constant.Constants;
 import com.example.be.common.constant.RedisConstants;
 import com.example.be.common.constant.SystemConstants;
 import com.example.be.common.utils.UUIDUtils;
 import com.example.be.register.domain.dto.LoginUserDTO;
+import com.example.be.register.domain.po.DyUser;
+import com.example.be.register.mapper.DyUserMapper;
 import com.example.be.register.security.service.TokenService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -46,6 +49,9 @@ public class TokenServiceImpl implements TokenService {
     @Value("${token.expireTime}")
     private int expireTime;
 
+    @Autowired
+    private DyUserMapper userMapper;
+
     private static final long MILLIS_SECOND = 1000;
 
     private static final long MILLIS_MINUTE = MILLIS_SECOND * 60;
@@ -81,6 +87,7 @@ public class TokenServiceImpl implements TokenService {
 
         HashMap<String, Object> claims = new HashMap<>();
         claims.put(Constants.LOGIN_USER_KEY, loginUserDTO.getToken());
+        claims.put(Constants.PHONE, loginUserDTO.getDyUser().getPhone());
         String token = Jwts.builder()
                 .setClaims(claims)
                 .signWith(SignatureAlgorithm.HS256, secret).compact();
@@ -93,10 +100,27 @@ public class TokenServiceImpl implements TokenService {
         String token = getToken(request);
         if(!StringUtil.isEmpty(token)){
             Claims claims = parseToken(token);
-            // 解析对应的用户信息
+//            // 解析对应的用户信息 (Redis)
+//            String uuid = (String) claims.get(Constants.LOGIN_USER_KEY);
+//            String userKey = getTokenKey(uuid);
+//            return (LoginUserDTO) redisTemplate.opsForValue().get(userKey);
+
+            // 解析对应的用户信息 (mysql)
+            String phone = (String) claims.get(Constants.PHONE);
+            //根据手机号查询用户信息
+            LambdaQueryWrapper<DyUser> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(DyUser::getPhone, phone);
+            DyUser user = userMapper.selectOne(wrapper);
+            LoginUserDTO loginUserDTO = new LoginUserDTO(user);
+            // 更新时间
+            loginUserDTO.setLoginTime(System.currentTimeMillis());
+            // 过期时间48小时
+            loginUserDTO.setExpireTime(loginUserDTO.getLoginTime() + expireTime * MILLIS_MINUTE);
+            // 设置Token
             String uuid = (String) claims.get(Constants.LOGIN_USER_KEY);
             String userKey = getTokenKey(uuid);
-            return (LoginUserDTO) redisTemplate.opsForValue().get(userKey);
+            loginUserDTO.setToken(userKey);
+            return new LoginUserDTO(user);
 
         }
         return null;
