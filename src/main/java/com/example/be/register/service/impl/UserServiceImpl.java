@@ -1,38 +1,39 @@
 package com.example.be.register.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.util.RandomUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.be.common.constant.Constants;
 import com.example.be.common.constant.RedisConstants;
 import com.example.be.common.constant.SystemConstants;
 import com.example.be.common.core.domain.BaseResponse;
 import com.example.be.common.utils.RegexUtils;
-import com.example.be.register.domain.dto.LoginUserDTO;
+import com.example.be.register.domain.dto.PhoneLoginUserDTO;
+import com.example.be.register.domain.dto.UserNameLoginUserDTO;
 import com.example.be.register.domain.po.DyUser;
-import com.example.be.register.domain.vo.LoginUserVO;
+import com.example.be.register.domain.vo.PhoneLoginUserVO;
+import com.example.be.register.domain.vo.UserNameLoginUserVo;
 import com.example.be.register.mapper.DyUserMapper;
+import com.example.be.register.security.exception.CaptchaNotMatchException;
 import com.example.be.register.security.service.TokenService;
 import com.example.be.register.service.UserService;
+import com.wf.captcha.SpecCaptcha;
 import lombok.extern.slf4j.Slf4j;
+import org.passay.CharacterRule;
+import org.passay.EnglishCharacterData;
+import org.passay.PasswordGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -79,15 +80,34 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
         // 4. 发送验证码       (搁置，接入云平台短信验证码需要网站备案)
         log.debug("发送短信验证码成功，验证码：{}", code);
 
-        return BaseResponse.success(code);
+        return BaseResponse.success();
     }
 
     @Override
-    public BaseResponse login(LoginUserVO loginUserVO) {
-        String phone = loginUserVO.getPhone();
+    public BaseResponse getCode(String userName) {
+        SpecCaptcha specCaptcha = new SpecCaptcha(130, 48, 4);
+
+        // 生成验证码
+        String code = specCaptcha.text().toLowerCase();
+
+        log.info("图形验证码为 {}",code);
+
+        // 保存到redis
+        redisTemplate.opsForValue().set(RedisConstants.LOGIN_CODE_KEY + userName, code, RedisConstants.LOGIN_CODE_TTL, TimeUnit.MINUTES);
+
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("userName", userName);              // TODO 为什么要返回验证码数据
+        map.put("img", specCaptcha.toBase64());
+
+        return BaseResponse.success(map);
+    }
+
+    @Override
+    public BaseResponse login(PhoneLoginUserVO phoneLoginUserVO) {
+        String phone = phoneLoginUserVO.getPhone();
         // 1. 从Redis中获取验证码并进行校验
         String cacheCode = (String) redisTemplate.opsForValue().get(RedisConstants.LOGIN_CODE_KEY + phone);
-        String code = loginUserVO.getCode();
+        String code = phoneLoginUserVO.getCode();
         if(cacheCode==null || !cacheCode.equals(code)){
             return BaseResponse.fail("验证码错误");
         }
@@ -106,7 +126,7 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
         }
 
         // 4. 调用AuthenticationManager的authenticate方法，进行用户认证
-        Authentication usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(loginUserVO.getPhone(), loginUserVO.getCode());
+        Authentication usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(phoneLoginUserVO.getPhone(), phoneLoginUserVO.getCode());
         Authentication authentication = authenticationManager.authenticate(usernamePasswordAuthenticationToken);
 
         // 5. 如果认证没有通过，给出错误信息
@@ -115,8 +135,7 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
         }
 
         // 6. 如果认证通过，使用userId生成一个JWT （tokenService.createToken方法中缓存了token）
-        LoginUserDTO loginUser = (LoginUserDTO) authentication.getPrincipal();
-        log.info(String.valueOf(loginUser));
+        PhoneLoginUserDTO loginUser = (PhoneLoginUserDTO) authentication.getPrincipal();
         String jwt = tokenService.createToken(loginUser);
 //        LoginUserDTO loginUserDTO = BeanUtil.copyProperties(loginUser, LoginUserDTO.class);
 
@@ -126,6 +145,44 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
         map.put("authorization", jwt);
         map.put("token_type", "jwt");
         map.put("expire_time", String.valueOf(loginUser.getExpireTime()));
+        return BaseResponse.success(map);
+
+    }
+
+    @Override
+    public BaseResponse loginByUserName(UserNameLoginUserVo userNameLoginUserVo) {
+
+        // 从Redis中获取验证码
+        String verifyKey = RedisConstants.LOGIN_CODE_KEY + userNameLoginUserVo.getUserName();
+        log.info(verifyKey);
+        String captcha = (String) redisTemplate.opsForValue().get(verifyKey);
+        redisTemplate.delete(verifyKey);
+        if(captcha == null || !userNameLoginUserVo.getCode().equalsIgnoreCase(captcha)) {     // equalsIgnoreCase忽视大小写
+            throw new CaptchaNotMatchException("验证码错误");
+        }
+
+        log.info("开始认证");
+
+        // 认证
+        Authentication authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userNameLoginUserVo.getUserName(), userNameLoginUserVo.getPassword()));
+
+        if(Objects.isNull(authenticate)){
+            throw new RuntimeException("登录失败");
+        }
+
+        log.info(String.valueOf(authenticate));
+
+        // 生成令牌
+        UserNameLoginUserDTO userNameLoginUserDTO = (UserNameLoginUserDTO) authenticate.getPrincipal();
+        String jwt = tokenService.createToken(userNameLoginUserDTO);
+
+        log.info(jwt);
+
+        // 返回响应
+        Map<String, Object> map = new HashMap<>();
+        map.put("authorization", jwt);
+        map.put("token_type", "jwt");
+        map.put("expire_time", String.valueOf(userNameLoginUserDTO.getExpireTime()));
         return BaseResponse.success(map);
 
     }
@@ -156,8 +213,14 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
         user.setUserName(SystemConstants.USER_NICK_NAME_PREFIX + RandomUtil.randomString(10));
         user.setCreateTime(new Timestamp(System.currentTimeMillis()));
         user.setUpdateTime(new Timestamp(System.currentTimeMillis()));
-        user.setCode(code);
 
+        // 通过Passay库生成密码
+        PasswordGenerator passwordGenerator = new PasswordGenerator();
+        String password = passwordGenerator.generatePassword(12, new CharacterRule(EnglishCharacterData.Digit), new CharacterRule(EnglishCharacterData.Alphabetical));
+        log.info("原始密码{}",password);
+        user.setPassword(passwordEncoder.encode(password));
+
+        user.setCode(code);
         this.save(user);
         return user;
     }

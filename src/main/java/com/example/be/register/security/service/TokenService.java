@@ -1,7 +1,9 @@
 package com.example.be.register.security.service;
 
 import com.example.be.register.domain.dto.LoginUserDTO;
+import com.example.be.register.domain.dto.PhoneLoginUserDTO;
 
+import com.example.be.register.domain.dto.UserNameLoginUserDTO;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
@@ -11,12 +13,16 @@ import jakarta.servlet.http.HttpServletRequest;
  * @version: 1.0
  */
 public interface TokenService {
-    String createToken(LoginUserDTO loginUserDTO);
+    String createToken(PhoneLoginUserDTO phoneLoginUserDTO);
+
+    String createToken(UserNameLoginUserDTO userNameLoginUserDTO);
 
     String refreshToken(LoginUserDTO loginUserDTO);
 
+//    String refreshToken(UserNameLoginUserDTO userNameLoginUserDTO);
+
     LoginUserDTO getLoginUserDTO(HttpServletRequest request);
 
-    void verifyToken(LoginUserDTO loginUserDTO);
+    void verifyToken(PhoneLoginUserDTO phoneLoginUserDTO);
 
 }

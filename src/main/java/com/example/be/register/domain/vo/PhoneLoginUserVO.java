@@ -9,9 +9,7 @@ import lombok.Data;
  * @version: 1.0
  */
 @Data
-public class LoginUserVO {
+public class PhoneLoginUserVO {
     private String phone;
     private String code;
-    private String password;
-    private String userName;
 }

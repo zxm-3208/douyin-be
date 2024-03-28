@@ -1,12 +1,12 @@
 package com.example.be.register.controller;
 
 import com.example.be.common.core.domain.BaseResponse;
-import com.example.be.register.domain.vo.LoginUserVO;
+import com.example.be.register.domain.vo.PhoneLoginUserVO;
+import com.example.be.register.domain.vo.UserNameLoginUserVo;
 import com.example.be.register.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitterReturnValueHandler;
 
 /**
  * @author : zxm
@@ -33,12 +33,28 @@ public class UserController {
     }
 
     /**
+     * 图形验证码
+     */
+    @GetMapping("/captchaImage")
+    public BaseResponse getCode(@RequestParam String userName){
+        return userService.getCode(userName);
+    }
+
+    /**
      * 手机号+验证码
-     * @param loginUserVO 登录参数，包含phone和code
+     * @param phoneLoginUserVO 登录参数，包含phone和code
      */
     @PostMapping("/login")
-    public BaseResponse login(@RequestBody LoginUserVO loginUserVO){
-        return userService.login(loginUserVO);
+    public BaseResponse login(@RequestBody PhoneLoginUserVO phoneLoginUserVO){
+        return userService.login(phoneLoginUserVO);
+    }
+
+    /**
+     *  用户名+密码+验证码
+     */
+    @PostMapping("/logoinbyusername")
+    public BaseResponse loginByUserName(@RequestBody UserNameLoginUserVo userNameLoginUserVo){
+        return userService.loginByUserName(userNameLoginUserVo);
     }
 
 

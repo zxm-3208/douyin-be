@@ -2,6 +2,7 @@ package com.example.be.register.security.config;
 
 import com.example.be.register.security.filterf.JwtAuthenticationTokenFilter;
 import com.example.be.register.security.service.impl.UserDetailServiceImplByPhone;
+import com.example.be.register.security.service.impl.UserDetailServiceImplByUserName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,6 +33,9 @@ public class SecurityConfig {
     UserDetailServiceImplByPhone userDetailServiceImplByPhone;
 
     @Autowired
+    UserDetailServiceImplByUserName userDetailServiceImplByUserName;
+
+    @Autowired
     private JwtAuthenticationTokenFilter jwtAuthenticationTokenFilter;
 
     @Autowired
@@ -41,17 +45,27 @@ public class SecurityConfig {
     private LogoutSuccessHandler logoutSuccessHandler;
 
     @Bean
-    UserDetailServiceImplByPhone customUserDetailsService() {
+    UserDetailServiceImplByPhone customUserDetailsServiceByPhone() {
         return new UserDetailServiceImplByPhone();
     }
 
     @Bean
-    AuthenticationManager authenticationManager(UserDetailServiceImplByPhone userDetailServiceImplByPhone,
+    UserDetailServiceImplByUserName customUserDetailsServiceByUserName() {
+        return new UserDetailServiceImplByUserName();
+    }
+
+    @Bean
+    AuthenticationManager authenticationManager(UserDetailServiceImplByPhone userDetailServiceImplByPhone, UserDetailServiceImplByUserName userDetailServiceImplByUserName,
                                                 PasswordEncoder passwordEncoder) {
-        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
-        daoAuthenticationProvider.setUserDetailsService(userDetailServiceImplByPhone);
-        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder);
-        ProviderManager pm = new ProviderManager(daoAuthenticationProvider);
+        DaoAuthenticationProvider daoAuthenticationProviderByPhone = new DaoAuthenticationProvider();
+        daoAuthenticationProviderByPhone.setUserDetailsService(userDetailServiceImplByPhone);
+        daoAuthenticationProviderByPhone.setPasswordEncoder(passwordEncoder);
+
+        DaoAuthenticationProvider daoAuthenticationProviderByUserName = new DaoAuthenticationProvider();
+        daoAuthenticationProviderByUserName.setUserDetailsService(userDetailServiceImplByUserName);
+        daoAuthenticationProviderByUserName.setPasswordEncoder(passwordEncoder);
+
+        ProviderManager pm = new ProviderManager(daoAuthenticationProviderByPhone, daoAuthenticationProviderByUserName);
         return pm;
     }
 
@@ -68,7 +82,7 @@ public class SecurityConfig {
                 //过滤请求
                 .authorizeHttpRequests()
                 // 对于登录login 验证码code 允许匿名访问
-                .requestMatchers("/user/code","/user/login").permitAll()
+                .requestMatchers("/user/code","/user/login", "/user/captchaImage", "/user/logoinbyusername").permitAll()
                 // 除上面外的所有请求全部需要鉴权认证
                 .anyRequest().authenticated();
 

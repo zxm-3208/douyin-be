@@ -1,9 +1,8 @@
 package com.example.be.register.security.filterf;
 
-import com.example.be.common.constant.HttpStatus;
 import com.example.be.register.domain.dto.LoginUserDTO;
+import com.example.be.register.domain.dto.PhoneLoginUserDTO;
 import com.example.be.register.security.service.TokenService;
-import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,7 +14,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -48,7 +46,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
 
         if(!Objects.isNull(loginUser)&&Objects.isNull(authentication)) {
             // Token剩余时间小于XX，则刷新
-//            tokenService.verifyToken(loginUser);
+            // tokenService.verifyToken(loginUser);
 
             // 保存用户认证信息
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(loginUser, null, loginUser.getAuthorities());

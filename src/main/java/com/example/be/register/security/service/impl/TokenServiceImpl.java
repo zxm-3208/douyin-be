@@ -1,12 +1,12 @@
 package com.example.be.register.security.service.impl;
 
-import cn.hutool.jwt.JWTUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.esotericsoftware.kryo.util.Null;
 import com.example.be.common.constant.Constants;
-import com.example.be.common.constant.RedisConstants;
-import com.example.be.common.constant.SystemConstants;
 import com.example.be.common.utils.UUIDUtils;
 import com.example.be.register.domain.dto.LoginUserDTO;
+import com.example.be.register.domain.dto.PhoneLoginUserDTO;
+import com.example.be.register.domain.dto.UserNameLoginUserDTO;
 import com.example.be.register.domain.po.DyUser;
 import com.example.be.register.mapper.DyUserMapper;
 import com.example.be.register.security.service.TokenService;
@@ -15,17 +15,13 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.util.bcel.Const;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.core.token.Token;
 import org.springframework.stereotype.Component;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author : zxm
@@ -57,13 +53,13 @@ public class TokenServiceImpl implements TokenService {
     private static final long MILLIS_MINUTE = MILLIS_SECOND * 60;
 
     @Override
-    public String createToken(LoginUserDTO loginUserDTO) {
+    public String createToken(PhoneLoginUserDTO phoneLoginUserDTO) {
         // 设置uuid 用户唯一标识
         String userKey = UUIDUtils.randomUUID();
-        loginUserDTO.setToken(userKey);
+        phoneLoginUserDTO.setToken(userKey);
 
         // 保存用户信息，刷新令牌有效时间
-        return refreshToken(loginUserDTO);
+        return refreshToken(phoneLoginUserDTO);
 
 //        HashMap<String, Object> claims = new HashMap<>();
 //        claims.put(Constants.LOGIN_USER_KEY, userKey);
@@ -74,13 +70,21 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
+    public String createToken(UserNameLoginUserDTO userNameLoginUserDTO) {
+        // 设置uuid 用户唯一标识
+        String userKey = UUIDUtils.randomUUID();
+        userNameLoginUserDTO.setToken(userKey);
+
+        // 保存用户信息，刷新令牌有效时间
+        return refreshToken(userNameLoginUserDTO);
+    }
+
+    @Override
     public String refreshToken(LoginUserDTO loginUserDTO) {
         // 更新时间
         loginUserDTO.setLoginTime(System.currentTimeMillis());
-
         // 过期时间48小时
         loginUserDTO.setExpireTime(loginUserDTO.getLoginTime() + expireTime * MILLIS_MINUTE);
-
         // 根据UUID缓存
         String userKey = getTokenKey(loginUserDTO.getToken());
 //        redisTemplate.opsForValue().set(userKey, loginUserDTO, expireTime, TimeUnit.MINUTES);
@@ -88,12 +92,33 @@ public class TokenServiceImpl implements TokenService {
         HashMap<String, Object> claims = new HashMap<>();
         claims.put(Constants.LOGIN_USER_KEY, loginUserDTO.getToken());
         claims.put(Constants.PHONE, loginUserDTO.getDyUser().getPhone());
+        claims.put(Constants.USERNAME, loginUserDTO.getUsername());
         String token = Jwts.builder()
                 .setClaims(claims)
                 .signWith(SignatureAlgorithm.HS256, secret).compact();
 
         return token;
     }
+
+//    @Override
+//    public String refreshToken(UserNameLoginUserDTO userNameLoginUserDTO) {
+//        // 更新时间
+//        userNameLoginUserDTO.setLoginTime(System.currentTimeMillis());
+//        // 过期时间48小时
+//        userNameLoginUserDTO.setExpireTime(userNameLoginUserDTO.getLoginTime() + expireTime * MILLIS_MINUTE);
+//        // 根据UUID缓存
+//        String userKey = getTokenKey(userNameLoginUserDTO.getToken());
+//
+//        HashMap<String, Object> claims = new HashMap<>();
+//        claims.put(Constants.LOGIN_USER_KEY, userNameLoginUserDTO.getToken());
+//        claims.put(Constants.USERNAME, userNameLoginUserDTO.getUsername());
+//        String token = Jwts.builder()
+//                .setClaims(claims)
+//                .signWith(SignatureAlgorithm.HS256, secret).compact();
+//
+//        return token;
+//    }
+
 
     @Override
     public LoginUserDTO getLoginUserDTO(HttpServletRequest request) {
@@ -105,23 +130,24 @@ public class TokenServiceImpl implements TokenService {
 //            String userKey = getTokenKey(uuid);
 //            return (LoginUserDTO) redisTemplate.opsForValue().get(userKey);
 
+            System.out.println(claims);
             // 解析对应的用户信息 (mysql)
             String phone = (String) claims.get(Constants.PHONE);
+            System.out.println(phone);
             //根据手机号查询用户信息
             LambdaQueryWrapper<DyUser> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(DyUser::getPhone, phone);
             DyUser user = userMapper.selectOne(wrapper);
-            LoginUserDTO loginUserDTO = new LoginUserDTO(user);
+            PhoneLoginUserDTO phoneLoginUserDTO = new PhoneLoginUserDTO(user);
             // 更新时间
-            loginUserDTO.setLoginTime(System.currentTimeMillis());
+            phoneLoginUserDTO.setLoginTime(System.currentTimeMillis());
             // 过期时间48小时
-            loginUserDTO.setExpireTime(loginUserDTO.getLoginTime() + expireTime * MILLIS_MINUTE);
+            phoneLoginUserDTO.setExpireTime(phoneLoginUserDTO.getLoginTime() + expireTime * MILLIS_MINUTE);
             // 设置Token
             String uuid = (String) claims.get(Constants.LOGIN_USER_KEY);
             String userKey = getTokenKey(uuid);
-            loginUserDTO.setToken(userKey);
-            return new LoginUserDTO(user);
-
+            phoneLoginUserDTO.setToken(userKey);
+            return phoneLoginUserDTO;
         }
         return null;
     }
@@ -133,12 +159,12 @@ public class TokenServiceImpl implements TokenService {
      * @version 1.0
     */
     @Override
-    public void verifyToken(LoginUserDTO loginUserDTO) {
-        long expireTime = loginUserDTO.getExpireTime();
+    public void verifyToken(PhoneLoginUserDTO phoneLoginUserDTO) {
+        long expireTime = phoneLoginUserDTO.getExpireTime();
         long currentTimeMillis = System.currentTimeMillis();
         // 相差小于24小时，自动刷新缓存
         if (expireTime-currentTimeMillis <= expireTime * MILLIS_MINUTE / 2){
-            refreshToken(loginUserDTO);
+            refreshToken(phoneLoginUserDTO);
         }
     }
 

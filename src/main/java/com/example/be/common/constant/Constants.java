@@ -82,6 +82,11 @@ public class Constants {
     public static final String PHONE = "phone";
 
     /**
+     * 用户名
+     */
+    public static final String USERNAME = "username";
+
+    /**
      * 令牌前缀
      */
     public static final String TOKEN_PREFIX = "Bearer ";
