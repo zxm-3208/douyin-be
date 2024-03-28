@@ -36,8 +36,8 @@ public class UserController {
      * 图形验证码
      */
     @GetMapping("/captchaImage")
-    public BaseResponse getCode(@RequestParam String userName){
-        return userService.getCode(userName);
+    public BaseResponse getCode(){
+        return userService.getCode();
     }
 
     /**

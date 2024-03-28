@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 public interface UserService extends IService<DyUser> {
     BaseResponse send(String phone);
 
-    BaseResponse getCode(String userName);
+    BaseResponse getCode();
 
     BaseResponse login(PhoneLoginUserVO phoneLoginUserVO);
 

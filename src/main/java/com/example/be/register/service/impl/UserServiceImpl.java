@@ -84,19 +84,21 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
     }
 
     @Override
-    public BaseResponse getCode(String userName) {
+    public BaseResponse getCode() {
         SpecCaptcha specCaptcha = new SpecCaptcha(130, 48, 4);
 
-        // 生成验证码
+        // 生成验证码,及验证码唯一标识
+        String uuid = UUID.randomUUID().toString().replaceAll("-", "");
+        String key = Constants.CAPTCHA_CODE_KEY + uuid;
         String code = specCaptcha.text().toLowerCase();
-
+        log.info("uuid为 {}",uuid);
         log.info("图形验证码为 {}",code);
 
         // 保存到redis
-        redisTemplate.opsForValue().set(RedisConstants.LOGIN_CODE_KEY + userName, code, RedisConstants.LOGIN_CODE_TTL, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set(key, code, RedisConstants.LOGIN_CODE_TTL, TimeUnit.MINUTES);
 
         HashMap<String, Object> map = new HashMap<>();
-        map.put("userName", userName);              // TODO 为什么要返回验证码数据
+        map.put("uuid", uuid);
         map.put("img", specCaptcha.toBase64());
 
         return BaseResponse.success(map);
@@ -153,16 +155,19 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
     public BaseResponse loginByUserName(UserNameLoginUserVo userNameLoginUserVo) {
 
         // 从Redis中获取验证码
-        String verifyKey = RedisConstants.LOGIN_CODE_KEY + userNameLoginUserVo.getUserName();
+        String verifyKey = Constants.CAPTCHA_CODE_KEY + userNameLoginUserVo.getUuid();
         log.info(verifyKey);
         String captcha = (String) redisTemplate.opsForValue().get(verifyKey);
-        redisTemplate.delete(verifyKey);
+        log.info(captcha);
         if(captcha == null || !userNameLoginUserVo.getCode().equalsIgnoreCase(captcha)) {     // equalsIgnoreCase忽视大小写
-            throw new CaptchaNotMatchException("验证码错误");
+            throw new CaptchaNotMatchException("验证码错误!!!!!!!!!!");
         }
+        redisTemplate.delete(verifyKey);
 
         log.info("开始认证");
 
+        log.info(userNameLoginUserVo.getUserName());
+        log.info(userNameLoginUserVo.getPassword());
         // 认证
         Authentication authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(userNameLoginUserVo.getUserName(), userNameLoginUserVo.getPassword()));
 
