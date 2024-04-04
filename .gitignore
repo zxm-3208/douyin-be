@@ -7,4 +7,5 @@
 out
 gen
 *.yaml
-src/main/resources/application.yaml
+**/target
+**/application.yaml
