@@ -13,12 +13,12 @@
    11. 用户名+密码+图形验证码登录
    12. TODO: 基于Oauth2，调用QQ微信等接口进行认证登录。 (问题：网站要备案)
 2. 将项目由单体项目转换为微服务架构
-   1. douyin_common: 服务注册与发现
-   2. douyin_gateway: 网关路由
-   3. douyin_auth: 用户登录授权服务
-   4. TODO: Nacos配置
-   5. pom.xml 各个服务区分开
-   6. gateway配置
+   1. douyin_common: 服务注册与发现 (√)
+   2. douyin_gateway: 网关路由 (√)
+   3. douyin_auth: 用户登录授权服务 (√)
+   4. Nacos配置 (√)
+   5. gateway配置
+   6. feign调用
 
 
 
@@ -61,3 +61,7 @@
 2. 微服务架构
    1. 微服务间的数据库如何设计。
    2. nacos2.x 新增了gRPC 的通信方式(用于客户端向服务端发起连接请求)，新增了两个端口。这两个端口在nacos原先的端口上(默认8848)，进行一定偏移量自动生成
+   3. 转换成微服务架构后，前端无法正常调用接口了。 排查：
+      - 服务命名(uri解析)不支持下划线. 
+      - 要想使用gateway进行请求转发，所有的微服务实例与gateway服务实例在nacos中必须是同一个namesapce和同一个group. 
+      - pring Cloud 2020版本以后，默认移除了对Netflix的依赖，其中就包括Ribbon. 因此需要额外导入spring-cloud-loadbalancer依赖。

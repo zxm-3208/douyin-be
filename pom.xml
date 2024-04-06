@@ -20,6 +20,7 @@
     <modules>
         <module>douyin_auth</module>
         <module>douyin_commons</module>
+        <module>douyin_gateway</module>
     </modules>
     <packaging>pom</packaging>
 

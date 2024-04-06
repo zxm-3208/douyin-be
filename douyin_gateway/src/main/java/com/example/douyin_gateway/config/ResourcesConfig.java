@@ -1,10 +1,15 @@
-package com.example.douyin_auth.common.config;
+package com.example.douyin_gateway.config;
 
+
+
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.cors.reactive.CorsWebFilter;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.util.pattern.PathPatternParser;
 
 import java.util.Collections;
 
@@ -14,18 +19,19 @@ import java.util.Collections;
  * @Description: com.example.be.common.config
  * @version: 1.0
  */
-//@Configuration
+@Configuration
 public class ResourcesConfig {
     /**
      * 跨域配置
      */
     @Bean
-    public CorsFilter corsFilter()
+    public CorsWebFilter corsFilter()
     {
         CorsConfiguration config = new CorsConfiguration();
 
         // 设置访问源地址
-        config.setAllowedOriginPatterns(Collections.singletonList("http://localhost:8080"));
+//        config.setAllowedOriginPatterns(Collections.singletonList("http://localhost:8080"));
+        config.addAllowedOriginPattern("*");
 
         // 设置访问源请求头
         config.addAllowedHeader(CorsConfiguration.ALL);
@@ -36,9 +42,11 @@ public class ResourcesConfig {
         // 允许凭证
         config.setAllowCredentials(true);
 
+        config.setMaxAge(18000L);
+
         // 对接口配置跨域设置
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource(new PathPatternParser());
         source.registerCorsConfiguration("/**", config);
-        return new CorsFilter(source);
+        return new CorsWebFilter(source);
     }
 }

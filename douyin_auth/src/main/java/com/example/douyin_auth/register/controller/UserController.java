@@ -27,9 +27,8 @@ public class UserController {
     /**
      * 发送手机验证码
      */
-    @PostMapping("/code")
+    @GetMapping("/code")
     public BaseResponse sendCode(@RequestParam String phone){
-        // TODO 发送短信验证码并保存验证
         return userService.send(phone);
     }
 
