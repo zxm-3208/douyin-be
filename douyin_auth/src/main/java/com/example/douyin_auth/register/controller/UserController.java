@@ -1,9 +1,9 @@
 package com.example.douyin_auth.register.controller;
 
-import com.example.douyin_auth.common.core.domain.BaseResponse;
 import com.example.douyin_auth.register.domain.vo.PhoneLoginUserVO;
 import com.example.douyin_auth.register.domain.vo.UserNameLoginUserVo;
 import com.example.douyin_auth.register.service.UserService;
+import com.example.douyin_commons.core.domain.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

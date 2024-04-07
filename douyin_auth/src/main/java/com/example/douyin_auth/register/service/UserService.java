@@ -1,10 +1,10 @@
 package com.example.douyin_auth.register.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.example.douyin_auth.common.core.domain.BaseResponse;
 import com.example.douyin_auth.register.domain.po.DyUser;
 import com.example.douyin_auth.register.domain.vo.PhoneLoginUserVO;
 import com.example.douyin_auth.register.domain.vo.UserNameLoginUserVo;
+import com.example.douyin_commons.core.domain.BaseResponse;
 import org.springframework.stereotype.Service;
 
 /**

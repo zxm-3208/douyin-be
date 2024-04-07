@@ -1,8 +1,8 @@
 package com.example.douyin_auth.register.security.exception;
 
 import com.alibaba.fastjson.JSON;
-import com.example.douyin_auth.common.core.domain.BaseResponse;
-import com.example.douyin_auth.common.utils.WebUtils;
+import com.example.douyin_commons.core.domain.BaseResponse;
+import com.example.douyin_commons.utils.WebUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

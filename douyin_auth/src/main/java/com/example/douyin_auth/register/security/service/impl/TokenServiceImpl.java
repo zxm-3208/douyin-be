@@ -2,14 +2,14 @@ package com.example.douyin_auth.register.security.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.esotericsoftware.kryo.util.Null;
-import com.example.douyin_auth.common.constant.Constants;
-import com.example.douyin_auth.common.utils.UUIDUtils;
 import com.example.douyin_auth.register.domain.dto.LoginUserDTO;
 import com.example.douyin_auth.register.domain.dto.PhoneLoginUserDTO;
 import com.example.douyin_auth.register.domain.dto.UserNameLoginUserDTO;
 import com.example.douyin_auth.register.domain.po.DyUser;
 import com.example.douyin_auth.register.mapper.DyUserMapper;
 import com.example.douyin_auth.register.security.service.TokenService;
+import com.example.douyin_commons.constant.Constants;
+import com.example.douyin_commons.utils.UUIDUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
