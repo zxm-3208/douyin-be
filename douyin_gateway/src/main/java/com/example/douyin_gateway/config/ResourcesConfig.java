@@ -31,7 +31,7 @@ public class ResourcesConfig {
 
         // 设置访问源地址
 //        config.setAllowedOriginPatterns(Collections.singletonList("http://localhost:8080"));
-        config.addAllowedOriginPattern("*");
+        config.setAllowedOriginPatterns(Collections.singletonList("*"));
 
         // 设置访问源请求头
         config.addAllowedHeader(CorsConfiguration.ALL);
@@ -45,7 +45,7 @@ public class ResourcesConfig {
         config.setMaxAge(18000L);
 
         // 对接口配置跨域设置
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource(new PathPatternParser());
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return new CorsWebFilter(source);
     }

@@ -9,24 +9,28 @@
    7. 登出功能          (√)
    8. SpringSecurity异常处理   (√)
    9. 刷新Jwt有效时间(有效时间48小时，再次访问时有效时间小于24小时时重置为48小时。长时间不登录，Jwt失效)    (√)
-   10. 多种验证方式下，如何配置多个AuthenticationManager
-   11. 用户名+密码+图形验证码登录
-   12. TODO: 基于Oauth2，调用QQ微信等接口进行认证登录。 (问题：网站要备案)
+   10. 多种验证方式下，如何配置多个AuthenticationManager (√)
+   11. 用户名+密码+图形验证码登录  (√)
+   13. TODO: 基于Oauth2，调用QQ微信等接口进行认证登录。 (问题：网站要备案,且需要部署到云服务器上（有IP地址）)。
+   14. TODO: gateway鉴权（白名单，校验jwt合法性）
 2. 将项目由单体项目转换为微服务架构
    1. douyin_common: 服务注册与发现 (√)
    2. douyin_gateway: 网关路由 (√)
    3. douyin_auth: 用户登录授权服务 (√)
    4. Nacos配置 (√)
-   5. gateway配置
-   6. feign调用
+   5. gateway配置 (√)
+
 
 
 
 
 # 功能列表
-1. 用户模块
-    - 注册、登录    （√）
-    - 关注 
+
+1. 认证模块（douyin_auth）
+   - 手机号注册/登录
+   - 用户名+密码+验证码验证登录
+2. 用户关注点赞    
+   - - 关注 
     - 聊天 （秒杀）
     - 附近的人
     - 用户统计UV用HyperLogLog
@@ -41,8 +45,8 @@
 3. 高并发弹幕
 4. 红包
 5. 商城
-   - AI试衣服
-6. ...
+6. AI
+7. ...
 
 # 小细节TODO
 1. 连接池换成druid
@@ -65,3 +69,4 @@
       - 服务命名(uri解析)不支持下划线. 
       - 要想使用gateway进行请求转发，所有的微服务实例与gateway服务实例在nacos中必须是同一个namesapce和同一个group. 
       - pring Cloud 2020版本以后，默认移除了对Netflix的依赖，其中就包括Ribbon. 因此需要额外导入spring-cloud-loadbalancer依赖。
+      - Postman可以正常调用后端接口，但是前端由于出现多个’Access-Control-Allow-Origin’ CORS头，会导致前端无法正常访问后端接口。解决方案：https://blog.csdn.net/youanyyou/article/details/127543821

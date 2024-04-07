@@ -1,6 +1,6 @@
 package com.example.douyin_auth.common.config;
 
-import com.example.douyin_auth.common.utils.FastJsonJsonRedisSerializer;
+import com.example.douyin_commons.utils.FastJsonJsonRedisSerializer;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,7 +16,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
  * @Description: com.example.be.common.config
  * @version: 1.0
  */
-//@Configuration
+@Configuration
 public class RedisConfig {
     @Bean
     public RedisTemplate<Object, Object> redisTemplate(RedisConnectionFactory connectionFactory){
