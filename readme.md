@@ -19,8 +19,9 @@
    3. douyin_auth: 用户登录授权服务 (√)
    4. Nacos配置 (√)
    5. gateway配置 (√)
-3. 相关用户模块 
-   1. 关注用户
+3. 视频发布模块 
+   1. 实现文件上传功能（将文件写入minIO和数据库）
+   2. 更换对象拷贝方法
 
 
 
@@ -36,6 +37,7 @@
    - 提供视频上传功能`
    - 视频存储
    - 将视频发送至vedio消息队列，用于后续处理
+   - 熔断降级
 3. 视频点赞模块 (douyin_like)
    - 点赞，取消点赞
    - 喜欢列表
@@ -98,3 +100,6 @@
       - 要想使用gateway进行请求转发，所有的微服务实例与gateway服务实例在nacos中必须是同一个namesapce和同一个group. 
       - pring Cloud 2020版本以后，默认移除了对Netflix的依赖，其中就包括Ribbon. 因此需要额外导入spring-cloud-loadbalancer依赖。
       - Postman可以正常调用后端接口，但是前端由于出现多个’Access-Control-Allow-Origin’ CORS头，会导致前端无法正常访问后端接口。解决方案：https://blog.csdn.net/youanyyou/article/details/127543821
+3. 视频发布模块
+   1. 不同服务间的数据库要独立，外键采用逻辑外键。
+4. 

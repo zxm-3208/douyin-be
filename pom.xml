@@ -21,7 +21,6 @@
         <module>douyin_auth</module>
         <module>douyin_commons</module>
         <module>douyin_gateway</module>
-        <module>douyin_relation</module>
         <module>douyin_publish</module>
     </modules>
     <packaging>pom</packaging>
