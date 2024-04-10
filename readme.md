@@ -102,4 +102,5 @@
       - Postman可以正常调用后端接口，但是前端由于出现多个’Access-Control-Allow-Origin’ CORS头，会导致前端无法正常访问后端接口。解决方案：https://blog.csdn.net/youanyyou/article/details/127543821
 3. 视频发布模块
    1. 不同服务间的数据库要独立，外键采用逻辑外键。
+   2. 非事务方法调用同类的一个事务方法，事务无法控制：在使用@Transacational的时候，Spring Framework会默认使用AOP代理。因此，代码运行时会生成一个代理对象，且是通过代理对象调用目标方法.方法：1. @Autowired直接注入service，通过cglib动态代理实现.(Spring Boot2.6以后已禁用循环引用) 2. 通过Spring AOP的方式调用。
 4. 

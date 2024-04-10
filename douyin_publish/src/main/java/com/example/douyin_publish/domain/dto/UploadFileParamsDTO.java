@@ -13,6 +13,10 @@ import lombok.Data;
 @Data
 public class UploadFileParamsDTO {
 
+    public UploadFileParamsDTO(DyMedia dyMedia, DyPublish dyPublish) {
+        this.dyMedia = dyMedia;
+        this.dyPublish = dyPublish;
+    }
 
     private DyMedia dyMedia;
 

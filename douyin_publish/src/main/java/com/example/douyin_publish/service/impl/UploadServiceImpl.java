@@ -9,20 +9,22 @@ import com.example.douyin_publish.mapper.MediaFilesMapper;
 import com.example.douyin_publish.mapper.PublishMapper;
 import com.example.douyin_publish.service.UploadService;
 import io.micrometer.common.util.StringUtils;
-import io.minio.Digest;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
-import jodd.util.StringUtil;
+import com.example.douyin_publish.config.MinioConfig;
+import io.minio.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.checkerframework.checker.units.qual.A;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 
 /**
  * @author : zxm
@@ -30,6 +32,8 @@ import java.util.Date;
  * @Description: com.example.douyin_publish.service.impl
  * @version: 1.0
  */
+@Slf4j
+@Service
 public class UploadServiceImpl implements UploadService {
 
     @Autowired
@@ -40,6 +44,9 @@ public class UploadServiceImpl implements UploadService {
 
     @Autowired
     PublishMapper publishMapper;
+
+//    @Autowired
+//    UploadService currentProxy;
 
     // 普通文件桶
     @Value("${minio.bucket.files}")
@@ -60,7 +67,6 @@ public class UploadServiceImpl implements UploadService {
      * @author zxm
      * @date: 2024/4/9 15:23
      */
-    @Transactional
     @Override
     public UploadFileResultDTO uploadFile(UploadFileParamsDTO uploadFileParamsDTO, byte[] bytes, String folder, String objectName) {
 
@@ -85,7 +91,7 @@ public class UploadServiceImpl implements UploadService {
             // 上传至文件系统
             addMediaFilesToMinIO(bytes, objectName, uploadFileParamsDTO.getContentType());
             // 写入数据库表
-            addMediaFilesToDb(fileId, uploadFileParamsDTO, objectName);
+            getService().addMediaFilesToDb(fileId, uploadFileParamsDTO, objectName);
             UploadFileResultDTO uploadFileResultDTO = new UploadFileResultDTO();
             BeanUtils.copyProperties(dyMedia, uploadFileResultDTO);
             BeanUtils.copyProperties(dyPublish, uploadFileResultDTO);
@@ -102,7 +108,7 @@ public class UploadServiceImpl implements UploadService {
      * @param bytes 文件字节数组
      * @param bucket 桶
      * @param objectName 对象名称
-     * @param contentType 内容类型
+     * @param contentType 内容类型 （即是Internet Media Type，互联网媒体类型，也叫做MIME类型，通过这个属性来告诉服务器如何处理请求的数据。）
      * @return: void
      * @author zxm
      * @date: 2024/4/9 15:25
@@ -132,9 +138,12 @@ public class UploadServiceImpl implements UploadService {
      * @author zxm
      * @date: 2024/4/9 15:44
      */
-    private void addMediaFilesToDb(String fileMd5, UploadFileParamsDTO uploadFileParamsDTO, String objectName) {
+    @Transactional
+    public void addMediaFilesToDb(String fileMd5, UploadFileParamsDTO uploadFileParamsDTO, String objectName) {
         // 从数据库查询文件
         dyMedia = mediaFilesMapper.selectById(fileMd5);
+        System.out.println("=====");
+        System.out.println(dyMedia);
         dyPublish = publishMapper.selectByMediaId(fileMd5);
         if(dyMedia == null){
             dyMedia = new DyMedia();
@@ -180,5 +189,12 @@ public class UploadServiceImpl implements UploadService {
             folderString.append("/");
         }
         return folderString.toString();
+    }
+
+    /**
+     *  通过AopContext获取代理类
+     */
+    private UploadService getService(){
+        return Objects.nonNull(AopContext.currentProxy()) ? (UploadService) AopContext.currentProxy() : this;
     }
 }
