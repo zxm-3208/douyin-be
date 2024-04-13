@@ -22,10 +22,6 @@ public class DyMedia implements Serializable {
      */
     private String tag;
     /**
-     * 封面url
-     */
-    private String imgUrl;
-    /**
      * 视频url
      */
     private String mediaUrl;
@@ -33,6 +29,11 @@ public class DyMedia implements Serializable {
      * 状态
      */
     private String status;
+
+    /**
+     * MD5
+     */
+    private String md5;
 
 }
 

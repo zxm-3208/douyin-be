@@ -1,17 +1,25 @@
 package com.example.douyin_publish.controller;
 
+import com.example.douyin_commons.core.domain.BaseResponse;
+import com.example.douyin_commons.core.domain.ResultCode;
 import com.example.douyin_commons.core.exception.MsgException;
 import com.example.douyin_publish.domain.dto.UploadFileParamsDTO;
 import com.example.douyin_publish.domain.dto.UploadFileResultDTO;
 import com.example.douyin_publish.domain.po.DyMedia;
 import com.example.douyin_publish.domain.po.DyPublish;
+import com.example.douyin_publish.domain.vo.CheckFileVo;
 import com.example.douyin_publish.service.UploadService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author : zxm
@@ -22,6 +30,8 @@ import java.io.IOException;
 
 @RestController     //@Controller + @ResponseBody
 @RequestMapping("/publish")
+@CrossOrigin
+@Slf4j
 public class PublishController {
 
     @Autowired
@@ -33,6 +43,7 @@ public class PublishController {
                                       @RequestParam(value = "folder", required = false) String folder,
                                       @RequestParam(value = "objectName", required = false) String objectName){
         UploadFileParamsDTO uploadFileParamsDto = new UploadFileParamsDTO(new DyMedia(),new DyPublish());
+        System.out.println("....");
         String contentType = filedata.getContentType();
         uploadFileParamsDto.setContentType(contentType);
         uploadFileParamsDto.setFileSize(filedata.getSize());
@@ -42,7 +53,7 @@ public class PublishController {
         else{
             uploadFileParamsDto.getDyPublish().setType("001003");   //是个视频
         }
-        uploadFileParamsDto.getDyPublish().setTitle(filedata.getOriginalFilename());
+        uploadFileParamsDto.getDyPublish().setFileName(filedata.getOriginalFilename());
         UploadFileResultDTO uploadFileResultDTO = null;
         try{
             uploadFileResultDTO = uploadService.uploadFile(uploadFileParamsDto, filedata.getBytes(), folder, objectName);
@@ -50,6 +61,20 @@ public class PublishController {
             MsgException.cast("上传文件过程中出错");
         }
         return uploadFileResultDTO;
+    }
+
+    /**
+     * @param fileMd5
+     * @Title: 判断文件是否上传过，是否存在分片，断点续传
+     * @MethodName: checkBigFile
+     * @Exception
+     * @Description: 文件已存在，1
+     * 文件没有上传过，0
+     * 文件上传中断过，2 以及现在有的数组分片索引
+     */
+    @PostMapping(value = "/checkBigFile")
+    public BaseResponse checkBigFile(@RequestBody CheckFileVo checkFileVo) {
+        return uploadService.checkFile(checkFileVo.getFileMd5());
     }
 
 }

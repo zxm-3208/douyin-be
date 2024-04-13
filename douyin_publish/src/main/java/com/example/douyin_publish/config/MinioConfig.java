@@ -22,7 +22,7 @@ import java.security.NoSuchAlgorithmException;
  */
 
 //@Data
-@Component
+@Configuration
 public class MinioConfig {
 
     @Value("${minio.endpoint}")

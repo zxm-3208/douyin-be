@@ -87,6 +87,11 @@ public class Constants {
     public static final String USERNAME = "username";
 
     /**
+     * 过期时间
+     */
+    public static final String EXP = "exp";
+
+    /**
      * 令牌前缀
      */
     public static final String TOKEN_PREFIX = "Bearer ";

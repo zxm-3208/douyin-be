@@ -1,5 +1,6 @@
 package com.example.douyin_gateway.filter;
 
+import com.example.douyin_commons.constant.Constants;
 import com.example.douyin_gateway.utils.JwtUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -33,8 +34,8 @@ public class AuthorizeFilter implements Ordered, GlobalFilter {
     @Value("${token.secret}")
     private String secret;
 
-    @Value("${token.expireTime}")
-    private int expireTime;
+//    @Value("${token.expireTime}")
+//    private int expireTime;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -43,35 +44,46 @@ public class AuthorizeFilter implements Ordered, GlobalFilter {
         ServerHttpResponse response = exchange.getResponse();
         // 2.判断是否登录
         String uriPath = (request.getURI().getPath());
-        System.out.println(uriPath);
+        log.info(uriPath);
         if(uriPath.contains("/code")||uriPath.contains("/login")||uriPath.contains("/captchaImage")||uriPath.contains("/logout")||uriPath.contains("/logoinbyusername")){
             return chain.filter(exchange);
         }
         // 3. 获取token
-        String token = request.getHeaders().getFirst("authorization");
+        String token = request.getHeaders().getFirst(header);
+        // 将标准的JWT（Authorization: Bearer aaa.bbb.ccc）进行转换
+        if(!StringUtil.isEmpty(token) && token.startsWith(Constants.TOKEN_PREFIX))
+            token = token.replace(Constants.TOKEN_PREFIX, "");
         // 4. 判断token是否存在
         if(StringUtil.isBlank(token)){
             response.setStatusCode(HttpStatus.UNAUTHORIZED);
             return response.setComplete();
         }
-
         // 5. 判断token是否有效
         try {
             Claims claims = Jwts.parser()
                     .setSigningKey(secret)
                     .parseClaimsJws(token)
                     .getBody();
-            int result = JwtUtil.verifyToken(claims);
-            if (result == 1 || result == 2) {
+            Long exp = (Long)claims.get(Constants.EXP);
+//            long exp = claims.getExpiration().getTime();
+            long currentTimeMillis = System.currentTimeMillis();
+            log.info("==={},{}",currentTimeMillis,exp);
+            if(currentTimeMillis > exp){
+                log.info("token已过期");
                 response.setStatusCode(HttpStatus.UNAUTHORIZED);
                 return response.setComplete();
             }
+//            int result = JwtUtil.verifyToken(claims);
+//            if (result == 1 || result == 2) {
+//                response.setStatusCode(HttpStatus.UNAUTHORIZED);
+//                return response.setComplete();
+//            }
         }catch (Exception e){
             e.printStackTrace();
             response.setStatusCode(HttpStatus.UNAUTHORIZED);
             return response.setComplete();
         }
-
+        log.info("-----------------");
         // 6. 放行
         return chain.filter(exchange);
     }

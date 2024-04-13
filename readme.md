@@ -20,8 +20,12 @@
    4. Nacos配置 (√)
    5. gateway配置 (√)
 3. 视频发布模块 
-   1. 实现文件上传功能（将文件写入minIO和数据库）
-   2. 更换对象拷贝方法
+   1. 将文件写入到minIO (√)
+   2. 完善文件属性，写入到数据库中 (√)
+   3. 将文件ID由MD5转换为雪花算法 (√)
+   4. 根据MD5码判断文件是否已经上传过（秒传）
+   5. 
+   4. 大文件切片 （前端分块，后端合并，md5校验文件）
 
 
 
@@ -102,5 +106,5 @@
       - Postman可以正常调用后端接口，但是前端由于出现多个’Access-Control-Allow-Origin’ CORS头，会导致前端无法正常访问后端接口。解决方案：https://blog.csdn.net/youanyyou/article/details/127543821
 3. 视频发布模块
    1. 不同服务间的数据库要独立，外键采用逻辑外键。
-   2. 非事务方法调用同类的一个事务方法，事务无法控制：在使用@Transacational的时候，Spring Framework会默认使用AOP代理。因此，代码运行时会生成一个代理对象，且是通过代理对象调用目标方法.方法：1. @Autowired直接注入service，通过cglib动态代理实现.(Spring Boot2.6以后已禁用循环引用) 2. 通过Spring AOP的方式调用。
+   2. 非事务方法调用同类的一个事务方法，事务无法控制：在使用@Transacational的时候，Spring Framework会默认使用AOP代理。因此，代码运行时会生成一个代理对象，且是通过代理对象调用目标方法.方法：1. @Autowired直接注入service，通过cglib动态代理实现.(Spring Boot2.6以后已禁用循环引用) 2. 通过Spring AOP的方式调用，但需要配置exposeProxy=true。
 4. 

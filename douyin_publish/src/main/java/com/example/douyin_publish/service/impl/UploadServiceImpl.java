@@ -1,6 +1,11 @@
 package com.example.douyin_publish.service.impl;
 
+import cn.hutool.core.lang.generator.SnowflakeGenerator;
+import com.example.douyin_commons.constant.RedisConstants;
+import com.example.douyin_commons.core.domain.BaseResponse;
+import com.example.douyin_commons.core.domain.ResultCode;
 import com.example.douyin_commons.core.exception.MsgException;
+import com.example.douyin_publish.config.IdConfig;
 import com.example.douyin_publish.domain.dto.UploadFileParamsDTO;
 import com.example.douyin_publish.domain.dto.UploadFileResultDTO;
 import com.example.douyin_publish.domain.po.DyMedia;
@@ -18,10 +23,12 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
@@ -37,13 +44,19 @@ import java.util.Objects;
 public class UploadServiceImpl implements UploadService {
 
     @Autowired
-    MinioClient minioClient;
+    private MinioClient minioClient;
 
     @Autowired
-    MediaFilesMapper mediaFilesMapper;
+    private RedisTemplate redisTemplate;
 
     @Autowired
-    PublishMapper publishMapper;
+    private MediaFilesMapper mediaFilesMapper;
+
+    @Autowired
+    private PublishMapper publishMapper;
+
+    @Autowired
+    private SnowflakeGenerator snowflakeGenerator;
 
 //    @Autowired
 //    UploadService currentProxy;
@@ -69,11 +82,14 @@ public class UploadServiceImpl implements UploadService {
      */
     @Override
     public UploadFileResultDTO uploadFile(UploadFileParamsDTO uploadFileParamsDTO, byte[] bytes, String folder, String objectName) {
+        System.out.println(".....");
+        // 生成文件id, 雪花算法
+        String fileId = String.valueOf(snowflakeGenerator.next());
+        uploadFileParamsDTO.getDyMedia().setId(fileId);
+        uploadFileParamsDTO.getDyPublish().setMediaId(fileId);
 
-        // 生成文件id, 文件的md5值
-        String fileId = DigestUtils.md5Hex(bytes);
         // 文件名称
-        String filename = uploadFileParamsDTO.getDyPublish().getTitle();
+        String filename = uploadFileParamsDTO.getDyPublish().getFileName();
         // 构造objectname
         if(StringUtils.isEmpty(objectName)){
             objectName = fileId + filename.substring(filename.lastIndexOf("."));
@@ -149,7 +165,14 @@ public class UploadServiceImpl implements UploadService {
             dyMedia = new DyMedia();
             // 拷贝基本信息
             BeanUtils.copyProperties(uploadFileParamsDTO.getDyMedia(), dyMedia);
+
             // TODO: 补充dyMdia的额外信息
+            log.info("ConentType{}", uploadFileParamsDTO.getContentType());
+            if(uploadFileParamsDTO.getContentType().indexOf("image")<0) {
+                dyMedia.setMediaUrl("/" + bucket_Files + "/" + objectName);
+            }
+
+            System.out.println(dyMedia);
             //保存文件信息到DyMedia表
             int insert = mediaFilesMapper.insert(dyMedia);
             if (insert < 0) {
@@ -161,6 +184,11 @@ public class UploadServiceImpl implements UploadService {
             // 拷贝基本信息
             BeanUtils.copyProperties(uploadFileParamsDTO.getDyPublish(), dyPublish);
             // TODO: 补充dyPublish的额外信息
+            if(uploadFileParamsDTO.getContentType().indexOf("image")>=0) {
+                dyPublish.setImgUrl("/" + bucket_Files + "/" + objectName);
+            }
+            dyPublish.setUploadTime(new Timestamp(System.currentTimeMillis()));
+            dyPublish.setUpdateTime(new Timestamp(System.currentTimeMillis()));
             //保存文件信息到DyPublish表
             int insert = publishMapper.insert(dyPublish);
             if (insert < 0) {
@@ -168,6 +196,43 @@ public class UploadServiceImpl implements UploadService {
             }
         }
     }
+
+
+    /** 
+     * @description: 判断文件是否上传过
+     * @param fileMd5
+     * @return: 1:文件已存在，0：文件没有上传过，2：文件上传且中断过，以及现在有的数组分片索引
+     * @author zxm
+     * @date: 2024/4/12 10:20
+     */ 
+    @Override
+    public BaseResponse checkFile(String fileMd5) {
+        // 1. 查询Redis中是否存在MD5
+        String is_finish = (String) redisTemplate.opsForValue().get(RedisConstants.MEDIA_MD5_KEY + fileMd5);
+
+        // 2. 如果md5码在redis中存在，且value为1，则返回1
+        if(is_finish!=null && is_finish.equals(1)){
+            return BaseResponse.success("1");
+        }
+
+        // 3. 如果redis中不存在，则在mysql中查找，如果存在也返回1
+        DyMedia media = mediaFilesMapper.selectMediaByMD5(fileMd5);
+        if(media!=null){
+            return BaseResponse.success("1");
+        }
+
+        // 4. 如果md5码在redis中存在，但value为0，则返回2
+        if(is_finish!=null && is_finish.equals(0)){
+            return BaseResponse.success("2");
+        }
+
+        // 5. 如果mysql中不存在，则返回0
+        if(media==null){
+            return BaseResponse.success("0");
+        }
+        return BaseResponse.fail("查询失败");
+    }
+
 
     private String getFileFolder(Date date, boolean year, boolean month, boolean day) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");

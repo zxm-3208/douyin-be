@@ -85,6 +85,7 @@ public class TokenServiceImpl implements TokenService {
         loginUserDTO.setLoginTime(System.currentTimeMillis());
         // 过期时间48小时
         loginUserDTO.setExpireTime(loginUserDTO.getLoginTime() + expireTime * MILLIS_MINUTE);
+        log.info("xxx{},{}",loginUserDTO.getLoginTime(), expireTime * MILLIS_MINUTE);
         // 根据UUID缓存
         String userKey = getTokenKey(loginUserDTO.getToken());
 //        redisTemplate.opsForValue().set(userKey, loginUserDTO, expireTime, TimeUnit.MINUTES);
@@ -93,6 +94,7 @@ public class TokenServiceImpl implements TokenService {
         claims.put(Constants.LOGIN_USER_KEY, loginUserDTO.getToken());
         claims.put(Constants.PHONE, loginUserDTO.getDyUser().getPhone());
         claims.put(Constants.USERNAME, loginUserDTO.getUsername());
+        claims.put(Constants.EXP, loginUserDTO.getExpireTime());
         String token = Jwts.builder()
                 .setClaims(claims)
                 .signWith(SignatureAlgorithm.HS256, secret).compact();

@@ -23,6 +23,10 @@ public class DyPublish implements Serializable {
      */
     private String mediaId;
     /**
+     * 上传的文件名
+     */
+    private String fileName;
+    /**
      * 视频题目
      */
     private String title;
@@ -51,4 +55,8 @@ public class DyPublish implements Serializable {
      *  文件类型（文档、音频、视频）
      */
     private String type;
+    /**
+     * 封面url
+     */
+    private String imgUrl;
 }

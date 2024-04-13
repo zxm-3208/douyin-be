@@ -1,5 +1,7 @@
 package com.example.douyin_publish.service;
 
+import com.example.douyin_commons.core.domain.BaseResponse;
+import com.example.douyin_commons.core.domain.ResultCode;
 import com.example.douyin_publish.domain.dto.UploadFileParamsDTO;
 import com.example.douyin_publish.domain.dto.UploadFileResultDTO;
 
@@ -13,4 +15,7 @@ public interface UploadService {
     public UploadFileResultDTO uploadFile(UploadFileParamsDTO uploadFileParamsDTO, byte[] bytes, String folder, String objectName);
 
     void addMediaFilesToDb(String fileMd5, UploadFileParamsDTO uploadFileParamsDTO, String objectName);
+
+    BaseResponse checkFile(String fileMd5);
+
 }
