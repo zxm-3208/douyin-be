@@ -8,6 +8,7 @@ import com.example.douyin_publish.domain.dto.UploadFileResultDTO;
 import com.example.douyin_publish.domain.po.DyMedia;
 import com.example.douyin_publish.domain.po.DyPublish;
 import com.example.douyin_publish.domain.vo.CheckFileVo;
+import com.example.douyin_publish.domain.vo.UploadVo;
 import com.example.douyin_publish.service.UploadService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,25 +39,31 @@ public class PublishController {
     UploadService uploadService;
 
     @PostMapping(value = "/upload", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})   // comsume用来控制入参的数据类型
-    // RequestParam一般用于name-valueString类型的请求域，RequestPart用于复杂的请求域
-    public UploadFileResultDTO upload(@RequestPart("filedata") MultipartFile filedata,
+    // RequestParam一般用于name-valueString类型的请求域，RequestPart用于复杂的请求域.使用@RequestBody接收对象，所对应的content-type:application/json
+    public UploadFileResultDTO upload(UploadVo uploadVo,
                                       @RequestParam(value = "folder", required = false) String folder,
                                       @RequestParam(value = "objectName", required = false) String objectName){
+        // 将Vo的数据传给DTO
         UploadFileParamsDTO uploadFileParamsDto = new UploadFileParamsDTO(new DyMedia(),new DyPublish());
-        System.out.println("....");
-        String contentType = filedata.getContentType();
+        String contentType = uploadVo.getFile().getContentType();
         uploadFileParamsDto.setContentType(contentType);
-        uploadFileParamsDto.setFileSize(filedata.getSize());
+        uploadFileParamsDto.setFileSize(uploadVo.getFile().getSize());
+        uploadFileParamsDto.getDyMedia().setMd5(uploadVo.getMd5());
+        uploadFileParamsDto.setChunks(uploadVo.getChunks());
+        uploadFileParamsDto.setChunk(uploadVo.getChunk());
+        uploadFileParamsDto.getDyPublish().setAbout(uploadVo.getUid());
+
         if(contentType.indexOf("image")>=0){
             uploadFileParamsDto.getDyPublish().setType("001001");   //是个图片
         }
         else{
             uploadFileParamsDto.getDyPublish().setType("001003");   //是个视频
         }
-        uploadFileParamsDto.getDyPublish().setFileName(filedata.getOriginalFilename());
+        uploadFileParamsDto.getDyPublish().setFileName(uploadVo.getName());
+        System.out.println(uploadVo.getName());
         UploadFileResultDTO uploadFileResultDTO = null;
         try{
-            uploadFileResultDTO = uploadService.uploadFile(uploadFileParamsDto, filedata.getBytes(), folder, objectName);
+            uploadFileResultDTO = uploadService.uploadFile(uploadFileParamsDto, uploadVo.getFile().getBytes(), folder, objectName);
         } catch (IOException e) {
             MsgException.cast("上传文件过程中出错");
         }

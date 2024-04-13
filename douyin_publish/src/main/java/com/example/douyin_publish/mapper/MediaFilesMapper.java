@@ -11,6 +11,6 @@ import org.apache.ibatis.annotations.Select;
  * @version: 1.0
  */
 public interface MediaFilesMapper extends BaseMapper<DyMedia> {
-    @Select("select * from dy_media u where u.md5 = #{MD5}")
-    DyMedia selectMediaByMD5(String MD5);
+    @Select("select count(*) from dy_media u where u.md5 = #{MD5}")
+    int getCountOfMediaByMD5(String MD5);
 }

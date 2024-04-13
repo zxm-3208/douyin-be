@@ -108,10 +108,11 @@ public class UploadServiceImpl implements UploadService {
             addMediaFilesToMinIO(bytes, objectName, uploadFileParamsDTO.getContentType());
             // 写入数据库表
             getService().addMediaFilesToDb(fileId, uploadFileParamsDTO, objectName);
-            UploadFileResultDTO uploadFileResultDTO = new UploadFileResultDTO();
-            BeanUtils.copyProperties(dyMedia, uploadFileResultDTO);
-            BeanUtils.copyProperties(dyPublish, uploadFileResultDTO);
-            return uploadFileResultDTO;
+//            UploadFileResultDTO uploadFileResultDTO = new UploadFileResultDTO();
+//            BeanUtils.copyProperties(dyMedia, uploadFileResultDTO);
+//            BeanUtils.copyProperties(dyPublish, uploadFileResultDTO);
+//            return uploadFileResultDTO;
+            return null; // TODO: 返回结果
         }catch (Exception e){
             e.printStackTrace();
             MsgException.cast("上传过程中出错");
@@ -155,12 +156,12 @@ public class UploadServiceImpl implements UploadService {
      * @date: 2024/4/9 15:44
      */
     @Transactional
-    public void addMediaFilesToDb(String fileMd5, UploadFileParamsDTO uploadFileParamsDTO, String objectName) {
+    public void addMediaFilesToDb(String fileId, UploadFileParamsDTO uploadFileParamsDTO, String objectName) {
         // 从数据库查询文件
-        dyMedia = mediaFilesMapper.selectById(fileMd5);
+        dyMedia = mediaFilesMapper.selectById(fileId);
         System.out.println("=====");
         System.out.println(dyMedia);
-        dyPublish = publishMapper.selectByMediaId(fileMd5);
+        dyPublish = publishMapper.selectByMediaId(fileId);
         if(dyMedia == null){
             dyMedia = new DyMedia();
             // 拷贝基本信息
@@ -171,6 +172,7 @@ public class UploadServiceImpl implements UploadService {
             if(uploadFileParamsDTO.getContentType().indexOf("image")<0) {
                 dyMedia.setMediaUrl("/" + bucket_Files + "/" + objectName);
             }
+//            dyMedia.setMd5(uploadFileParamsDTO.);
 
             System.out.println(dyMedia);
             //保存文件信息到DyMedia表
@@ -198,7 +200,7 @@ public class UploadServiceImpl implements UploadService {
     }
 
 
-    /** 
+    /**
      * @description: 判断文件是否上传过
      * @param fileMd5
      * @return: 1:文件已存在，0：文件没有上传过，2：文件上传且中断过，以及现在有的数组分片索引
@@ -216,8 +218,8 @@ public class UploadServiceImpl implements UploadService {
         }
 
         // 3. 如果redis中不存在，则在mysql中查找，如果存在也返回1
-        DyMedia media = mediaFilesMapper.selectMediaByMD5(fileMd5);
-        if(media!=null){
+        int count = mediaFilesMapper.getCountOfMediaByMD5(fileMd5);
+        if(count>0){
             return BaseResponse.success("1");
         }
 
@@ -227,7 +229,7 @@ public class UploadServiceImpl implements UploadService {
         }
 
         // 5. 如果mysql中不存在，则返回0
-        if(media==null){
+        if(count==0){
             return BaseResponse.success("0");
         }
         return BaseResponse.fail("查询失败");

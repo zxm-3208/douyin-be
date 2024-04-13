@@ -32,4 +32,14 @@ public class UploadFileParamsDTO {
      */
     private Long fileSize;
 
+    /**
+     *  总分片数量
+     */
+    private int chunks;
+
+    /**
+     *  当前为第几块分块
+     */
+    private int chunk;
+
 }
