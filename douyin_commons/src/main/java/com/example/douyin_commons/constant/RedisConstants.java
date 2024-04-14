@@ -4,6 +4,9 @@ public class RedisConstants {
     public static final String LOGIN_CODE_KEY = "login:code:";
     public static final Long LOGIN_CODE_TTL = 2L;
 
-    public static final String MEDIA_MD5_KEY = "media:md5:";
-    public static final Long MEDIA_MD5_TTL = 1440L;
+    public static final String MEDIA_MERGEMD5_KEY = "mediaMerge:md5:";
+    public static final Long MEDIA_MERGEMD5_TTL = 1440L;
+
+    public static final String MEDIA_CHUNKMD5_KEY = "mediaChunk:md5:";
+    public static final Long MEDIA_CHUNKMD5_TTL = 1440L;
 }

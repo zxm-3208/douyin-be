@@ -17,6 +17,11 @@ public class BaseResponse<T> implements Serializable {
     public BaseResponse() {
     }
 
+    public BaseResponse(int code, T data) {
+        this.code = code;
+        this.data = data;
+    }
+
     /**
      * 响应状态码
      */

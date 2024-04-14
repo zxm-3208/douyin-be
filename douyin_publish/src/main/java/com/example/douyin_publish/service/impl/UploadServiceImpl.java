@@ -32,6 +32,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author : zxm
@@ -82,7 +83,6 @@ public class UploadServiceImpl implements UploadService {
      */
     @Override
     public UploadFileResultDTO uploadFile(UploadFileParamsDTO uploadFileParamsDTO, byte[] bytes, String folder, String objectName) {
-        System.out.println(".....");
         // 生成文件id, 雪花算法
         String fileId = String.valueOf(snowflakeGenerator.next());
         uploadFileParamsDTO.getDyMedia().setId(fileId);
@@ -106,19 +106,22 @@ public class UploadServiceImpl implements UploadService {
         try{
             // 上传至文件系统
             addMediaFilesToMinIO(bytes, objectName, uploadFileParamsDTO.getContentType());
+            // 写入Redis
+            addMediaFilesToMinRedis(fileId, uploadFileParamsDTO, objectName);
             // 写入数据库表
-            getService().addMediaFilesToDb(fileId, uploadFileParamsDTO, objectName);
-//            UploadFileResultDTO uploadFileResultDTO = new UploadFileResultDTO();
+//            getService().addMediaFilesToDb(fileId, uploadFileParamsDTO, objectName);
+            UploadFileResultDTO uploadFileResultDTO = UploadFileResultDTO.success(uploadFileParamsDTO.getChunk());
 //            BeanUtils.copyProperties(dyMedia, uploadFileResultDTO);
 //            BeanUtils.copyProperties(dyPublish, uploadFileResultDTO);
 //            return uploadFileResultDTO;
-            return null; // TODO: 返回结果
+            return uploadFileResultDTO; // TODO: 返回结果
         }catch (Exception e){
             e.printStackTrace();
             MsgException.cast("上传过程中出错");
         }
-        return null;
+        return UploadFileResultDTO.fail(uploadFileParamsDTO.getChunk());
     }
+
 
     /**
      * @description: 将文件写入minIO
@@ -155,49 +158,45 @@ public class UploadServiceImpl implements UploadService {
      * @author zxm
      * @date: 2024/4/9 15:44
      */
-    @Transactional
-    public void addMediaFilesToDb(String fileId, UploadFileParamsDTO uploadFileParamsDTO, String objectName) {
-        // 从数据库查询文件
-        dyMedia = mediaFilesMapper.selectById(fileId);
-        System.out.println("=====");
-        System.out.println(dyMedia);
-        dyPublish = publishMapper.selectByMediaId(fileId);
-        if(dyMedia == null){
-            dyMedia = new DyMedia();
-            // 拷贝基本信息
-            BeanUtils.copyProperties(uploadFileParamsDTO.getDyMedia(), dyMedia);
-
-            // TODO: 补充dyMdia的额外信息
-            log.info("ConentType{}", uploadFileParamsDTO.getContentType());
-            if(uploadFileParamsDTO.getContentType().indexOf("image")<0) {
-                dyMedia.setMediaUrl("/" + bucket_Files + "/" + objectName);
-            }
-//            dyMedia.setMd5(uploadFileParamsDTO.);
-
-            System.out.println(dyMedia);
-            //保存文件信息到DyMedia表
-            int insert = mediaFilesMapper.insert(dyMedia);
-            if (insert < 0) {
-                MsgException.cast("保存文件信息失败");
-            }
-        }
-        if(dyPublish == null){
-            dyPublish = new DyPublish();
-            // 拷贝基本信息
-            BeanUtils.copyProperties(uploadFileParamsDTO.getDyPublish(), dyPublish);
-            // TODO: 补充dyPublish的额外信息
-            if(uploadFileParamsDTO.getContentType().indexOf("image")>=0) {
-                dyPublish.setImgUrl("/" + bucket_Files + "/" + objectName);
-            }
-            dyPublish.setUploadTime(new Timestamp(System.currentTimeMillis()));
-            dyPublish.setUpdateTime(new Timestamp(System.currentTimeMillis()));
-            //保存文件信息到DyPublish表
-            int insert = publishMapper.insert(dyPublish);
-            if (insert < 0) {
-                MsgException.cast("保存文件信息失败");
-            }
-        }
-    }
+//    @Transactional
+//    public void addMediaFilesToDb(String fileId, UploadFileParamsDTO uploadFileParamsDTO, String objectName) {
+//        // 从数据库查询文件
+//        dyMedia = mediaFilesMapper.selectById(fileId);
+//        dyPublish = publishMapper.selectByMediaId(fileId);
+//        if(dyMedia == null){
+//            dyMedia = new DyMedia();
+//            // 拷贝基本信息
+//            BeanUtils.copyProperties(uploadFileParamsDTO.getDyMedia(), dyMedia);
+//
+//            // TODO: 补充dyMdia的额外信息
+//            log.info("ConentType{}", uploadFileParamsDTO.getContentType());
+//            if(uploadFileParamsDTO.getContentType().indexOf("image")<0) {
+//                dyMedia.setMediaUrl("/" + bucket_Files + "/" + objectName);
+//            }
+////            dyMedia.setMd5(uploadFileParamsDTO.);
+//            //保存文件信息到DyMedia表
+//            int insert = mediaFilesMapper.insert(dyMedia);
+//            if (insert < 0) {
+//                MsgException.cast("保存文件信息失败");
+//            }
+//        }
+//        if(dyPublish == null){
+//            dyPublish = new DyPublish();
+//            // 拷贝基本信息
+//            BeanUtils.copyProperties(uploadFileParamsDTO.getDyPublish(), dyPublish);
+//            // TODO: 补充dyPublish的额外信息
+//            if(uploadFileParamsDTO.getContentType().indexOf("image")>=0) {
+//                dyPublish.setImgUrl("/" + bucket_Files + "/" + objectName);
+//            }
+//            dyPublish.setUploadTime(new Timestamp(System.currentTimeMillis()));
+//            dyPublish.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+//            //保存文件信息到DyPublish表
+//            int insert = publishMapper.insert(dyPublish);
+//            if (insert < 0) {
+//                MsgException.cast("保存文件信息失败");
+//            }
+//        }
+//    }
 
 
     /**
@@ -210,31 +209,52 @@ public class UploadServiceImpl implements UploadService {
     @Override
     public BaseResponse checkFile(String fileMd5) {
         // 1. 查询Redis中是否存在MD5
-        String is_finish = (String) redisTemplate.opsForValue().get(RedisConstants.MEDIA_MD5_KEY + fileMd5);
+        String is_finish = String.valueOf(redisTemplate.opsForValue().get(RedisConstants.MEDIA_MERGEMD5_KEY + fileMd5));
 
         // 2. 如果md5码在redis中存在，且value为1，则返回1
-        if(is_finish!=null && is_finish.equals(1)){
-            return BaseResponse.success("1");
+        if(is_finish!=null && is_finish.equals("1")){
+            return new BaseResponse(1, null);
         }
 
         // 3. 如果redis中不存在，则在mysql中查找，如果存在也返回1
         int count = mediaFilesMapper.getCountOfMediaByMD5(fileMd5);
         if(count>0){
-            return BaseResponse.success("1");
+            return new BaseResponse(1, null);
         }
 
         // 4. 如果md5码在redis中存在，但value为0，则返回2
-        if(is_finish!=null && is_finish.equals(0)){
-            return BaseResponse.success("2");
+        if(is_finish!=null && is_finish.equals("0")){
+            Set chunkFile = redisTemplate.opsForSet().members(RedisConstants.MEDIA_CHUNKMD5_KEY + fileMd5);
+            log.info("chunkFile{}",chunkFile);
+            return new BaseResponse(2, chunkFile);
         }
 
         // 5. 如果mysql中不存在，则返回0
         if(count==0){
-            return BaseResponse.success("0");
+            return new BaseResponse(0, null);
         }
         return BaseResponse.fail("查询失败");
     }
 
+    /**
+     * @description: 将文件保存信息记录到Redis中
+     * @param fileId
+     * @param uploadFileParamsDTO
+     * @param objectName
+     * @return: void
+     * @author zxm
+     * @date: 2024/4/14 21:14
+     */
+    private void addMediaFilesToMinRedis(String fileId, UploadFileParamsDTO uploadFileParamsDTO, String objectName) {
+        String key = RedisConstants.MEDIA_CHUNKMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5();
+        redisTemplate.opsForSet().add(key, uploadFileParamsDTO.getChunk());
+        if (redisTemplate.opsForSet().size(key).equals((long) uploadFileParamsDTO.getChunks())){
+            redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1");
+        }
+        else {
+            redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "0");
+        }
+    }
 
     private String getFileFolder(Date date, boolean year, boolean month, boolean day) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");

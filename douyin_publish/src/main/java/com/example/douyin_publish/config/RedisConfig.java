@@ -31,7 +31,6 @@ public class RedisConfig {
         //设置Hash类型的value设置序列化器
         template.setHashValueSerializer(new StringRedisSerializer());
 
-
         //使用FastJson2JsonRedisSerializer 来序列化和反序列化redis的value值
         FastJsonJsonRedisSerializer serializer = new FastJsonJsonRedisSerializer(Object.class);
 

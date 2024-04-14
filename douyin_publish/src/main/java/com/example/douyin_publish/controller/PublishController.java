@@ -60,7 +60,6 @@ public class PublishController {
             uploadFileParamsDto.getDyPublish().setType("001003");   //是个视频
         }
         uploadFileParamsDto.getDyPublish().setFileName(uploadVo.getName());
-        System.out.println(uploadVo.getName());
         UploadFileResultDTO uploadFileResultDTO = null;
         try{
             uploadFileResultDTO = uploadService.uploadFile(uploadFileParamsDto, uploadVo.getFile().getBytes(), folder, objectName);

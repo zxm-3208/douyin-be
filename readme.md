@@ -23,10 +23,12 @@
    1. 将文件写入到minIO (√)
    2. 完善文件属性，写入到数据库中 (√)
    3. 将文件ID由MD5转换为雪花算法 (√)
-   4. 根据MD5码判断文件是否已经上传过（秒传）
-   5. 
-   4. 大文件切片 （前端分块，后端合并，md5校验文件）
-
+   4. 文件切片上传 (√)
+   5. 根据MD5码判断文件是否已经上传过（秒传）（√）
+   6. 服务器的响应
+   7. 文件的合并
+   8. redis和mysql记录
+   
 
 
 
@@ -38,7 +40,7 @@
    - 用户名+密码+验证码验证登录 (√)
    - TODO: 第三方接口登录 (等网站上线后在做)
 2. 视频发布模块 (douyin_publish)`
-   - 提供视频上传功能`
+   - 提供视频上传功能`  
    - 视频存储
    - 将视频发送至vedio消息队列，用于后续处理
    - 熔断降级
@@ -107,4 +109,7 @@
 3. 视频发布模块
    1. 不同服务间的数据库要独立，外键采用逻辑外键。
    2. 非事务方法调用同类的一个事务方法，事务无法控制：在使用@Transacational的时候，Spring Framework会默认使用AOP代理。因此，代码运行时会生成一个代理对象，且是通过代理对象调用目标方法.方法：1. @Autowired直接注入service，通过cglib动态代理实现.(Spring Boot2.6以后已禁用循环引用) 2. 通过Spring AOP的方式调用，但需要配置exposeProxy=true。
+   3. RequestParam一般用于name-valueString类型的请求域，RequestPart用于复杂的请求域.使用@RequestBody接收对象，所对应的content-type:application/json。后端接收multipart/form-data时，可以用VO接收，且不带@RequestXXX注解
+   4. Bug：在没有进行合并操作时，minio上存储的数据是齐的，但是mysql中的数据有缺失。
+   5. Bug：在写入数据库数据的时候，通过navicat查询数据库，会使nacos连接超时。因为写数据库操作是事务，可能会出现死锁？
 4. 
