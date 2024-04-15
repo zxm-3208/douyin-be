@@ -19,7 +19,15 @@ public class UploadFileResultDTO extends DyMedia {
     public UploadFileResultDTO() {
     }
 
-    public static UploadFileResultDTO success(int chunkIndex) {
+
+    public static UploadFileResultDTO successMerge(){
+        UploadFileResultDTO resultDTO = new UploadFileResultDTO();
+        resultDTO.setResultCode(ResultCode.SUCCESS.getCode());
+        resultDTO.setResultMsg(ResultCode.SUCCESS.getMessage());
+        return resultDTO;
+    }
+
+    public static UploadFileResultDTO successIndex(int chunkIndex) {
         UploadFileResultDTO resultDTO = new UploadFileResultDTO();
         resultDTO.setChunkIndex(chunkIndex);
         resultDTO.setResultCode(ResultCode.SUCCESS.getCode());
@@ -27,7 +35,7 @@ public class UploadFileResultDTO extends DyMedia {
         return resultDTO;
     }
 
-    public static UploadFileResultDTO fail(int chunkIndex) {
+    public static UploadFileResultDTO failIndex(int chunkIndex) {
         UploadFileResultDTO resultDTO = new UploadFileResultDTO();
         resultDTO.setChunkIndex(chunkIndex);
         resultDTO.setResultCode(ResultCode.Error.getCode());

@@ -25,10 +25,13 @@
    3. 将文件ID由MD5转换为雪花算法 (√)
    4. 文件切片上传 (√)
    5. 根据MD5码判断文件是否已经上传过（秒传）（√）
-   6. 服务器的响应
-   7. 文件的合并
-   8. redis和mysql记录
-   
+   6. 服务器的响应 (√)
+   7. redis缓存记录 (√)
+   8. 文件的合并
+   9. mysql记录
+   10. 视频的下载
+   11. 消息队列（预下载）
+   12. 分布式文件系统
 
 
 
@@ -40,8 +43,8 @@
    - 用户名+密码+验证码验证登录 (√)
    - TODO: 第三方接口登录 (等网站上线后在做)
 2. 视频发布模块 (douyin_publish)`
-   - 提供视频上传功能`  
-   - 视频存储
+   - 提供视频上传功能 (√)
+   - 视频存储 （IO完成，数据库TODO）
    - 将视频发送至vedio消息队列，用于后续处理
    - 熔断降级
 3. 视频点赞模块 (douyin_like)
@@ -110,6 +113,7 @@
    1. 不同服务间的数据库要独立，外键采用逻辑外键。
    2. 非事务方法调用同类的一个事务方法，事务无法控制：在使用@Transacational的时候，Spring Framework会默认使用AOP代理。因此，代码运行时会生成一个代理对象，且是通过代理对象调用目标方法.方法：1. @Autowired直接注入service，通过cglib动态代理实现.(Spring Boot2.6以后已禁用循环引用) 2. 通过Spring AOP的方式调用，但需要配置exposeProxy=true。
    3. RequestParam一般用于name-valueString类型的请求域，RequestPart用于复杂的请求域.使用@RequestBody接收对象，所对应的content-type:application/json。后端接收multipart/form-data时，可以用VO接收，且不带@RequestXXX注解
-   4. Bug：在没有进行合并操作时，minio上存储的数据是齐的，但是mysql中的数据有缺失。
-   5. Bug：在写入数据库数据的时候，通过navicat查询数据库，会使nacos连接超时。因为写数据库操作是事务，可能会出现死锁？
+   4. Redis作为缓存，要在分片数据合并并上传minio后，才能将value设置为1。分片数量齐了，但是还没有合并也是0.
+   5. Bug: 将视频写入数据库操作绑定为一个事务，会导致nacos失效。
+   6. TODO: 为了确保一致性，要先保存mysql,在保存redis
 4. 

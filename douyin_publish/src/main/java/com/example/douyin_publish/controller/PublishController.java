@@ -8,6 +8,7 @@ import com.example.douyin_publish.domain.dto.UploadFileResultDTO;
 import com.example.douyin_publish.domain.po.DyMedia;
 import com.example.douyin_publish.domain.po.DyPublish;
 import com.example.douyin_publish.domain.vo.CheckFileVo;
+import com.example.douyin_publish.domain.vo.MergeChecksVO;
 import com.example.douyin_publish.domain.vo.UploadVo;
 import com.example.douyin_publish.service.UploadService;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,15 @@ public class PublishController {
     @Autowired
     UploadService uploadService;
 
+    /**
+     * @description: 普通文件上传
+     * @param uploadVo
+     * @param folder
+     * @param objectName
+     * @return: com.example.douyin_publish.domain.dto.UploadFileResultDTO
+     * @author zxm
+     * @date: 2024/4/15 11:08
+     */
     @PostMapping(value = "/upload", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})   // comsume用来控制入参的数据类型
     // RequestParam一般用于name-valueString类型的请求域，RequestPart用于复杂的请求域.使用@RequestBody接收对象，所对应的content-type:application/json
     public UploadFileResultDTO upload(UploadVo uploadVo,
@@ -67,6 +77,39 @@ public class PublishController {
             MsgException.cast("上传文件过程中出错");
         }
         return uploadFileResultDTO;
+    }
+
+    @PostMapping("/mergechunks")
+    public UploadFileResultDTO mergechunks(@RequestBody MergeChecksVO mergeChecksVO){
+        UploadFileParamsDTO uploadFileParamsDTO = new UploadFileParamsDTO(new DyMedia(),new DyPublish());
+        uploadFileParamsDTO.getDyPublish().setFileName(mergeChecksVO.getFileName());
+        uploadFileParamsDTO.getDyMedia().setMd5(mergeChecksVO.getFileMd5());
+        uploadFileParamsDTO.setChunks(mergeChecksVO.getChunkTotal());
+        uploadFileParamsDTO.getDyPublish().setType("001002");
+        return uploadService.mergeChunk(uploadFileParamsDTO);
+
+    }
+
+    /**
+     * @description: 上传分块文件
+     * @param file
+     * @param fileMd5
+     * @param chunk
+     * @return: com.example.douyin_publish.domain.dto.UploadFileResultDTO
+     * @author zxm
+     * @date: 2024/4/15 11:11
+     */
+    @PostMapping(value="/uploadchunk", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public UploadFileResultDTO uploadchunk(UploadVo uploadVo) throws Exception{
+        UploadFileParamsDTO uploadFileParamsDto = new UploadFileParamsDTO(new DyMedia(),new DyPublish());
+        String contentType = uploadVo.getFile().getContentType();
+        uploadFileParamsDto.setContentType(contentType);
+//        uploadFileParamsDto.setFileSize(uploadVo.getFile().getSize());
+        uploadFileParamsDto.getDyMedia().setMd5(uploadVo.getMd5());
+        uploadFileParamsDto.setChunks(uploadVo.getChunks());
+        uploadFileParamsDto.setChunk(uploadVo.getChunk());
+//        uploadFileParamsDto.getDyPublish().setAbout(uploadVo.getUid());
+        return uploadService.uploadChunk(uploadFileParamsDto, uploadVo.getFile().getBytes());
     }
 
     /**

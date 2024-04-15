@@ -13,21 +13,30 @@ import com.example.douyin_publish.domain.po.DyPublish;
 import com.example.douyin_publish.mapper.MediaFilesMapper;
 import com.example.douyin_publish.mapper.PublishMapper;
 import com.example.douyin_publish.service.UploadService;
+import com.j256.simplemagic.ContentInfo;
+import com.j256.simplemagic.ContentInfoUtil;
 import io.micrometer.common.util.StringUtils;
 import com.example.douyin_publish.config.MinioConfig;
 import io.minio.*;
+import io.minio.errors.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.IOUtils;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.ByteArrayInputStream;
+import javax.imageio.IIOException;
+import javax.print.attribute.standard.Media;
+import java.io.*;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -64,23 +73,16 @@ public class UploadServiceImpl implements UploadService {
 
     // 普通文件桶
     @Value("${minio.bucket.files}")
-    private String bucket_Files;
+    private String bucket_files;
+
+    // 普通文件桶
+    @Value("${minio.bucket.videofiles}")
+    private String bucket_videofiles;
 
     private DyMedia dyMedia;
     private DyPublish dyPublish;
 
 
-
-    /**
-     * @description:  上传文件
-     * @param uploadFileParamsDTO 上传文件的信息
-     * @param bytes 文件比特
-     * @param folder 文件名
-     * @param objectName
-     * @return: com.example.douyin_publish.domain.dto.UploadFileResultDTO
-     * @author zxm
-     * @date: 2024/4/9 15:23
-     */
     @Override
     public UploadFileResultDTO uploadFile(UploadFileParamsDTO uploadFileParamsDTO, byte[] bytes, String folder, String objectName) {
         // 生成文件id, 雪花算法
@@ -105,26 +107,153 @@ public class UploadServiceImpl implements UploadService {
 
         try{
             // 上传至文件系统
-            addMediaFilesToMinIO(bytes, objectName, uploadFileParamsDTO.getContentType());
+            addMediaFilesToMinIO(bytes, objectName, bucket_files, uploadFileParamsDTO.getContentType());
             // 写入Redis
-            addMediaFilesToMinRedis(fileId, uploadFileParamsDTO, objectName);
+            addMediaFilesToSingleRedis(uploadFileParamsDTO);
             // 写入数据库表
-//            getService().addMediaFilesToDb(fileId, uploadFileParamsDTO, objectName);
-            UploadFileResultDTO uploadFileResultDTO = UploadFileResultDTO.success(uploadFileParamsDTO.getChunk());
-//            BeanUtils.copyProperties(dyMedia, uploadFileResultDTO);
-//            BeanUtils.copyProperties(dyPublish, uploadFileResultDTO);
-//            return uploadFileResultDTO;
+//            getService().addMediaFilesToDb(uploadFileParamsDTO, objectName);
+            UploadFileResultDTO uploadFileResultDTO = UploadFileResultDTO.successIndex(uploadFileParamsDTO.getChunk());
             return uploadFileResultDTO; // TODO: 返回结果
         }catch (Exception e){
             e.printStackTrace();
             MsgException.cast("上传过程中出错");
         }
-        return UploadFileResultDTO.fail(uploadFileParamsDTO.getChunk());
+        return UploadFileResultDTO.failIndex(uploadFileParamsDTO.getChunk());
+    }
+
+    @Override
+    public UploadFileResultDTO uploadChunk(UploadFileParamsDTO uploadFileParamsDTO, byte[] bytes) {
+        // 得到分块文件的目录路径
+        String chunkFileFolderPath = getChunkFileFolderPath(uploadFileParamsDTO.getDyMedia().getMd5());
+        // 得到分块文件的路径
+        String chunkFilePath = chunkFileFolderPath + uploadFileParamsDTO.getChunk();
+        try{
+            // 将文件存储至minIO
+            addMediaFilesToMinIO(bytes, chunkFilePath, bucket_videofiles, uploadFileParamsDTO.getContentType());
+            // 把成功传输的分片索引写入Redis
+            addMediaFilesToChunkRedis(uploadFileParamsDTO);
+            return UploadFileResultDTO.successIndex(uploadFileParamsDTO.getChunk());
+        } catch (Exception e) {
+            return UploadFileResultDTO.failIndex(uploadFileParamsDTO.getChunk());
+        }
+    }
+
+    @Override
+    public UploadFileResultDTO mergeChunk(UploadFileParamsDTO uploadFileParamsDTO) {
+        String fileMd5 = uploadFileParamsDTO.getDyMedia().getMd5();
+        String fileName = uploadFileParamsDTO.getDyPublish().getFileName();
+        // 下载所有分块文件
+        File[] chunkFIles = checkChunkStatus(fileMd5, uploadFileParamsDTO.getChunks());
+        // 扩展名
+        String extName = fileName.substring(fileName.lastIndexOf("."));
+        // 创建临时文件作为合并文件
+        File mergeFile = null;
+        try {
+            try {
+                mergeFile = File.createTempFile(fileMd5, extName);
+            } catch (IOException e) {
+                MsgException.cast("合并文件过程中创建临时文件错误");
+            }
+
+            try (RandomAccessFile raf_write = new RandomAccessFile(mergeFile, "rw")) {
+                // 开始合并
+                byte[] b = new byte[1024];
+                for (File file : chunkFIles) {
+                    try (RandomAccessFile raf_read = new RandomAccessFile(file, "r")) {
+                        int len = -1;
+                        while ((len = raf_read.read(b)) != -1) {
+                            // 向合并文件写数据
+                            raf_write.write(b, 0, len);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                MsgException.cast("合并文件过程出错");
+            }
+            log.info("合并文件完成{}", mergeFile.getAbsolutePath());
+            uploadFileParamsDTO.setFileSize(mergeFile.length());
+
+            try (InputStream mergeFileInputStream = new FileInputStream(mergeFile)) {
+                // 对文件进行校验，通过比较md5值
+                String newFileMd5 = DigestUtils.md5Hex(mergeFileInputStream);
+                if (!fileMd5.equalsIgnoreCase(newFileMd5)) {
+                    // 校验失败
+                    MsgException.cast("合并文件校验失败");
+                }
+                log.info("合并文件校验通过{}", mergeFile.getAbsolutePath());
+            } catch (Exception e) {
+                e.printStackTrace();
+                // 校验失败
+                MsgException.cast("合并文件校验异常");
+            }
+
+            // 将临时文件上传至minio
+            String mergeFilePath = getFilePathByMd5(fileMd5, extName);
+            try {
+                // 上传文件到minIO
+                addMediaFilesToMinIO(mergeFile.getAbsolutePath(), bucket_videofiles, mergeFilePath);
+                log.info("合并文件上传minIO完成{}", mergeFile.getAbsolutePath());
+                // 写入Redis
+                addMediaFilesToMergeRedis(uploadFileParamsDTO);
+            } catch (Exception e) {
+                e.printStackTrace();
+                MsgException.cast("合并文件时上传文件错误");
+            }
+
+            // 生成文件id, 雪花算法
+            String fileId = String.valueOf(snowflakeGenerator.next());
+            uploadFileParamsDTO.getDyMedia().setId(fileId);
+            uploadFileParamsDTO.getDyPublish().setMediaId(fileId);
+
+            // 写入数据库
+//            System.out.println(getService().getClass());
+//            Boolean is_finish = getService().addMediaFilesToDb(uploadFileParamsDTO, mergeFilePath);
+//            if (!is_finish) {
+//                MsgException.cast("媒资文件入库错误");
+//            }
+            return UploadFileResultDTO.successMerge();
+        }finally {
+            // 删除临时分块文件
+            if(chunkFIles != null){
+                for(File chunkFile: chunkFIles){
+                    if(chunkFile.exists()){
+                        chunkFile.delete();
+                    }
+                }
+            }
+            // 删除合并的临时文件
+            if(mergeFile!=null){
+                mergeFile.delete();
+            }
+        }
+    }
+
+    /**
+     * @description: 根据MD5获得合并文件的地址
+     * @param fileMd5
+     * @param extName
+     * @return: java.lang.String
+     * @author zxm
+     * @date: 2024/4/15 14:11
+     */
+    private String getFilePathByMd5(String fileMd5, String extName) {
+        return fileMd5.substring(0,1) + "/" + fileMd5.substring(1,2) + "/" +fileMd5 + "/" + fileMd5 +extName;
+    }
+
+    /**
+     * @description: 得到分块文件的目录
+     * @param fileMd5
+     * @return: java.lang.String
+     * @author zxm
+     * @date: 2024/4/15 10:33
+     */
+    private String getChunkFileFolderPath(String fileMd5) {
+        return fileMd5.substring(0, 1) + "/" + fileMd5.substring(1, 2) + "/" + fileMd5 + "/" + "chunk" + "/";
     }
 
 
     /**
-     * @description: 将文件写入minIO
+     * @description: 将文件写入minIO(流传输)
      * @param bytes 文件字节数组
      * @param bucket 桶
      * @param objectName 对象名称
@@ -133,11 +262,24 @@ public class UploadServiceImpl implements UploadService {
      * @author zxm
      * @date: 2024/4/9 15:25
      */
-    private void addMediaFilesToMinIO(byte[] bytes, String objectName, String contentType) {
+    private void addMediaFilesToMinIO(byte[] bytes, String objectName, String bucket, String contentType) {
+        if(contentType == null){
+            //资源的媒体类型
+            contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;//默认未知二进制流
+            if(objectName.indexOf(".")>=0){
+                // 取objectName中的扩展名
+                String extension = objectName.substring(objectName.lastIndexOf("."));
+                ContentInfo extensionMatch = ContentInfoUtil.findExtensionMatch(extension);
+                if(extensionMatch != null){
+                    contentType = extensionMatch.getMimeType();
+                }
+            }
+        }
+
         // 转为流
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
         try {
-            PutObjectArgs putObjectArgs = PutObjectArgs.builder().bucket(bucket_Files)
+            PutObjectArgs putObjectArgs = PutObjectArgs.builder().bucket(bucket)
                     .object(objectName)
                     .stream(byteArrayInputStream, byteArrayInputStream.available(), -1) // -1表示文件分片按(不小于5M，不大于5T),分片数量最大10000
                     .contentType(contentType)
@@ -146,6 +288,28 @@ public class UploadServiceImpl implements UploadService {
         }catch (Exception e){
             e.printStackTrace();
             MsgException.cast("上传文件到文件系统出错");
+        }
+    }
+
+    /**
+     * @description: 将文件写入minIO(文件路径)
+     * @param filePath
+     * @param bucket
+     * @param objectName
+     * @return: void
+     * @author zxm
+     * @date: 2024/4/15 10:55
+     */
+    private void addMediaFilesToMinIO(String filePath, String bucket, String objectName){
+        try {
+            UploadObjectArgs uploadObjectArgs = UploadObjectArgs.builder()
+                    .bucket(bucket)
+                    .object(objectName)
+                    .filename(filePath)
+                    .build();
+            minioClient.uploadObject(uploadObjectArgs);
+        } catch (Exception e) {
+            MsgException.cast("文件上传到文件系统失败");
         }
     }
 
@@ -159,10 +323,10 @@ public class UploadServiceImpl implements UploadService {
      * @date: 2024/4/9 15:44
      */
 //    @Transactional
-//    public void addMediaFilesToDb(String fileId, UploadFileParamsDTO uploadFileParamsDTO, String objectName) {
+//    public boolean addMediaFilesToDb(UploadFileParamsDTO uploadFileParamsDTO, String objectName) {
 //        // 从数据库查询文件
-//        dyMedia = mediaFilesMapper.selectById(fileId);
-//        dyPublish = publishMapper.selectByMediaId(fileId);
+//        dyMedia = mediaFilesMapper.selectById(uploadFileParamsDTO.getDyMedia().getId());
+//        dyPublish = publishMapper.selectByMediaId(uploadFileParamsDTO.getDyMedia().getId());
 //        if(dyMedia == null){
 //            dyMedia = new DyMedia();
 //            // 拷贝基本信息
@@ -171,7 +335,7 @@ public class UploadServiceImpl implements UploadService {
 //            // TODO: 补充dyMdia的额外信息
 //            log.info("ConentType{}", uploadFileParamsDTO.getContentType());
 //            if(uploadFileParamsDTO.getContentType().indexOf("image")<0) {
-//                dyMedia.setMediaUrl("/" + bucket_Files + "/" + objectName);
+//                dyMedia.setMediaUrl("/" + bucket_videofiles + "/" + objectName);
 //            }
 ////            dyMedia.setMd5(uploadFileParamsDTO.);
 //            //保存文件信息到DyMedia表
@@ -186,7 +350,7 @@ public class UploadServiceImpl implements UploadService {
 //            BeanUtils.copyProperties(uploadFileParamsDTO.getDyPublish(), dyPublish);
 //            // TODO: 补充dyPublish的额外信息
 //            if(uploadFileParamsDTO.getContentType().indexOf("image")>=0) {
-//                dyPublish.setImgUrl("/" + bucket_Files + "/" + objectName);
+//                dyPublish.setImgUrl("/" + bucket_videofiles + "/" + objectName);
 //            }
 //            dyPublish.setUploadTime(new Timestamp(System.currentTimeMillis()));
 //            dyPublish.setUpdateTime(new Timestamp(System.currentTimeMillis()));
@@ -196,16 +360,10 @@ public class UploadServiceImpl implements UploadService {
 //                MsgException.cast("保存文件信息失败");
 //            }
 //        }
+//        return true;
 //    }
 
 
-    /**
-     * @description: 判断文件是否上传过
-     * @param fileMd5
-     * @return: 1:文件已存在，0：文件没有上传过，2：文件上传且中断过，以及现在有的数组分片索引
-     * @author zxm
-     * @date: 2024/4/12 10:20
-     */ 
     @Override
     public BaseResponse checkFile(String fileMd5) {
         // 1. 查询Redis中是否存在MD5
@@ -237,23 +395,125 @@ public class UploadServiceImpl implements UploadService {
     }
 
     /**
-     * @description: 将文件保存信息记录到Redis中
-     * @param fileId
+     * @description: 检查所有分块是否上传完毕
+     * @param fileMd5
+     * @param chunkTotal
+     * @return: java.io.File[]
+     * @author zxm
+     * @date: 2024/4/15 13:18
+     */
+    private File[] checkChunkStatus(String fileMd5, int chunkTotal){
+        File[] files = new File[chunkTotal];
+        // 得到分块文件的目录路径
+        String chunkFileFolderPath = getChunkFileFolderPath(fileMd5);
+        // 检查分块文件是否上传完毕
+//        log.info("=={}",redisTemplate.opsForSet().size(RedisConstants.MEDIA_CHUNKMD5_KEY + fileMd5));
+//        log.info("=={}",chunkTotal);
+        if(!redisTemplate.opsForSet().size(RedisConstants.MEDIA_CHUNKMD5_KEY + fileMd5).equals((long)chunkTotal)){
+            MsgException.cast("分块文件缺失");
+            return null;
+        }
+        // 下载
+        for(int i=0;i<chunkTotal;i++){
+            String chunkFilePath = chunkFileFolderPath + i;
+            // 下载文件
+            File chunkFile = null;
+            try{
+                chunkFile = File.createTempFile("chunk" + i, null);
+            }catch (IOException e){
+                e.printStackTrace();
+                MsgException.cast("下载分块时创建临时文件出错");
+            }
+            downloadFileFromMinIO(chunkFile, bucket_videofiles, chunkFilePath);
+            files[i] = chunkFile;
+        }
+        return files;
+    }
+
+    /**
+     * @description: 根据桶和文件路径从minio下载文件
+     * @param chunkFile
+     * @param bucketVideofiles
+     * @param chunkFilePath
+     * @return: void
+     * @author zxm
+     * @date: 2024/4/15 13:23
+     */
+    private void downloadFileFromMinIO(File file, String bucket, String objectName) {
+        InputStream fileInputStream = null;
+        OutputStream fileOutputStream = null;
+        try{
+            fileInputStream = minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(bucket)
+                            .object(objectName)
+                            .build());
+            try{
+                fileOutputStream = new FileOutputStream(file);
+                IOUtils.copy(fileInputStream, fileOutputStream);
+            }catch (IOException e){
+                MsgException.cast("下载文件"+objectName+"出错");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            MsgException.cast("文件不存在"+objectName);
+        }finally {
+            if(fileInputStream!=null){
+                try{
+                    fileInputStream.close();
+                }catch (IOException e){
+                    e.printStackTrace();
+                }
+            }
+            if(fileOutputStream!=null){
+                try{
+                    fileOutputStream.close();
+                }catch (IOException e){
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    /**
+     * @description: 将成功传输的分片文件索引保存信息记录到Redis中
      * @param uploadFileParamsDTO
-     * @param objectName
      * @return: void
      * @author zxm
      * @date: 2024/4/14 21:14
      */
-    private void addMediaFilesToMinRedis(String fileId, UploadFileParamsDTO uploadFileParamsDTO, String objectName) {
+    private void addMediaFilesToChunkRedis(UploadFileParamsDTO uploadFileParamsDTO) {
         String key = RedisConstants.MEDIA_CHUNKMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5();
         redisTemplate.opsForSet().add(key, uploadFileParamsDTO.getChunk());
-        if (redisTemplate.opsForSet().size(key).equals((long) uploadFileParamsDTO.getChunks())){
-            redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1");
-        }
-        else {
-            redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "0");
-        }
+        redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "0");
+//        if (redisTemplate.opsForSet().size(key).equals((long) uploadFileParamsDTO.getChunks())){
+//            redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1");
+//        }
+//        else {
+//            redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "0");
+//        }
+    }
+
+    /**
+     * @description: 将合并成功的文件记录到Redis中
+     * @param uploadFileParamsDTO
+     * @return: void
+     * @author zxm
+     * @date: 2024/4/15 16:11
+     */
+    private void addMediaFilesToMergeRedis(UploadFileParamsDTO uploadFileParamsDTO) {
+        redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1");
+    }
+
+    /**
+     * @description: 单个文件传输信息记录到Redis中
+     * @param uploadFileParamsDTO
+     * @return: void
+     * @author zxm
+     * @date: 2024/4/14 21:14
+     */
+    private void addMediaFilesToSingleRedis(UploadFileParamsDTO uploadFileParamsDTO){
+        redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1");
     }
 
     private String getFileFolder(Date date, boolean year, boolean month, boolean day) {
