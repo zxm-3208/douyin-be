@@ -43,7 +43,7 @@ public interface UploadService {
      */
     UploadFileResultDTO mergeChunk(UploadFileParamsDTO uploadFileParamsDTO);
 
-//    boolean addMediaFilesToDb(UploadFileParamsDTO uploadFileParamsDTO, String objectName);
+    boolean addMediaFilesToDb(UploadFileParamsDTO uploadFileParamsDTO, String objectName);
 
     /**
      * @description: 判断文件是否上传过

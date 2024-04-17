@@ -19,6 +19,7 @@
    3. douyin_auth: 用户登录授权服务 (√)
    4. Nacos配置 (√)
    5. gateway配置 (√)
+   6. 新增了一台云服务器，将Redis,minIO集群化。减少nacos的内存占用设置，集群化
 3. 视频发布模块 
    1. 将文件写入到minIO (√)
    2. 完善文件属性，写入到数据库中 (√)
@@ -27,11 +28,13 @@
    5. 根据MD5码判断文件是否已经上传过（秒传）（√）
    6. 服务器的响应 (√)
    7. redis缓存记录 (√)
-   8. 文件的合并
-   9. mysql记录
-   10. 视频的下载
-   11. 消息队列（预下载）
-   12. 分布式文件系统
+   8. 文件的合并 (√)
+   9. mysql记录 (√)
+   10. 补充每个步骤的日志 (√)
+   11. 考虑数据上传IO成功，但未保存到数据库的情况。
+   12. 视频并发下载 
+   13. 消息队列（预下载）
+   14. 分布式文件系统
 
 
 
@@ -114,6 +117,7 @@
    2. 非事务方法调用同类的一个事务方法，事务无法控制：在使用@Transacational的时候，Spring Framework会默认使用AOP代理。因此，代码运行时会生成一个代理对象，且是通过代理对象调用目标方法.方法：1. @Autowired直接注入service，通过cglib动态代理实现.(Spring Boot2.6以后已禁用循环引用) 2. 通过Spring AOP的方式调用，但需要配置exposeProxy=true。
    3. RequestParam一般用于name-valueString类型的请求域，RequestPart用于复杂的请求域.使用@RequestBody接收对象，所对应的content-type:application/json。后端接收multipart/form-data时，可以用VO接收，且不带@RequestXXX注解
    4. Redis作为缓存，要在分片数据合并并上传minio后，才能将value设置为1。分片数量齐了，但是还没有合并也是0.
-   5. Bug: 将视频写入数据库操作绑定为一个事务，会导致nacos失效。
-   6. TODO: 为了确保一致性，要先保存mysql,在保存redis
+   5. 将视频写入数据库操作时导致nacos失效。通过检查服务器docker日志，发现是内存溢出。
+   6. 为了确保一致性，要先保存mysql,在保存redis。
+
 4. 

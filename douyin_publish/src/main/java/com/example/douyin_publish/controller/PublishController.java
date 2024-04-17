@@ -1,27 +1,21 @@
 package com.example.douyin_publish.controller;
 
 import com.example.douyin_commons.core.domain.BaseResponse;
-import com.example.douyin_commons.core.domain.ResultCode;
 import com.example.douyin_commons.core.exception.MsgException;
 import com.example.douyin_publish.domain.dto.UploadFileParamsDTO;
 import com.example.douyin_publish.domain.dto.UploadFileResultDTO;
 import com.example.douyin_publish.domain.po.DyMedia;
 import com.example.douyin_publish.domain.po.DyPublish;
 import com.example.douyin_publish.domain.vo.CheckFileVo;
-import com.example.douyin_publish.domain.vo.MergeChecksVO;
+import com.example.douyin_publish.domain.vo.MergeChunksVO;
 import com.example.douyin_publish.domain.vo.UploadVo;
 import com.example.douyin_publish.service.UploadService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author : zxm
@@ -80,11 +74,11 @@ public class PublishController {
     }
 
     @PostMapping("/mergechunks")
-    public UploadFileResultDTO mergechunks(@RequestBody MergeChecksVO mergeChecksVO){
+    public UploadFileResultDTO mergechunks(@RequestBody MergeChunksVO mergeChunksVO){
         UploadFileParamsDTO uploadFileParamsDTO = new UploadFileParamsDTO(new DyMedia(),new DyPublish());
-        uploadFileParamsDTO.getDyPublish().setFileName(mergeChecksVO.getFileName());
-        uploadFileParamsDTO.getDyMedia().setMd5(mergeChecksVO.getFileMd5());
-        uploadFileParamsDTO.setChunks(mergeChecksVO.getChunkTotal());
+        uploadFileParamsDTO.getDyPublish().setFileName(mergeChunksVO.getFileName());
+        uploadFileParamsDTO.getDyMedia().setMd5(mergeChunksVO.getFileMd5());
+        uploadFileParamsDTO.setChunks(mergeChunksVO.getChunkTotal());
         uploadFileParamsDTO.getDyPublish().setType("001002");
         return uploadService.mergeChunk(uploadFileParamsDTO);
 

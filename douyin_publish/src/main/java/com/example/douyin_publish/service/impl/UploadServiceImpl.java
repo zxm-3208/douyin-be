@@ -108,10 +108,10 @@ public class UploadServiceImpl implements UploadService {
         try{
             // 上传至文件系统
             addMediaFilesToMinIO(bytes, objectName, bucket_files, uploadFileParamsDTO.getContentType());
+            // 写入数据库表
+            getService().addMediaFilesToDb(uploadFileParamsDTO, objectName);
             // 写入Redis
             addMediaFilesToSingleRedis(uploadFileParamsDTO);
-            // 写入数据库表
-//            getService().addMediaFilesToDb(uploadFileParamsDTO, objectName);
             UploadFileResultDTO uploadFileResultDTO = UploadFileResultDTO.successIndex(uploadFileParamsDTO.getChunk());
             return uploadFileResultDTO; // TODO: 返回结果
         }catch (Exception e){
@@ -130,6 +130,7 @@ public class UploadServiceImpl implements UploadService {
         try{
             // 将文件存储至minIO
             addMediaFilesToMinIO(bytes, chunkFilePath, bucket_videofiles, uploadFileParamsDTO.getContentType());
+            log.info("分片索引{}/总片数{}",uploadFileParamsDTO.getChunk(),uploadFileParamsDTO.getChunks());
             // 把成功传输的分片索引写入Redis
             addMediaFilesToChunkRedis(uploadFileParamsDTO);
             return UploadFileResultDTO.successIndex(uploadFileParamsDTO.getChunk());
@@ -142,62 +143,66 @@ public class UploadServiceImpl implements UploadService {
     public UploadFileResultDTO mergeChunk(UploadFileParamsDTO uploadFileParamsDTO) {
         String fileMd5 = uploadFileParamsDTO.getDyMedia().getMd5();
         String fileName = uploadFileParamsDTO.getDyPublish().getFileName();
-        // 下载所有分块文件
-        File[] chunkFIles = checkChunkStatus(fileMd5, uploadFileParamsDTO.getChunks());
         // 扩展名
         String extName = fileName.substring(fileName.lastIndexOf("."));
+
+        // 将临时文件上传至minio
+        String mergeFilePath = getFilePathByMd5(fileMd5, extName);
+
+        File[] chunkFIles = null;
         // 创建临时文件作为合并文件
         File mergeFile = null;
-        try {
-            try {
-                mergeFile = File.createTempFile(fileMd5, extName);
-            } catch (IOException e) {
-                MsgException.cast("合并文件过程中创建临时文件错误");
-            }
 
-            try (RandomAccessFile raf_write = new RandomAccessFile(mergeFile, "rw")) {
-                // 开始合并
-                byte[] b = new byte[1024];
-                for (File file : chunkFIles) {
-                    try (RandomAccessFile raf_read = new RandomAccessFile(file, "r")) {
-                        int len = -1;
-                        while ((len = raf_read.read(b)) != -1) {
-                            // 向合并文件写数据
-                            raf_write.write(b, 0, len);
+        try {
+            if(!checkFileIsExist(bucket_videofiles,mergeFilePath)) {
+                // 下载所有分块文件
+                chunkFIles = checkChunkStatus(fileMd5, uploadFileParamsDTO.getChunks());
+                try {
+                    mergeFile = File.createTempFile(fileMd5, extName);
+                } catch (IOException e) {
+                    MsgException.cast("合并文件过程中创建临时文件错误");
+                }
+
+                try (RandomAccessFile raf_write = new RandomAccessFile(mergeFile, "rw")) {
+                    // 开始合并
+                    byte[] b = new byte[1024];
+                    for (File file : chunkFIles) {
+                        try (RandomAccessFile raf_read = new RandomAccessFile(file, "r")) {
+                            int len = -1;
+                            while ((len = raf_read.read(b)) != -1) {
+                                // 向合并文件写数据
+                                raf_write.write(b, 0, len);
+                            }
                         }
                     }
+                } catch (IOException e) {
+                    MsgException.cast("合并文件过程出错");
                 }
-            } catch (IOException e) {
-                MsgException.cast("合并文件过程出错");
-            }
-            log.info("合并文件完成{}", mergeFile.getAbsolutePath());
-            uploadFileParamsDTO.setFileSize(mergeFile.length());
+                log.info("合并文件完成{}", mergeFile.getAbsolutePath());
+                uploadFileParamsDTO.setFileSize(mergeFile.length());
 
-            try (InputStream mergeFileInputStream = new FileInputStream(mergeFile)) {
-                // 对文件进行校验，通过比较md5值
-                String newFileMd5 = DigestUtils.md5Hex(mergeFileInputStream);
-                if (!fileMd5.equalsIgnoreCase(newFileMd5)) {
+                try (InputStream mergeFileInputStream = new FileInputStream(mergeFile)) {
+                    // 对文件进行校验，通过比较md5值
+                    String newFileMd5 = DigestUtils.md5Hex(mergeFileInputStream);
+                    if (!fileMd5.equalsIgnoreCase(newFileMd5)) {
+                        // 校验失败
+                        MsgException.cast("合并文件校验失败");
+                    }
+                    log.info("合并文件校验通过{}", mergeFile.getAbsolutePath());
+                } catch (Exception e) {
+                    e.printStackTrace();
                     // 校验失败
-                    MsgException.cast("合并文件校验失败");
+                    MsgException.cast("合并文件校验异常");
                 }
-                log.info("合并文件校验通过{}", mergeFile.getAbsolutePath());
-            } catch (Exception e) {
-                e.printStackTrace();
-                // 校验失败
-                MsgException.cast("合并文件校验异常");
-            }
 
-            // 将临时文件上传至minio
-            String mergeFilePath = getFilePathByMd5(fileMd5, extName);
-            try {
-                // 上传文件到minIO
-                addMediaFilesToMinIO(mergeFile.getAbsolutePath(), bucket_videofiles, mergeFilePath);
-                log.info("合并文件上传minIO完成{}", mergeFile.getAbsolutePath());
-                // 写入Redis
-                addMediaFilesToMergeRedis(uploadFileParamsDTO);
-            } catch (Exception e) {
-                e.printStackTrace();
-                MsgException.cast("合并文件时上传文件错误");
+                try {
+                    // 上传文件到minIO
+                    addMediaFilesToMinIO(mergeFile.getAbsolutePath(), bucket_videofiles, mergeFilePath);
+                    log.info("合并文件上传minIO完成{}", mergeFile.getAbsolutePath());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    MsgException.cast("合并文件时上传文件错误");
+                }
             }
 
             // 生成文件id, 雪花算法
@@ -207,10 +212,14 @@ public class UploadServiceImpl implements UploadService {
 
             // 写入数据库
 //            System.out.println(getService().getClass());
-//            Boolean is_finish = getService().addMediaFilesToDb(uploadFileParamsDTO, mergeFilePath);
-//            if (!is_finish) {
-//                MsgException.cast("媒资文件入库错误");
-//            }
+            Boolean is_finish = getService().addMediaFilesToDb(uploadFileParamsDTO, mergeFilePath);
+            log.info("写入数据库：{}", is_finish);
+            // 写入Redis
+            addMediaFilesToMergeRedis(uploadFileParamsDTO);
+            log.info("写入了Redis");
+            if (!is_finish) {
+                MsgException.cast("媒资文件入库错误");
+            }
             return UploadFileResultDTO.successMerge();
         }finally {
             // 删除临时分块文件
@@ -263,31 +272,21 @@ public class UploadServiceImpl implements UploadService {
      * @date: 2024/4/9 15:25
      */
     private void addMediaFilesToMinIO(byte[] bytes, String objectName, String bucket, String contentType) {
-        if(contentType == null){
-            //资源的媒体类型
-            contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;//默认未知二进制流
-            if(objectName.indexOf(".")>=0){
-                // 取objectName中的扩展名
-                String extension = objectName.substring(objectName.lastIndexOf("."));
-                ContentInfo extensionMatch = ContentInfoUtil.findExtensionMatch(extension);
-                if(extensionMatch != null){
-                    contentType = extensionMatch.getMimeType();
-                }
+        if(!checkFileIsExist(bucket, objectName)) {
+            contentType = GetContentType(contentType, objectName);
+            // 转为流
+            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
+            try {
+                PutObjectArgs putObjectArgs = PutObjectArgs.builder().bucket(bucket)
+                        .object(objectName)
+                        .stream(byteArrayInputStream, byteArrayInputStream.available(), -1) // -1表示文件分片按(不小于5M，不大于5T),分片数量最大10000
+                        .contentType(contentType)
+                        .build();
+                minioClient.putObject(putObjectArgs);
+            } catch (Exception e) {
+                e.printStackTrace();
+                MsgException.cast("上传文件到文件系统出错");
             }
-        }
-
-        // 转为流
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
-        try {
-            PutObjectArgs putObjectArgs = PutObjectArgs.builder().bucket(bucket)
-                    .object(objectName)
-                    .stream(byteArrayInputStream, byteArrayInputStream.available(), -1) // -1表示文件分片按(不小于5M，不大于5T),分片数量最大10000
-                    .contentType(contentType)
-                    .build();
-            minioClient.putObject(putObjectArgs);
-        }catch (Exception e){
-            e.printStackTrace();
-            MsgException.cast("上传文件到文件系统出错");
         }
     }
 
@@ -301,15 +300,17 @@ public class UploadServiceImpl implements UploadService {
      * @date: 2024/4/15 10:55
      */
     private void addMediaFilesToMinIO(String filePath, String bucket, String objectName){
-        try {
-            UploadObjectArgs uploadObjectArgs = UploadObjectArgs.builder()
-                    .bucket(bucket)
-                    .object(objectName)
-                    .filename(filePath)
-                    .build();
-            minioClient.uploadObject(uploadObjectArgs);
-        } catch (Exception e) {
-            MsgException.cast("文件上传到文件系统失败");
+        if(!checkFileIsExist(bucket, objectName)){
+            try {
+                UploadObjectArgs uploadObjectArgs = UploadObjectArgs.builder()
+                        .bucket(bucket)
+                        .object(objectName)
+                        .filename(filePath)
+                        .build();
+                minioClient.uploadObject(uploadObjectArgs);
+            } catch (Exception e) {
+                MsgException.cast("文件上传到文件系统失败");
+            }
         }
     }
 
@@ -322,46 +323,46 @@ public class UploadServiceImpl implements UploadService {
      * @author zxm
      * @date: 2024/4/9 15:44
      */
-//    @Transactional
-//    public boolean addMediaFilesToDb(UploadFileParamsDTO uploadFileParamsDTO, String objectName) {
-//        // 从数据库查询文件
-//        dyMedia = mediaFilesMapper.selectById(uploadFileParamsDTO.getDyMedia().getId());
-//        dyPublish = publishMapper.selectByMediaId(uploadFileParamsDTO.getDyMedia().getId());
-//        if(dyMedia == null){
-//            dyMedia = new DyMedia();
-//            // 拷贝基本信息
-//            BeanUtils.copyProperties(uploadFileParamsDTO.getDyMedia(), dyMedia);
-//
-//            // TODO: 补充dyMdia的额外信息
-//            log.info("ConentType{}", uploadFileParamsDTO.getContentType());
-//            if(uploadFileParamsDTO.getContentType().indexOf("image")<0) {
-//                dyMedia.setMediaUrl("/" + bucket_videofiles + "/" + objectName);
-//            }
-////            dyMedia.setMd5(uploadFileParamsDTO.);
-//            //保存文件信息到DyMedia表
-//            int insert = mediaFilesMapper.insert(dyMedia);
-//            if (insert < 0) {
-//                MsgException.cast("保存文件信息失败");
-//            }
-//        }
-//        if(dyPublish == null){
-//            dyPublish = new DyPublish();
-//            // 拷贝基本信息
-//            BeanUtils.copyProperties(uploadFileParamsDTO.getDyPublish(), dyPublish);
-//            // TODO: 补充dyPublish的额外信息
-//            if(uploadFileParamsDTO.getContentType().indexOf("image")>=0) {
-//                dyPublish.setImgUrl("/" + bucket_videofiles + "/" + objectName);
-//            }
-//            dyPublish.setUploadTime(new Timestamp(System.currentTimeMillis()));
-//            dyPublish.setUpdateTime(new Timestamp(System.currentTimeMillis()));
-//            //保存文件信息到DyPublish表
-//            int insert = publishMapper.insert(dyPublish);
-//            if (insert < 0) {
-//                MsgException.cast("保存文件信息失败");
-//            }
-//        }
-//        return true;
-//    }
+    @Transactional
+    public boolean addMediaFilesToDb(UploadFileParamsDTO uploadFileParamsDTO, String objectName) {
+        // 从数据库查询文件
+        dyMedia = mediaFilesMapper.selectById(uploadFileParamsDTO.getDyMedia().getId());
+        dyPublish = publishMapper.selectByMediaId(uploadFileParamsDTO.getDyMedia().getId());
+        String contentType = GetContentType(null, objectName);
+        if(dyMedia == null){
+            dyMedia = new DyMedia();
+            // 拷贝基本信息
+            BeanUtils.copyProperties(uploadFileParamsDTO.getDyMedia(), dyMedia);
+
+            // TODO: 补充dyMdia的额外信息
+            if(contentType.indexOf("image")<0) {
+                dyMedia.setMediaUrl("/" + bucket_videofiles + "/" + objectName);
+            }
+//            dyMedia.setMd5(uploadFileParamsDTO.);
+            //保存文件信息到DyMedia表
+            int insert = mediaFilesMapper.insert(dyMedia);
+            if (insert < 0) {
+                MsgException.cast("保存文件信息失败");
+            }
+        }
+        if(dyPublish == null){
+            dyPublish = new DyPublish();
+            // 拷贝基本信息
+            BeanUtils.copyProperties(uploadFileParamsDTO.getDyPublish(), dyPublish);
+            // TODO: 补充dyPublish的额外信息
+            if(contentType.indexOf("image")>=0) {
+                dyPublish.setImgUrl("/" + bucket_videofiles + "/" + objectName);
+            }
+            dyPublish.setUploadTime(new Timestamp(System.currentTimeMillis()));
+            dyPublish.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+            //保存文件信息到DyPublish表
+            int insert = publishMapper.insert(dyPublish);
+            if (insert < 0) {
+                MsgException.cast("保存文件信息失败");
+            }
+        }
+        return true;
+    }
 
 
     @Override
@@ -426,6 +427,7 @@ public class UploadServiceImpl implements UploadService {
             }
             downloadFileFromMinIO(chunkFile, bucket_videofiles, chunkFilePath);
             files[i] = chunkFile;
+            log.info("分片下载进度{}/{}",i,chunkTotal);
         }
         return files;
     }
@@ -543,5 +545,35 @@ public class UploadServiceImpl implements UploadService {
      */
     private UploadService getService(){
         return Objects.nonNull(AopContext.currentProxy()) ? (UploadService) AopContext.currentProxy() : this;
+    }
+
+    private String GetContentType(String contentType, String objectName){
+        if(contentType == null){
+            //资源的媒体类型
+            contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;//默认未知二进制流
+            if(objectName.indexOf(".")>=0){
+                // 取objectName中的扩展名
+                String extension = objectName.substring(objectName.lastIndexOf("."));
+                ContentInfo extensionMatch = ContentInfoUtil.findExtensionMatch(extension);
+                if(extensionMatch != null){
+                    contentType = extensionMatch.getMimeType();
+                }
+            }
+        }
+        return contentType;
+    }
+
+    /**
+     * 判断文件是否存在
+     */
+    public Boolean checkFileIsExist(String bucket, String objectName){
+        try {
+            minioClient.statObject(
+                    StatObjectArgs.builder().bucket(bucket).object(objectName).build()
+            );
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
     }
 }

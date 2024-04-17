@@ -1,6 +1,8 @@
 package com.example.douyin_gateway.filter;
 
 import com.example.douyin_commons.constant.Constants;
+import com.example.douyin_commons.core.domain.BaseResponse;
+import com.example.douyin_commons.core.domain.ResultCode;
 import com.example.douyin_gateway.utils.JwtUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
