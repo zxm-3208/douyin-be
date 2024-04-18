@@ -4,6 +4,9 @@ import com.example.douyin_commons.core.domain.BaseResponse;
 import com.example.douyin_commons.core.domain.ResultCode;
 import com.example.douyin_publish.domain.dto.UploadFileParamsDTO;
 import com.example.douyin_publish.domain.dto.UploadFileResultDTO;
+import org.springframework.stereotype.Service;
+
+import java.io.File;
 
 /**
  * @author : zxm
@@ -54,4 +57,16 @@ public interface UploadService {
      */
     BaseResponse checkFile(String fileMd5);
 
+    /**
+     * @description: 根据桶和文件路径从minio下载文件
+     * @param file
+     * @param bucket
+     * @param objectName
+     * @return: void
+     * @author zxm
+     * @date: 2024/4/15 13:23
+     */
+    void downloadFileFromMinIO(File file, String bucket, String objectName);
+
+    void countDown();
 }

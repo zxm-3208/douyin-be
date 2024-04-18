@@ -13,6 +13,7 @@ import com.example.douyin_publish.domain.po.DyPublish;
 import com.example.douyin_publish.mapper.MediaFilesMapper;
 import com.example.douyin_publish.mapper.PublishMapper;
 import com.example.douyin_publish.service.UploadService;
+import com.example.douyin_publish.utils.ExecutorsPools;
 import com.j256.simplemagic.ContentInfo;
 import com.j256.simplemagic.ContentInfoUtil;
 import io.micrometer.common.util.StringUtils;
@@ -26,6 +27,7 @@ import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
@@ -42,6 +44,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * @author : zxm
@@ -68,6 +71,8 @@ public class UploadServiceImpl implements UploadService {
     @Autowired
     private SnowflakeGenerator snowflakeGenerator;
 
+    private CountDownLatch countDownLatch;
+
 //    @Autowired
 //    UploadService currentProxy;
 
@@ -82,6 +87,7 @@ public class UploadServiceImpl implements UploadService {
     private DyMedia dyMedia;
     private DyPublish dyPublish;
 
+    public static File[] files = null;
 
     @Override
     public UploadFileResultDTO uploadFile(UploadFileParamsDTO uploadFileParamsDTO, byte[] bytes, String folder, String objectName) {
@@ -404,7 +410,7 @@ public class UploadServiceImpl implements UploadService {
      * @date: 2024/4/15 13:18
      */
     private File[] checkChunkStatus(String fileMd5, int chunkTotal){
-        File[] files = new File[chunkTotal];
+        files = new File[chunkTotal];
         // 得到分块文件的目录路径
         String chunkFileFolderPath = getChunkFileFolderPath(fileMd5);
         // 检查分块文件是否上传完毕
@@ -415,33 +421,37 @@ public class UploadServiceImpl implements UploadService {
             return null;
         }
         // 下载
-        for(int i=0;i<chunkTotal;i++){
-            String chunkFilePath = chunkFileFolderPath + i;
-            // 下载文件
-            File chunkFile = null;
-            try{
-                chunkFile = File.createTempFile("chunk" + i, null);
-            }catch (IOException e){
-                e.printStackTrace();
-                MsgException.cast("下载分块时创建临时文件出错");
-            }
-            downloadFileFromMinIO(chunkFile, bucket_videofiles, chunkFilePath);
-            files[i] = chunkFile;
-            log.info("分片下载进度{}/{}",i,chunkTotal);
+        //在线程池执行之前，给计数器指定数值（与要执行代码的次数一致）
+        countDownLatch = new CountDownLatch(chunkTotal);
+        for (int i = 0; i < chunkTotal; i++) {
+            // 创建分片下载任务对象
+            DownloadRunnable downloadRunnable = new DownloadRunnable(chunkFileFolderPath, i, bucket_videofiles, chunkTotal);
+            // 使用线程池
+            ExecutorsPools.fixedThreadPool.execute(downloadRunnable);
+//                String chunkFilePath = chunkFileFolderPath + i;
+//                // 下载文件
+//                File chunkFile = null;
+//                try {
+//                    chunkFile = File.createTempFile("chunk" + i, null);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                    MsgException.cast("下载分块时创建临时文件出错");
+//                }
+//                downloadFileFromMinIO(chunkFile, bucket_videofiles, chunkFilePath);
+//                files[i] = chunkFile;
+//                log.info("分片下载进度{}/{}", i, chunkTotal);
+        }
+        try {
+            countDownLatch.await();
+            //等待计数器归零
+            log.info("多线程结束");
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
         return files;
     }
 
-    /**
-     * @description: 根据桶和文件路径从minio下载文件
-     * @param chunkFile
-     * @param bucketVideofiles
-     * @param chunkFilePath
-     * @return: void
-     * @author zxm
-     * @date: 2024/4/15 13:23
-     */
-    private void downloadFileFromMinIO(File file, String bucket, String objectName) {
+    public void downloadFileFromMinIO(File file, String bucket, String objectName) {
         InputStream fileInputStream = null;
         OutputStream fileOutputStream = null;
         try{
@@ -575,5 +585,9 @@ public class UploadServiceImpl implements UploadService {
             return false;
         }
         return true;
+    }
+
+    public void countDown(){
+        countDownLatch.countDown();
     }
 }

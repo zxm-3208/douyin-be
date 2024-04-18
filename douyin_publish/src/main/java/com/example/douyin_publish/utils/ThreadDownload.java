@@ -31,6 +31,10 @@ public class ThreadDownload extends Downer{
 
     SpeedListener sl;
 
+    public ThreadDownload(String url_path, String save_path) {
+        super(url_path, save_path);
+    }
+
     public void setThreadCount(int threadCount){
         ThreadDownload.threadCount=threadCount;
         runningThread=threadCount;

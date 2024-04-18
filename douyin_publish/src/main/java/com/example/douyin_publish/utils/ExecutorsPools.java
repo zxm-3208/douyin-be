@@ -12,7 +12,7 @@ import java.util.concurrent.Executors;
  * @version: 1.0
  */
 public class ExecutorsPools {
-    static final int MAX_T = 5;
+    static final int MAX_T = 15;
     //创建固定线程数量的线程池
     public static final ExecutorService fixedThreadPool = Executors.newFixedThreadPool(MAX_T);
 

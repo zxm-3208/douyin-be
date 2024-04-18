@@ -47,7 +47,7 @@ public class SonThreadDownload extends Downer{
                 String s = new String(temp, 0, len);
                 int downloadLenInt = Integer.parseInt(s) - 1;
                 // 修改下载开始的位置
-                startIndex = downloadLenInt;
+                startIndex += downloadLenInt;
             }
             URL url = new URL(getUrl_path());
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -57,7 +57,7 @@ public class SonThreadDownload extends Downer{
             conn.setRequestProperty("Range","bytes="+startIndex+"-"+endIndex);
             // 请求服务器全部资源(200)，请求部分资源(206)
             int responseCode = conn.getResponseCode();
-            if(responseCode==206){
+            if(responseCode==206){                              // 可能存在bug
                 raf=new RandomAccessFile(getSave_path(), "rwd");
                 inputStream=conn.getInputStream();
                 // 定位文件从哪个位置开始写
@@ -77,7 +77,6 @@ public class SonThreadDownload extends Downer{
                         // 以文件名+线程id保存为临时文件，保存当前线程的下载进度
                         info = new RandomAccessFile(getTemp_path() + getFileName() + threadId + ".temp", "rwd");
                         info.write(String.valueOf(total + startIndex).getBytes());
-
                     }
                 }
             }
