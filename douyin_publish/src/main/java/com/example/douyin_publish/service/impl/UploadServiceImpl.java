@@ -130,7 +130,7 @@ public class UploadServiceImpl implements UploadService {
         try{
             // 将文件存储至minIO
             addMediaFilesToMinIO(bytes, chunkFilePath, bucket_videofiles, uploadFileParamsDTO.getContentType());
-            log.info("分片索引{}/总片数{}",uploadFileParamsDTO.getChunk(),uploadFileParamsDTO.getChunks());
+            log.info("上传至minIO:分片索引{}/总片数{}",uploadFileParamsDTO.getChunk(),uploadFileParamsDTO.getChunks());
             // 把成功传输的分片索引写入Redis
             addMediaFilesToChunkRedis(uploadFileParamsDTO);
             return UploadFileResultDTO.successIndex(uploadFileParamsDTO.getChunk());
