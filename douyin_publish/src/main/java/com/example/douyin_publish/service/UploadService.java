@@ -4,7 +4,10 @@ import com.example.douyin_commons.core.domain.BaseResponse;
 import com.example.douyin_commons.core.domain.ResultCode;
 import com.example.douyin_publish.domain.dto.UploadFileParamsDTO;
 import com.example.douyin_publish.domain.dto.UploadFileResultDTO;
+import com.example.douyin_publish.domain.po.DyMedia;
+import com.example.douyin_publish.domain.vo.DownloadVO;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.io.File;
 
@@ -69,4 +72,13 @@ public interface UploadService {
     void downloadFileFromMinIO(File file, String bucket, String objectName);
 
     void countDown();
+
+    /** 
+     * @description: 生成外链
+     * @param downloadVO  
+     * @return: com.example.douyin_commons.core.domain.BaseResponse 
+     * @author zxm
+     * @date: 2024/4/19 15:03
+     */ 
+    BaseResponse downloadCreative(String MD5);
 }

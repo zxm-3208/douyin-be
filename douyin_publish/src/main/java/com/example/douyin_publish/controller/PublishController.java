@@ -7,11 +7,16 @@ import com.example.douyin_publish.domain.dto.UploadFileResultDTO;
 import com.example.douyin_publish.domain.po.DyMedia;
 import com.example.douyin_publish.domain.po.DyPublish;
 import com.example.douyin_publish.domain.vo.CheckFileVo;
+import com.example.douyin_publish.domain.vo.DownloadVO;
 import com.example.douyin_publish.domain.vo.MergeChunksVO;
 import com.example.douyin_publish.domain.vo.UploadVo;
 import com.example.douyin_publish.service.UploadService;
+import io.minio.BucketExistsArgs;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpServerConnection;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +37,7 @@ public class PublishController {
 
     @Autowired
     UploadService uploadService;
+
 
     /**
      * @description: 普通文件上传
@@ -118,6 +124,11 @@ public class PublishController {
     @PostMapping(value = "/checkBigFile")
     public BaseResponse checkBigFile(@RequestBody CheckFileVo checkFileVo) {
         return uploadService.checkFile(checkFileVo.getFileMd5());
+    }
+
+    @PostMapping(value = "/downloadCreative")
+    public BaseResponse downloadCreative(@RequestBody DownloadVO downloadVO){
+        return uploadService.downloadCreative(downloadVO.getMD5());
     }
 
 }

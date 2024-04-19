@@ -10,6 +10,7 @@ import com.example.douyin_publish.domain.dto.UploadFileParamsDTO;
 import com.example.douyin_publish.domain.dto.UploadFileResultDTO;
 import com.example.douyin_publish.domain.po.DyMedia;
 import com.example.douyin_publish.domain.po.DyPublish;
+import com.example.douyin_publish.domain.vo.DownloadVO;
 import com.example.douyin_publish.mapper.MediaFilesMapper;
 import com.example.douyin_publish.mapper.PublishMapper;
 import com.example.douyin_publish.service.UploadService;
@@ -20,6 +21,7 @@ import io.micrometer.common.util.StringUtils;
 import com.example.douyin_publish.config.MinioConfig;
 import io.minio.*;
 import io.minio.errors.*;
+import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
@@ -528,6 +530,54 @@ public class UploadServiceImpl implements UploadService {
         redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1");
     }
 
+    @Override
+    public BaseResponse downloadCreative(String fileMd5) {
+        log.info("1");
+        if (fileMd5 == null) {
+            return BaseResponse.fail("文件id为空！");
+        }
+        log.info("2");
+        String objectName = getChunkFileFolderPath(fileMd5);
+        Boolean bucketExists = null;
+        log.info("3");
+        try {
+            bucketExists = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket_videofiles).build());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return BaseResponse.fail("判断桶是否存在出现异常");
+        }
+        log.info("4");
+        if (!bucketExists) {
+            log.error("桶不存在");
+            return BaseResponse.fail("桶不存在");
+        }
+        log.info("5");
+        Boolean objectExist = true;
+        try {
+            minioClient.statObject(StatObjectArgs.builder().bucket(bucket_videofiles).object(objectName).build());
+        }catch (Exception e){
+            e.printStackTrace();
+            objectExist = false;
+            return BaseResponse.fail("判断文件是否存在出现异常");
+        }
+        log.info("6");
+        if(!objectExist){
+            log.error("文件不存在");
+            return BaseResponse.fail("文件不存在");
+        }
+        log.info("7");
+        // 获取外链，链接失效时间7天
+        String url = null;
+        try {
+            url = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_videofiles).object(objectName).method(Method.GET).build());
+        }catch (Exception e){
+            e.printStackTrace();
+            return BaseResponse.fail("获取外链失败");
+        }
+        log.info("{}",url);
+        return BaseResponse.success(url);
+    }
+
     private String getFileFolder(Date date, boolean year, boolean month, boolean day) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         // 获取当前日期字符串
@@ -590,4 +640,6 @@ public class UploadServiceImpl implements UploadService {
     public void countDown(){
         countDownLatch.countDown();
     }
+
+
 }
