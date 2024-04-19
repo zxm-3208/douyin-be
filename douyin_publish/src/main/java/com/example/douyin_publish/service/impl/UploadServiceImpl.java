@@ -1,6 +1,7 @@
 package com.example.douyin_publish.service.impl;
 
 import cn.hutool.core.lang.generator.SnowflakeGenerator;
+import com.example.douyin_commons.constant.Constants;
 import com.example.douyin_commons.constant.RedisConstants;
 import com.example.douyin_commons.core.domain.BaseResponse;
 import com.example.douyin_commons.core.domain.ResultCode;
@@ -532,40 +533,26 @@ public class UploadServiceImpl implements UploadService {
 
     @Override
     public BaseResponse downloadCreative(String fileMd5) {
-        log.info("1");
         if (fileMd5 == null) {
             return BaseResponse.fail("文件id为空！");
         }
-        log.info("2");
-        String objectName = getChunkFileFolderPath(fileMd5);
+        String objectName = getFilePathByMd5(fileMd5, Constants.DOWNLOADEXTNAME);
         Boolean bucketExists = null;
-        log.info("3");
         try {
             bucketExists = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket_videofiles).build());
         } catch (Exception e) {
             e.printStackTrace();
             return BaseResponse.fail("判断桶是否存在出现异常");
         }
-        log.info("4");
         if (!bucketExists) {
             log.error("桶不存在");
             return BaseResponse.fail("桶不存在");
         }
-        log.info("5");
-        Boolean objectExist = true;
-        try {
-            minioClient.statObject(StatObjectArgs.builder().bucket(bucket_videofiles).object(objectName).build());
-        }catch (Exception e){
-            e.printStackTrace();
-            objectExist = false;
-            return BaseResponse.fail("判断文件是否存在出现异常");
-        }
-        log.info("6");
+        Boolean objectExist = checkFileIsExist(bucket_videofiles, objectName);
         if(!objectExist){
             log.error("文件不存在");
             return BaseResponse.fail("文件不存在");
         }
-        log.info("7");
         // 获取外链，链接失效时间7天
         String url = null;
         try {
@@ -574,7 +561,6 @@ public class UploadServiceImpl implements UploadService {
             e.printStackTrace();
             return BaseResponse.fail("获取外链失败");
         }
-        log.info("{}",url);
         return BaseResponse.success(url);
     }
 

@@ -128,7 +128,7 @@ public class PublishController {
 
     @PostMapping(value = "/downloadCreative")
     public BaseResponse downloadCreative(@RequestBody DownloadVO downloadVO){
-        return uploadService.downloadCreative(downloadVO.getMD5());
+        return uploadService.downloadCreative(downloadVO.getFileMd5());
     }
 
 }

@@ -10,5 +10,5 @@ import lombok.Data;
  */
 @Data
 public class DownloadVO {
-    private String MD5;
+    private String fileMd5;
 }
