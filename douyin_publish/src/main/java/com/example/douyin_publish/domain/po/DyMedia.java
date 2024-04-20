@@ -18,10 +18,6 @@ public class DyMedia implements Serializable {
      */
     private String id;
     /**
-     * 视频标签
-     */
-    private String tag;
-    /**
      * 视频url
      */
     private String mediaUrl;

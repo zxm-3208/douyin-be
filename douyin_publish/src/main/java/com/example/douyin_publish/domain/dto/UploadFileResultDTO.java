@@ -13,6 +13,7 @@ import lombok.Data;
 @Data
 public class UploadFileResultDTO extends DyMedia {
     private int chunkIndex;
+    private String mediaId;
     private int resultCode;
     private String resultMsg;
 
@@ -20,7 +21,15 @@ public class UploadFileResultDTO extends DyMedia {
     }
 
 
-    public static UploadFileResultDTO successMerge(){
+    public static UploadFileResultDTO successMerge(String mediaId){
+        UploadFileResultDTO resultDTO = new UploadFileResultDTO();
+        resultDTO.setResultCode(ResultCode.SUCCESS.getCode());
+        resultDTO.setResultMsg(ResultCode.SUCCESS.getMessage());
+        resultDTO.setMediaId(mediaId);
+        return resultDTO;
+    }
+
+    public static UploadFileResultDTO success(){
         UploadFileResultDTO resultDTO = new UploadFileResultDTO();
         resultDTO.setResultCode(ResultCode.SUCCESS.getCode());
         resultDTO.setResultMsg(ResultCode.SUCCESS.getMessage());

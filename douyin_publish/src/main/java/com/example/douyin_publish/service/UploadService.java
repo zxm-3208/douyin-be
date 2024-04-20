@@ -1,13 +1,8 @@
 package com.example.douyin_publish.service;
 
 import com.example.douyin_commons.core.domain.BaseResponse;
-import com.example.douyin_commons.core.domain.ResultCode;
 import com.example.douyin_publish.domain.dto.UploadFileParamsDTO;
 import com.example.douyin_publish.domain.dto.UploadFileResultDTO;
-import com.example.douyin_publish.domain.po.DyMedia;
-import com.example.douyin_publish.domain.vo.DownloadVO;
-import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.io.File;
 
@@ -75,10 +70,22 @@ public interface UploadService {
 
     /** 
      * @description: 生成外链
-     * @param downloadVO  
+     * @param MD5
      * @return: com.example.douyin_commons.core.domain.BaseResponse 
      * @author zxm
      * @date: 2024/4/19 15:03
      */ 
     BaseResponse downloadCreative(String MD5);
+
+    /**
+     * @description: 封面图片上传
+     * @param uploadFileParamsDTO
+     * @param bytes
+     * @return: com.example.douyin_publish.domain.dto.UploadFileResultDTO
+     * @author zxm
+     * @date: 2024/4/20 21:51
+     */
+    UploadFileResultDTO uploadCoverFile(UploadFileParamsDTO uploadFileParamsDTO, byte[] bytes);
+
+    Boolean addCoverFilesToDb(String fileId, String objectName);
 }

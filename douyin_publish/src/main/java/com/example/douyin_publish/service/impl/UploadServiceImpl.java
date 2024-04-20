@@ -4,14 +4,11 @@ import cn.hutool.core.lang.generator.SnowflakeGenerator;
 import com.example.douyin_commons.constant.Constants;
 import com.example.douyin_commons.constant.RedisConstants;
 import com.example.douyin_commons.core.domain.BaseResponse;
-import com.example.douyin_commons.core.domain.ResultCode;
 import com.example.douyin_commons.core.exception.MsgException;
-import com.example.douyin_publish.config.IdConfig;
 import com.example.douyin_publish.domain.dto.UploadFileParamsDTO;
 import com.example.douyin_publish.domain.dto.UploadFileResultDTO;
 import com.example.douyin_publish.domain.po.DyMedia;
 import com.example.douyin_publish.domain.po.DyPublish;
-import com.example.douyin_publish.domain.vo.DownloadVO;
 import com.example.douyin_publish.mapper.MediaFilesMapper;
 import com.example.douyin_publish.mapper.PublishMapper;
 import com.example.douyin_publish.service.UploadService;
@@ -19,9 +16,7 @@ import com.example.douyin_publish.utils.ExecutorsPools;
 import com.j256.simplemagic.ContentInfo;
 import com.j256.simplemagic.ContentInfoUtil;
 import io.micrometer.common.util.StringUtils;
-import com.example.douyin_publish.config.MinioConfig;
 import io.minio.*;
-import io.minio.errors.*;
 import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -30,24 +25,20 @@ import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.imageio.IIOException;
-import javax.print.attribute.standard.Media;
 import java.io.*;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author : zxm
@@ -92,6 +83,7 @@ public class UploadServiceImpl implements UploadService {
 
     public static File[] files = null;
 
+    // TODO: 该方法中的addMediaFilesToDb方法还没有测试过
     @Override
     public UploadFileResultDTO uploadFile(UploadFileParamsDTO uploadFileParamsDTO, byte[] bytes, String folder, String objectName) {
         // 生成文件id, 雪花算法
@@ -121,7 +113,38 @@ public class UploadServiceImpl implements UploadService {
             getService().addMediaFilesToDb(uploadFileParamsDTO, objectName);
             // 写入Redis
             addMediaFilesToSingleRedis(uploadFileParamsDTO);
-            UploadFileResultDTO uploadFileResultDTO = UploadFileResultDTO.successIndex(uploadFileParamsDTO.getChunk());
+            UploadFileResultDTO uploadFileResultDTO = UploadFileResultDTO.success();
+            return uploadFileResultDTO; // TODO: 返回结果
+        }catch (Exception e){
+            e.printStackTrace();
+            MsgException.cast("上传过程中出错");
+        }
+        return UploadFileResultDTO.failIndex(uploadFileParamsDTO.getChunk());
+    }
+
+    @Override
+    public UploadFileResultDTO uploadCoverFile(UploadFileParamsDTO uploadFileParamsDTO, byte[] bytes) {
+        // 生成文件id, 雪花算法
+        String fileId = uploadFileParamsDTO.getDyPublish().getMediaId();
+
+        // 文件名称
+        String filename = uploadFileParamsDTO.getDyPublish().getFileName();
+        // 构造objectname
+        String objectName = fileId + filename.substring(filename.lastIndexOf("."));
+
+        // 通过日期构造文件存储路径
+        String folder = getFileFolder(new Date(), true, true, true);
+        // 对象名称
+        objectName = folder + objectName;
+
+        try{
+            // 上传至文件系统
+            addMediaFilesToMinIO(bytes, objectName, bucket_files, uploadFileParamsDTO.getContentType());
+            // 写入数据库表
+            getService().addCoverFilesToDb(fileId, objectName);
+            // 写入Redis
+            addMediaFilesToSingleRedis(uploadFileParamsDTO);
+            UploadFileResultDTO uploadFileResultDTO = UploadFileResultDTO.success();
             return uploadFileResultDTO; // TODO: 返回结果
         }catch (Exception e){
             e.printStackTrace();
@@ -229,7 +252,7 @@ public class UploadServiceImpl implements UploadService {
             if (!is_finish) {
                 MsgException.cast("媒资文件入库错误");
             }
-            return UploadFileResultDTO.successMerge();
+            return UploadFileResultDTO.successMerge(fileId);
         }finally {
             // 删除临时分块文件
             if(chunkFIles != null){
@@ -323,6 +346,7 @@ public class UploadServiceImpl implements UploadService {
         }
     }
 
+    // TODO:测试
     /**
      * @description: 将文件信息添加到文件夹
      * @param fileMd5 文件md5值
@@ -334,41 +358,75 @@ public class UploadServiceImpl implements UploadService {
      */
     @Transactional
     public boolean addMediaFilesToDb(UploadFileParamsDTO uploadFileParamsDTO, String objectName) {
-        // 从数据库查询文件
-        dyMedia = mediaFilesMapper.selectById(uploadFileParamsDTO.getDyMedia().getId());
-        dyPublish = publishMapper.selectByMediaId(uploadFileParamsDTO.getDyMedia().getId());
         String contentType = GetContentType(null, objectName);
-        if(dyMedia == null){
-            dyMedia = new DyMedia();
-            // 拷贝基本信息
-            BeanUtils.copyProperties(uploadFileParamsDTO.getDyMedia(), dyMedia);
+        if(contentType.indexOf("image")<0) {
+            // 从数据库查询文件
+            dyMedia = mediaFilesMapper.selectById(uploadFileParamsDTO.getDyMedia().getId());
+            dyPublish = publishMapper.selectByMediaId(uploadFileParamsDTO.getDyMedia().getId());
+            if (dyMedia == null) {
+                dyMedia = new DyMedia();
+                // 拷贝基本信息
+                BeanUtils.copyProperties(uploadFileParamsDTO.getDyMedia(), dyMedia);
 
-            // TODO: 补充dyMdia的额外信息
-            if(contentType.indexOf("image")<0) {
+                // TODO: 补充dyMdia的额外信息
                 dyMedia.setMediaUrl("/" + bucket_videofiles + "/" + objectName);
+                //            dyMedia.setMd5(uploadFileParamsDTO.);
+                //保存文件信息到DyMedia表
+                int insert = mediaFilesMapper.insert(dyMedia);
+                if (insert < 0) {
+                    MsgException.cast("保存文件信息失败");
+                }
             }
-//            dyMedia.setMd5(uploadFileParamsDTO.);
-            //保存文件信息到DyMedia表
-            int insert = mediaFilesMapper.insert(dyMedia);
-            if (insert < 0) {
-                MsgException.cast("保存文件信息失败");
+            if (dyPublish == null) {
+                dyPublish = new DyPublish();
+                // 拷贝基本信息
+                BeanUtils.copyProperties(uploadFileParamsDTO.getDyPublish(), dyPublish);
+                // TODO: 补充dyPublish的额外信息
+//                if (contentType.indexOf("image") >= 0) {
+//                    dyPublish.setImgUrl("/" + bucket_videofiles + "/" + objectName);
+//                }
+                if(dyPublish.getUploadTime()==null)
+                    dyPublish.setUploadTime(new Timestamp(System.currentTimeMillis()));
+                dyPublish.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+                //保存文件信息到DyPublish表
+                int insert = publishMapper.insert(dyPublish);
+                if (insert < 0) {
+                    MsgException.cast("保存文件信息失败");
+                }
             }
-        }
-        if(dyPublish == null){
-            dyPublish = new DyPublish();
+        }else{
+            dyPublish = publishMapper.selectByMediaId(uploadFileParamsDTO.getDyMedia().getId());
             // 拷贝基本信息
             BeanUtils.copyProperties(uploadFileParamsDTO.getDyPublish(), dyPublish);
-            // TODO: 补充dyPublish的额外信息
-            if(contentType.indexOf("image")>=0) {
-                dyPublish.setImgUrl("/" + bucket_videofiles + "/" + objectName);
-            }
-            dyPublish.setUploadTime(new Timestamp(System.currentTimeMillis()));
+            dyPublish.setImgUrl("/" + bucket_files + "/" + objectName);
+            if(dyPublish.getUploadTime()==null)
+                dyPublish.setUploadTime(new Timestamp(System.currentTimeMillis()));
             dyPublish.setUpdateTime(new Timestamp(System.currentTimeMillis()));
             //保存文件信息到DyPublish表
             int insert = publishMapper.insert(dyPublish);
             if (insert < 0) {
                 MsgException.cast("保存文件信息失败");
             }
+        }
+        return true;
+    }
+
+    @Transactional
+    public Boolean addCoverFilesToDb(String fileId, String objectName) {
+        String contentType = GetContentType(null, objectName);
+        System.out.println(fileId);
+        dyPublish = publishMapper.selectByMediaId(fileId);
+        // 拷贝基本信息
+//        BeanUtils.copyProperties(uploadFileParamsDTO.getDyPublish(), dyPublish);
+        dyPublish.setMediaId(fileId);
+        dyPublish.setImgUrl("/" + bucket_files + "/" + objectName);
+        if(dyPublish.getUploadTime()==null)
+            dyPublish.setUploadTime(new Timestamp(System.currentTimeMillis()));
+        dyPublish.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+        //保存文件信息到DyPublish表
+        int insert = publishMapper.update(dyPublish.getMediaId(), dyPublish.getImgUrl());
+        if (insert < 0) {
+            MsgException.cast("保存文件信息失败");
         }
         return true;
     }
@@ -528,7 +586,12 @@ public class UploadServiceImpl implements UploadService {
      * @date: 2024/4/14 21:14
      */
     private void addMediaFilesToSingleRedis(UploadFileParamsDTO uploadFileParamsDTO){
-        redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1");
+        if(uploadFileParamsDTO.getContentType().indexOf("image")>=0) {
+            redisTemplate.opsForValue().set(RedisConstants.COVERMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1", RedisConstants.COVERMD5_TTL, TimeUnit.MINUTES);
+        }
+        else {
+            redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1", RedisConstants.MEDIA_MERGEMD5_TTL, TimeUnit.MINUTES);
+        }
     }
 
     @Override
@@ -561,7 +624,12 @@ public class UploadServiceImpl implements UploadService {
             e.printStackTrace();
             return BaseResponse.fail("获取外链失败");
         }
-        return BaseResponse.success(url);
+        // 获取mediaId
+        String mediaId = String.valueOf(mediaFilesMapper.getMediaIdByMd5(fileMd5));
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("mediaId", mediaId);
+        map.put("url", url);
+        return BaseResponse.success(map);
     }
 
     private String getFileFolder(Date date, boolean year, boolean month, boolean day) {

@@ -59,4 +59,8 @@ public class DyPublish implements Serializable {
      * 封面url
      */
     private String imgUrl;
+    /**
+     * 视频标签
+     */
+    private String tag;
 }

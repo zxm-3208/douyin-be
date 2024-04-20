@@ -27,4 +27,6 @@ public class UploadVo {
     private MultipartFile file;
     // MD5
     private String md5;
+    // 视频id
+    private String mediaId;
 }

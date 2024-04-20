@@ -9,6 +9,6 @@ import lombok.Data;
  * @version: 1.0
  */
 @Data
-public class DownloadVO {
+public class DownloadVo {
     private String fileMd5;
 }

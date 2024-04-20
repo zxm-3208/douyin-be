@@ -9,7 +9,7 @@ import lombok.Data;
  * @version: 1.0
  */
 @Data
-public class MergeChunksVO {
+public class MergeChunksVo {
     private String fileMd5;
     private String fileName;
     private int chunkTotal;

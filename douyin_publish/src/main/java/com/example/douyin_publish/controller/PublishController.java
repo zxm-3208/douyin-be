@@ -7,16 +7,13 @@ import com.example.douyin_publish.domain.dto.UploadFileResultDTO;
 import com.example.douyin_publish.domain.po.DyMedia;
 import com.example.douyin_publish.domain.po.DyPublish;
 import com.example.douyin_publish.domain.vo.CheckFileVo;
-import com.example.douyin_publish.domain.vo.DownloadVO;
-import com.example.douyin_publish.domain.vo.MergeChunksVO;
+import com.example.douyin_publish.domain.vo.DownloadVo;
+import com.example.douyin_publish.domain.vo.MergeChunksVo;
 import com.example.douyin_publish.domain.vo.UploadVo;
 import com.example.douyin_publish.service.UploadService;
-import io.minio.BucketExistsArgs;
-import jakarta.servlet.http.HttpServletResponse;
+import com.sun.tools.jconsole.JConsoleContext;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpServerConnection;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,14 +50,13 @@ public class PublishController {
     public UploadFileResultDTO upload(UploadVo uploadVo,
                                       @RequestParam(value = "folder", required = false) String folder,
                                       @RequestParam(value = "objectName", required = false) String objectName){
+        log.info("{}",uploadVo);
         // 将Vo的数据传给DTO
         UploadFileParamsDTO uploadFileParamsDto = new UploadFileParamsDTO(new DyMedia(),new DyPublish());
         String contentType = uploadVo.getFile().getContentType();
         uploadFileParamsDto.setContentType(contentType);
         uploadFileParamsDto.setFileSize(uploadVo.getFile().getSize());
         uploadFileParamsDto.getDyMedia().setMd5(uploadVo.getMd5());
-        uploadFileParamsDto.setChunks(uploadVo.getChunks());
-        uploadFileParamsDto.setChunk(uploadVo.getChunk());
         uploadFileParamsDto.getDyPublish().setAbout(uploadVo.getUid());
 
         if(contentType.indexOf("image")>=0){
@@ -72,7 +68,7 @@ public class PublishController {
         uploadFileParamsDto.getDyPublish().setFileName(uploadVo.getName());
         UploadFileResultDTO uploadFileResultDTO = null;
         try{
-            uploadFileResultDTO = uploadService.uploadFile(uploadFileParamsDto, uploadVo.getFile().getBytes(), folder, objectName);
+            uploadFileResultDTO = uploadService.uploadFile(uploadFileParamsDto, uploadVo.getFile().getBytes(), null, null);
         } catch (IOException e) {
             MsgException.cast("上传文件过程中出错");
         }
@@ -80,7 +76,7 @@ public class PublishController {
     }
 
     @PostMapping("/mergechunks")
-    public UploadFileResultDTO mergechunks(@RequestBody MergeChunksVO mergeChunksVO){
+    public UploadFileResultDTO mergechunks(@RequestBody MergeChunksVo mergeChunksVO){
         UploadFileParamsDTO uploadFileParamsDTO = new UploadFileParamsDTO(new DyMedia(),new DyPublish());
         uploadFileParamsDTO.getDyPublish().setFileName(mergeChunksVO.getFileName());
         uploadFileParamsDTO.getDyMedia().setMd5(mergeChunksVO.getFileMd5());
@@ -127,8 +123,36 @@ public class PublishController {
     }
 
     @PostMapping(value = "/downloadCreative")
-    public BaseResponse downloadCreative(@RequestBody DownloadVO downloadVO){
+    public BaseResponse downloadCreative(@RequestBody DownloadVo downloadVO){
         return uploadService.downloadCreative(downloadVO.getFileMd5());
+    }
+
+
+    @PostMapping(value = "/uploadCover", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})   // comsume用来控制入参的数据类型
+    // RequestParam一般用于name-valueString类型的请求域，RequestPart用于复杂的请求域.使用@RequestBody接收对象，所对应的content-type:application/json
+    public UploadFileResultDTO upload(UploadVo uploadVo){
+        // 将Vo的数据传给DTO
+        UploadFileParamsDTO uploadFileParamsDto = new UploadFileParamsDTO(new DyMedia(),new DyPublish());
+        String contentType = uploadVo.getFile().getContentType();
+        uploadFileParamsDto.setContentType(contentType);
+        uploadFileParamsDto.setFileSize(uploadVo.getFile().getSize());
+        uploadFileParamsDto.getDyPublish().setAbout(uploadVo.getUid());
+        uploadFileParamsDto.getDyPublish().setMediaId(uploadVo.getMediaId());
+
+        if(contentType.indexOf("image")>=0){
+            uploadFileParamsDto.getDyPublish().setType("001001");   //是个图片
+        }
+        else{
+            uploadFileParamsDto.getDyPublish().setType("001003");   //是个视频
+        }
+        uploadFileParamsDto.getDyPublish().setFileName(uploadVo.getName());
+        UploadFileResultDTO uploadFileResultDTO = null;
+        try{
+            uploadFileResultDTO = uploadService.uploadCoverFile(uploadFileParamsDto, uploadVo.getFile().getBytes());
+        } catch (IOException e) {
+            MsgException.cast("上传文件过程中出错");
+        }
+        return uploadFileResultDTO;
     }
 
 }
