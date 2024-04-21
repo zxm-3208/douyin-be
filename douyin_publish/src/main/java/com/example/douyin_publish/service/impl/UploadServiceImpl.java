@@ -673,6 +673,42 @@ public class UploadServiceImpl implements UploadService {
         return BaseResponse.success(map);
     }
 
+    @Override
+    public BaseResponse downloadCover(String mediaId) {
+        DyPublish dyPublish = publishMapper.selectByMediaId(mediaId);
+
+        String objectName = dyPublish.getImgUrl();
+
+        if (objectName == null) {
+            return BaseResponse.fail("封面不存在！");
+        }
+        Boolean bucketExists = null;
+        try {
+            bucketExists = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket_files).build());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return BaseResponse.fail("判断桶是否存在出现异常");
+        }
+        if (!bucketExists) {
+            log.error("桶不存在");
+            return BaseResponse.fail("桶不存在");
+        }
+        Boolean objectExist = checkFileIsExist(bucket_files, objectName);
+        if(!objectExist){
+            log.error("文件不存在");
+            return BaseResponse.fail("文件不存在");
+        }
+        // 获取外链，链接失效时间7天
+        String url = null;
+        try {
+            url = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_files).object(objectName).method(Method.GET).build());
+        }catch (Exception e){
+            e.printStackTrace();
+            return BaseResponse.fail("获取外链失败");
+        }
+        return BaseResponse.success(url);
+    }
+
     private String getFileFolder(Date date, boolean year, boolean month, boolean day) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         // 获取当前日期字符串

@@ -10,6 +10,7 @@ import com.example.douyin_publish.domain.vo.CheckFileVo;
 import com.example.douyin_publish.domain.vo.DownloadVo;
 import com.example.douyin_publish.domain.vo.MergeChunksVo;
 import com.example.douyin_publish.domain.vo.UploadVo;
+import com.example.douyin_publish.mapper.PublishMapper;
 import com.example.douyin_publish.service.UploadService;
 import com.sun.tools.jconsole.JConsoleContext;
 import lombok.extern.slf4j.Slf4j;
@@ -127,6 +128,10 @@ public class PublishController {
         return uploadService.downloadCreative(downloadVO.getFileMd5());
     }
 
+    @PostMapping(value = "/downloadCover")
+    public BaseResponse downloadCover(@RequestBody DownloadVo downloadVO){
+        return uploadService.downloadCover(downloadVO.getMediaId());
+    }
 
     @PostMapping(value = "/uploadCover", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})   // comsume用来控制入参的数据类型
     // RequestParam一般用于name-valueString类型的请求域，RequestPart用于复杂的请求域.使用@RequestBody接收对象，所对应的content-type:application/json

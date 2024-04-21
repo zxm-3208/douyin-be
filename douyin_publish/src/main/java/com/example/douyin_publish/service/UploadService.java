@@ -69,13 +69,22 @@ public interface UploadService {
     void countDown();
 
     /** 
-     * @description: 生成外链
+     * @description: 生成视频外链
      * @param MD5
      * @return: com.example.douyin_commons.core.domain.BaseResponse 
      * @author zxm
      * @date: 2024/4/19 15:03
      */ 
     BaseResponse downloadCreative(String MD5);
+
+    /**
+     * @description: 生成封面外链
+     * @param mediaId
+     * @return: com.example.douyin_commons.core.domain.BaseResponse
+     * @author zxm
+     * @date: 2024/4/21 14:04
+     */
+    BaseResponse downloadCover(String mediaId);
 
     /**
      * @description: 封面图片上传(字节流)

@@ -11,4 +11,5 @@ import lombok.Data;
 @Data
 public class DownloadVo {
     private String fileMd5;
+    private String mediaId;
 }
