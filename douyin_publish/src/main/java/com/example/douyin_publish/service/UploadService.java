@@ -78,7 +78,7 @@ public interface UploadService {
     BaseResponse downloadCreative(String MD5);
 
     /**
-     * @description: 封面图片上传
+     * @description: 封面图片上传(字节流)
      * @param uploadFileParamsDTO
      * @param bytes
      * @return: com.example.douyin_publish.domain.dto.UploadFileResultDTO
@@ -86,6 +86,16 @@ public interface UploadService {
      * @date: 2024/4/20 21:51
      */
     UploadFileResultDTO uploadCoverFile(UploadFileParamsDTO uploadFileParamsDTO, byte[] bytes);
+
+    /**
+     * @description: 封面图片上传(路径)
+     * @param uploadFileParamsDTO
+     * @param filePath
+     * @return: null
+     * @author zxm
+     * @date: 2024/4/21 13:08
+     */
+    void uploadCoverFile(UploadFileParamsDTO uploadFileParamsDTO, String filePath);
 
     Boolean addCoverFilesToDb(String fileId, String objectName);
 }

@@ -3,6 +3,7 @@ package com.example.douyin_publish.service.impl;
 import cn.hutool.core.lang.generator.SnowflakeGenerator;
 import com.example.douyin_commons.constant.Constants;
 import com.example.douyin_commons.constant.RedisConstants;
+import com.example.douyin_commons.constant.SystemConstants;
 import com.example.douyin_commons.core.domain.BaseResponse;
 import com.example.douyin_commons.core.exception.MsgException;
 import com.example.douyin_publish.domain.dto.UploadFileParamsDTO;
@@ -13,6 +14,7 @@ import com.example.douyin_publish.mapper.MediaFilesMapper;
 import com.example.douyin_publish.mapper.PublishMapper;
 import com.example.douyin_publish.service.UploadService;
 import com.example.douyin_publish.utils.ExecutorsPools;
+import com.example.douyin_publish.utils.MediaUtils;
 import com.j256.simplemagic.ContentInfo;
 import com.j256.simplemagic.ContentInfoUtil;
 import io.micrometer.common.util.StringUtils;
@@ -21,6 +23,9 @@ import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
+import org.bytedeco.javacv.FFmpegFrameGrabber;
+import org.bytedeco.javacv.Frame;
+import org.bytedeco.javacv.Java2DFrameConverter;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,13 +35,12 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -153,6 +157,39 @@ public class UploadServiceImpl implements UploadService {
         return UploadFileResultDTO.failIndex(uploadFileParamsDTO.getChunk());
     }
 
+
+    public void uploadCoverFile(UploadFileParamsDTO uploadFileParamsDTO, String filePath) {
+        // 获取文件id
+        String fileId = uploadFileParamsDTO.getDyPublish().getMediaId();
+
+        // 构造objectname
+        String objectName = fileId + Constants.COVEREXTNAME;
+
+        log.info("==={},{}",fileId, objectName);
+
+        // 通过日期构造文件存储路径
+        String folder = getFileFolder(new Date(), true, true, true);
+        // 对象名称
+        objectName = folder + objectName;
+
+        uploadFileParamsDTO.getDyPublish().setImgUrl(objectName);
+
+        try{
+            // 上传至文件系统
+            addMediaFilesToMinIO(filePath, bucket_files, objectName);
+//            // 写入数据库表
+//            getService().addCoverFilesToDb(fileId, objectName);
+//            // 写入Redis
+//            addMediaFilesToSingleRedis(uploadFileParamsDTO);
+            UploadFileResultDTO uploadFileResultDTO = UploadFileResultDTO.success();
+//            return uploadFileResultDTO; // TODO: 返回结果
+        }catch (Exception e){
+            e.printStackTrace();
+            MsgException.cast("上传过程中出错");
+        }
+//        return UploadFileResultDTO.failIndex(uploadFileParamsDTO.getChunk());
+    }
+
     @Override
     public UploadFileResultDTO uploadChunk(UploadFileParamsDTO uploadFileParamsDTO, byte[] bytes) {
         // 得到分块文件的目录路径
@@ -184,6 +221,12 @@ public class UploadServiceImpl implements UploadService {
         File[] chunkFIles = null;
         // 创建临时文件作为合并文件
         File mergeFile = null;
+
+        // 生成文件id, 雪花算法
+        String fileId = String.valueOf(snowflakeGenerator.next());
+        uploadFileParamsDTO.getDyMedia().setId(fileId);
+        uploadFileParamsDTO.getDyPublish().setMediaId(fileId);
+
 
         try {
             if(!checkFileIsExist(bucket_videofiles,mergeFilePath)) {
@@ -228,6 +271,10 @@ public class UploadServiceImpl implements UploadService {
                 }
 
                 try {
+                    // TODO: 获取视频封面
+                    Map<String, String> screenShot = MediaUtils.getScreenshot(mergeFile.getAbsolutePath());
+                    // 上传封面信息
+                    uploadCoverFile(uploadFileParamsDTO, screenShot.get("imgPath"));
                     // 上传文件到minIO
                     addMediaFilesToMinIO(mergeFile.getAbsolutePath(), bucket_videofiles, mergeFilePath);
                     log.info("合并文件上传minIO完成{}", mergeFile.getAbsolutePath());
@@ -236,11 +283,6 @@ public class UploadServiceImpl implements UploadService {
                     MsgException.cast("合并文件时上传文件错误");
                 }
             }
-
-            // 生成文件id, 雪花算法
-            String fileId = String.valueOf(snowflakeGenerator.next());
-            uploadFileParamsDTO.getDyMedia().setId(fileId);
-            uploadFileParamsDTO.getDyPublish().setMediaId(fileId);
 
             // 写入数据库
 //            System.out.println(getService().getClass());
@@ -346,7 +388,6 @@ public class UploadServiceImpl implements UploadService {
         }
     }
 
-    // TODO:测试
     /**
      * @description: 将文件信息添加到文件夹
      * @param fileMd5 文件md5值
@@ -368,7 +409,6 @@ public class UploadServiceImpl implements UploadService {
                 // 拷贝基本信息
                 BeanUtils.copyProperties(uploadFileParamsDTO.getDyMedia(), dyMedia);
 
-                // TODO: 补充dyMdia的额外信息
                 dyMedia.setMediaUrl("/" + bucket_videofiles + "/" + objectName);
                 //            dyMedia.setMd5(uploadFileParamsDTO.);
                 //保存文件信息到DyMedia表
@@ -381,7 +421,6 @@ public class UploadServiceImpl implements UploadService {
                 dyPublish = new DyPublish();
                 // 拷贝基本信息
                 BeanUtils.copyProperties(uploadFileParamsDTO.getDyPublish(), dyPublish);
-                // TODO: 补充dyPublish的额外信息
 //                if (contentType.indexOf("image") >= 0) {
 //                    dyPublish.setImgUrl("/" + bucket_videofiles + "/" + objectName);
 //                }
@@ -416,6 +455,7 @@ public class UploadServiceImpl implements UploadService {
         String contentType = GetContentType(null, objectName);
         System.out.println(fileId);
         dyPublish = publishMapper.selectByMediaId(fileId);
+        log.info("{}",dyPublish);
         // 拷贝基本信息
 //        BeanUtils.copyProperties(uploadFileParamsDTO.getDyPublish(), dyPublish);
         dyPublish.setMediaId(fileId);
@@ -629,6 +669,7 @@ public class UploadServiceImpl implements UploadService {
         HashMap<String, Object> map = new HashMap<>();
         map.put("mediaId", mediaId);
         map.put("url", url);
+        log.info("获得得外链为:{}",map.get("url"));
         return BaseResponse.success(map);
     }
 
@@ -694,6 +735,5 @@ public class UploadServiceImpl implements UploadService {
     public void countDown(){
         countDownLatch.countDown();
     }
-
 
 }

@@ -57,6 +57,11 @@ public class Constants {
     public static final String DOWNLOADEXTNAME = ".mp4";
 
     /**
+     * 封面后缀名
+     */
+    public static final String COVEREXTNAME = ".jpg";
+
+    /**
      * 验证码 redis key
      */
     public static final String CAPTCHA_CODE_KEY = "captcha_codes:";
