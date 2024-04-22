@@ -3,6 +3,7 @@ package com.example.douyin_publish.service;
 import com.example.douyin_commons.core.domain.BaseResponse;
 import com.example.douyin_publish.domain.dto.UploadFileParamsDTO;
 import com.example.douyin_publish.domain.dto.UploadFileResultDTO;
+import com.example.douyin_publish.domain.vo.EditVo;
 
 import java.io.File;
 
@@ -107,4 +108,6 @@ public interface UploadService {
     void uploadCoverFile(UploadFileParamsDTO uploadFileParamsDTO, String filePath);
 
     Boolean addCoverFilesToDb(String fileId, String objectName);
+
+    UploadFileResultDTO editPublist(EditVo editVo);
 }

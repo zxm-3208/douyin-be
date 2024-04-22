@@ -31,10 +31,6 @@ public class DyPublish implements Serializable {
      */
     private String title;
     /**
-     * 视频简介
-     */
-    private String about;
-    /**
      * 上传时间
      */
     private Date uploadTime;

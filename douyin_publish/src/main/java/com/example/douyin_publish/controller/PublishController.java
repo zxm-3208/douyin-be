@@ -6,10 +6,7 @@ import com.example.douyin_publish.domain.dto.UploadFileParamsDTO;
 import com.example.douyin_publish.domain.dto.UploadFileResultDTO;
 import com.example.douyin_publish.domain.po.DyMedia;
 import com.example.douyin_publish.domain.po.DyPublish;
-import com.example.douyin_publish.domain.vo.CheckFileVo;
-import com.example.douyin_publish.domain.vo.DownloadVo;
-import com.example.douyin_publish.domain.vo.MergeChunksVo;
-import com.example.douyin_publish.domain.vo.UploadVo;
+import com.example.douyin_publish.domain.vo.*;
 import com.example.douyin_publish.mapper.PublishMapper;
 import com.example.douyin_publish.service.UploadService;
 import com.sun.tools.jconsole.JConsoleContext;
@@ -135,7 +132,7 @@ public class PublishController {
 
     @PostMapping(value = "/uploadCover", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})   // comsume用来控制入参的数据类型
     // RequestParam一般用于name-valueString类型的请求域，RequestPart用于复杂的请求域.使用@RequestBody接收对象，所对应的content-type:application/json
-    public UploadFileResultDTO upload(UploadVo uploadVo){
+    public UploadFileResultDTO upload(@RequestBody UploadVo uploadVo){
         // 将Vo的数据传给DTO
         UploadFileParamsDTO uploadFileParamsDto = new UploadFileParamsDTO(new DyMedia(),new DyPublish());
         String contentType = uploadVo.getFile().getContentType();
@@ -158,6 +155,12 @@ public class PublishController {
             MsgException.cast("上传文件过程中出错");
         }
         return uploadFileResultDTO;
+    }
+
+    @PostMapping(value="editPublist")
+    public UploadFileResultDTO edit(@RequestBody EditVo editVo){
+        log.info("edit{}{}",editVo.getTitle(), editVo.getMediaId());
+        return uploadService.editPublist(editVo);
     }
 
 }

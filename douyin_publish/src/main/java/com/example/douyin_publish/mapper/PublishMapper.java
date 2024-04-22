@@ -17,5 +17,8 @@ public interface PublishMapper extends BaseMapper<DyPublish> {
     DyPublish selectByMediaId(String id);
 
     @Update("update dy_publish u set img_url=#{imgUrl} where media_id=#{mediaId}")
-    int update(String mediaId, String imgUrl);
+    int updateImgUrl(String mediaId, String imgUrl);
+
+    @Update("update dy_publish u set title=#{title} where media_id=#{mediaId}")
+    int updateTitle(String mediaId, String title);
 }

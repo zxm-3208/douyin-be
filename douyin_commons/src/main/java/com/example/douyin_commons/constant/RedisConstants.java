@@ -10,5 +10,5 @@ public class RedisConstants {
     public static final Long COVERMD5_TTL = 1440L;
 
     public static final String MEDIA_CHUNKMD5_KEY = "mediaChunk:md5:";
-    public static final Long MEDIA_CHUNKMD5_TTL = 1440L;
+    public static final Long MEDIA_CHUNKMD5_TTL = 60L;
 }

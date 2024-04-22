@@ -10,6 +10,7 @@ import com.example.douyin_publish.domain.dto.UploadFileParamsDTO;
 import com.example.douyin_publish.domain.dto.UploadFileResultDTO;
 import com.example.douyin_publish.domain.po.DyMedia;
 import com.example.douyin_publish.domain.po.DyPublish;
+import com.example.douyin_publish.domain.vo.EditVo;
 import com.example.douyin_publish.mapper.MediaFilesMapper;
 import com.example.douyin_publish.mapper.PublishMapper;
 import com.example.douyin_publish.service.UploadService;
@@ -87,7 +88,6 @@ public class UploadServiceImpl implements UploadService {
 
     public static File[] files = null;
 
-    // TODO: 该方法中的addMediaFilesToDb方法还没有测试过
     @Override
     public UploadFileResultDTO uploadFile(UploadFileParamsDTO uploadFileParamsDTO, byte[] bytes, String folder, String objectName) {
         // 生成文件id, 雪花算法
@@ -118,7 +118,7 @@ public class UploadServiceImpl implements UploadService {
             // 写入Redis
             addMediaFilesToSingleRedis(uploadFileParamsDTO);
             UploadFileResultDTO uploadFileResultDTO = UploadFileResultDTO.success();
-            return uploadFileResultDTO; // TODO: 返回结果
+            return uploadFileResultDTO; // 返回结果
         }catch (Exception e){
             e.printStackTrace();
             MsgException.cast("上传过程中出错");
@@ -149,7 +149,7 @@ public class UploadServiceImpl implements UploadService {
             // 写入Redis
             addMediaFilesToSingleRedis(uploadFileParamsDTO);
             UploadFileResultDTO uploadFileResultDTO = UploadFileResultDTO.success();
-            return uploadFileResultDTO; // TODO: 返回结果
+            return uploadFileResultDTO; // 返回结果
         }catch (Exception e){
             e.printStackTrace();
             MsgException.cast("上传过程中出错");
@@ -164,8 +164,6 @@ public class UploadServiceImpl implements UploadService {
 
         // 构造objectname
         String objectName = fileId + Constants.COVEREXTNAME;
-
-        log.info("==={},{}",fileId, objectName);
 
         // 通过日期构造文件存储路径
         String folder = getFileFolder(new Date(), true, true, true);
@@ -182,7 +180,7 @@ public class UploadServiceImpl implements UploadService {
 //            // 写入Redis
 //            addMediaFilesToSingleRedis(uploadFileParamsDTO);
             UploadFileResultDTO uploadFileResultDTO = UploadFileResultDTO.success();
-//            return uploadFileResultDTO; // TODO: 返回结果
+//            return uploadFileResultDTO;
         }catch (Exception e){
             e.printStackTrace();
             MsgException.cast("上传过程中出错");
@@ -271,7 +269,7 @@ public class UploadServiceImpl implements UploadService {
                 }
 
                 try {
-                    // TODO: 获取视频封面
+                    // 获取视频封面
                     Map<String, String> screenShot = MediaUtils.getScreenshot(mergeFile.getAbsolutePath());
                     // 上传封面信息
                     uploadCoverFile(uploadFileParamsDTO, screenShot.get("imgPath"));
@@ -453,22 +451,30 @@ public class UploadServiceImpl implements UploadService {
     @Transactional
     public Boolean addCoverFilesToDb(String fileId, String objectName) {
         String contentType = GetContentType(null, objectName);
-        System.out.println(fileId);
         dyPublish = publishMapper.selectByMediaId(fileId);
-        log.info("{}",dyPublish);
         // 拷贝基本信息
 //        BeanUtils.copyProperties(uploadFileParamsDTO.getDyPublish(), dyPublish);
         dyPublish.setMediaId(fileId);
-        dyPublish.setImgUrl("/" + bucket_files + "/" + objectName);
+        dyPublish.setImgUrl(objectName);
         if(dyPublish.getUploadTime()==null)
             dyPublish.setUploadTime(new Timestamp(System.currentTimeMillis()));
         dyPublish.setUpdateTime(new Timestamp(System.currentTimeMillis()));
         //保存文件信息到DyPublish表
-        int insert = publishMapper.update(dyPublish.getMediaId(), dyPublish.getImgUrl());
-        if (insert < 0) {
+        int update = publishMapper.updateImgUrl(dyPublish.getMediaId(), dyPublish.getImgUrl());
+        if (update < 0) {
             MsgException.cast("保存文件信息失败");
         }
         return true;
+    }
+
+    @Override
+    public UploadFileResultDTO editPublist(EditVo editVo) {
+        String title = editVo.getTitle();
+        int update = publishMapper.updateTitle(editVo.getMediaId(), editVo.getTitle());
+        if (update < 0) {
+            MsgException.cast("保存文件信息失败");
+        }
+        return UploadFileResultDTO.success();
     }
 
 
@@ -598,7 +604,7 @@ public class UploadServiceImpl implements UploadService {
     private void addMediaFilesToChunkRedis(UploadFileParamsDTO uploadFileParamsDTO) {
         String key = RedisConstants.MEDIA_CHUNKMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5();
         redisTemplate.opsForSet().add(key, uploadFileParamsDTO.getChunk());
-        redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "0");
+        redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "0", RedisConstants.MEDIA_CHUNKMD5_TTL, TimeUnit.MINUTES);
 //        if (redisTemplate.opsForSet().size(key).equals((long) uploadFileParamsDTO.getChunks())){
 //            redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1");
 //        }
@@ -615,7 +621,7 @@ public class UploadServiceImpl implements UploadService {
      * @date: 2024/4/15 16:11
      */
     private void addMediaFilesToMergeRedis(UploadFileParamsDTO uploadFileParamsDTO) {
-        redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1");
+        redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1", RedisConstants.MEDIA_MERGEMD5_TTL, TimeUnit.MINUTES);
     }
 
     /**
@@ -693,6 +699,8 @@ public class UploadServiceImpl implements UploadService {
             log.error("桶不存在");
             return BaseResponse.fail("桶不存在");
         }
+        log.info("bucket_files:{}",bucket_files);
+        log.info("objectName:{}",objectName);
         Boolean objectExist = checkFileIsExist(bucket_files, objectName);
         if(!objectExist){
             log.error("文件不存在");
@@ -706,6 +714,7 @@ public class UploadServiceImpl implements UploadService {
             e.printStackTrace();
             return BaseResponse.fail("获取外链失败");
         }
+        log.info("封面的外链为：{}",url);
         return BaseResponse.success(url);
     }
 
