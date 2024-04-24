@@ -525,7 +525,7 @@ public class UploadServiceImpl implements UploadService {
         // 检查分块文件是否上传完毕
 //        log.info("=={}",redisTemplate.opsForSet().size(RedisConstants.MEDIA_CHUNKMD5_KEY + fileMd5));
 //        log.info("=={}",chunkTotal);
-        if(!redisTemplate.opsForSet().size(RedisConstants.MEDIA_CHUNKMD5_KEY + fileMd5).equals((long)chunkTotal)){
+        if(!redisTemplate.opsForSet().size(RedisConstants.MEDIA_CHUNKMD5_KEY + fileMd5).equals((long)chunkTotal)) {
             MsgException.cast("分块文件缺失");
             return null;
         }
@@ -624,6 +624,9 @@ public class UploadServiceImpl implements UploadService {
      */
     private void addMediaFilesToMergeRedis(UploadFileParamsDTO uploadFileParamsDTO) {
         redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1", RedisConstants.MEDIA_MERGEMD5_TTL, TimeUnit.MINUTES);
+        if(redisTemplate.opsForSet().size(RedisConstants.MEDIA_CHUNKMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5())!=0){
+            redisTemplate.delete(RedisConstants.MEDIA_CHUNKMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5());
+        }
     }
 
     /**
@@ -639,6 +642,9 @@ public class UploadServiceImpl implements UploadService {
         }
         else {
             redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1", RedisConstants.MEDIA_MERGEMD5_TTL, TimeUnit.MINUTES);
+            if(redisTemplate.opsForSet().size(RedisConstants.MEDIA_CHUNKMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5())!=0){
+                redisTemplate.delete(RedisConstants.MEDIA_CHUNKMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5());
+            }
         }
     }
 
@@ -768,7 +774,7 @@ public class UploadServiceImpl implements UploadService {
     /**
      * 判断文件是否存在
      */
-    public Boolean checkFileIsExist(String bucket, String objectName){
+    public boolean checkFileIsExist(String bucket, String objectName){
         try {
             minioClient.statObject(
                     StatObjectArgs.builder().bucket(bucket).object(objectName).build()

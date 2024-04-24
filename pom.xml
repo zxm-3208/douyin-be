@@ -22,6 +22,7 @@
         <module>douyin_commons</module>
         <module>douyin_gateway</module>
         <module>douyin_publish</module>
+        <module>douyin_feed</module>
     </modules>
     <packaging>pom</packaging>
 

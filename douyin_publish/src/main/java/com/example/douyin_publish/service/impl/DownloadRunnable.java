@@ -45,6 +45,9 @@ public class DownloadRunnable implements Runnable{
     @Override
     public void run() {
         String chunkFilePath = chunkFileFolderPath + chunk_index;
+        // 手动注入
+        uploadService = SpringContextUtils.getApplicationContext().getBean(UploadService.class);
+
         // 下载文件
         File chunkFile = null;
         try{
@@ -53,9 +56,8 @@ public class DownloadRunnable implements Runnable{
             e.printStackTrace();
             MsgException.cast("下载分块时创建临时文件出错");
         }
-        log.info("++{},{}",bucket_name,chunkFilePath);
-        // 手动注入
-        uploadService = SpringContextUtils.getApplicationContext().getBean(UploadService.class);
+        System.out.println(chunkFile);
+        log.info("++{},{},{}",bucket_name, chunk_index,chunkFilePath);
         uploadService.downloadFileFromMinIO(chunkFile, bucket_name, chunkFilePath);
         files[chunk_index] = chunkFile;
         //每执行一次数值减少一

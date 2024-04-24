@@ -110,4 +110,5 @@ public interface UploadService {
     Boolean addCoverFilesToDb(String fileId, String objectName);
 
     UploadFileResultDTO editPublist(EditVo editVo);
+
 }

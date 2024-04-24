@@ -22,7 +22,7 @@ public interface PublishMapper extends BaseMapper<DyPublish> {
     @Update("update dy_publish u set title=#{title} where media_id=#{mediaId}")
     int updateTitle(String mediaId, String title);
 
-    @Select("select img_url from dy_publish u where u.author = #{userId}")
-    String[] selectByUserId(String userId);
+    @Select("select * from dy_publish u where u.author = #{userId}")
+    DyPublish[] selectByUserId(String userId);
 
 }
