@@ -273,7 +273,7 @@ public class UploadServiceImpl implements UploadService {
                     Map<String, String> screenShot = MediaUtils.getScreenshot(mergeFile.getAbsolutePath());
                     // 上传封面信息
                     uploadCoverFile(uploadFileParamsDTO, screenShot.get("imgPath"));
-                    // 上传文件到minIO
+                    // 上传文件到minIO  TODO: 这一步后续可以用消息队列实现（前端可以选择继续等待实现视频预览或者跳过预览直接跳转到信息编辑页面）
                     addMediaFilesToMinIO(mergeFile.getAbsolutePath(), bucket_videofiles, mergeFilePath);
                     log.info("合并文件上传minIO完成{}", mergeFile.getAbsolutePath());
                 } catch (Exception e) {
@@ -422,6 +422,8 @@ public class UploadServiceImpl implements UploadService {
 //                if (contentType.indexOf("image") >= 0) {
 //                    dyPublish.setImgUrl("/" + bucket_videofiles + "/" + objectName);
 //                }
+                log.info("用户ID{}",uploadFileParamsDTO.getDyPublish().getAuthor());
+                dyPublish.setAuthor(uploadFileParamsDTO.getDyPublish().getAuthor());
                 if(dyPublish.getUploadTime()==null)
                     dyPublish.setUploadTime(new Timestamp(System.currentTimeMillis()));
                 dyPublish.setUpdateTime(new Timestamp(System.currentTimeMillis()));

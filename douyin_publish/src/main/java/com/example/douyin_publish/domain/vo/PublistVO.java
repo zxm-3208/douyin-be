@@ -4,14 +4,13 @@ import lombok.Data;
 
 /**
  * @author : zxm
- * @date: 2024/4/15 - 16:25
+ * @date: 2024/4/23 - 14:36
  * @Description: com.example.douyin_publish.domain.vo
  * @version: 1.0
  */
 @Data
-public class MergeChunksVo {
-    private String fileMd5;
-    private String fileName;
-    private int chunkTotal;
+public class PublistVO {
+
     private String userId;
+
 }

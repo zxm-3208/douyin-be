@@ -25,4 +25,7 @@ public interface DyUserMapper extends BaseMapper<DyUser> {
 
     @Select("update dy_user set code = #{code} where phone = #{phone}")
     DyUser UpdateUserByPhone(String phone, String code);
+
+    @Select("select * from dy_user u where u.user_name = #{user_name}")
+    DyUser selectUserByUsername(String user_name);
 }

@@ -11,8 +11,6 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Data
 public class UploadVo {
-    // 用户id
-    private String uid;
     //任务ID
     private String id;
     //总分片数量
@@ -29,4 +27,6 @@ public class UploadVo {
     private String md5;
     // 视频id
     private String mediaId;
+    // 用户ID
+    private String userId;
 }

@@ -53,9 +53,9 @@ public class PublishController {
         UploadFileParamsDTO uploadFileParamsDto = new UploadFileParamsDTO(new DyMedia(),new DyPublish());
         String contentType = uploadVo.getFile().getContentType();
         uploadFileParamsDto.setContentType(contentType);
+        uploadFileParamsDto.getDyPublish().setAuthor(uploadVo.getUserId());
         uploadFileParamsDto.setFileSize(uploadVo.getFile().getSize());
         uploadFileParamsDto.getDyMedia().setMd5(uploadVo.getMd5());
-        uploadFileParamsDto.getDyPublish().setAbout(uploadVo.getUid());
 
         if(contentType.indexOf("image")>=0){
             uploadFileParamsDto.getDyPublish().setType("001001");   //是个图片
@@ -77,6 +77,8 @@ public class PublishController {
     public UploadFileResultDTO mergechunks(@RequestBody MergeChunksVo mergeChunksVO){
         UploadFileParamsDTO uploadFileParamsDTO = new UploadFileParamsDTO(new DyMedia(),new DyPublish());
         uploadFileParamsDTO.getDyPublish().setFileName(mergeChunksVO.getFileName());
+        uploadFileParamsDTO.getDyPublish().setAuthor(mergeChunksVO.getUserId());
+        log.info("xxxxuserId{}", uploadFileParamsDTO.getDyPublish().getAuthor());
         uploadFileParamsDTO.getDyMedia().setMd5(mergeChunksVO.getFileMd5());
         uploadFileParamsDTO.setChunks(mergeChunksVO.getChunkTotal());
         uploadFileParamsDTO.getDyPublish().setType("001002");
@@ -102,7 +104,7 @@ public class PublishController {
         uploadFileParamsDto.getDyMedia().setMd5(uploadVo.getMd5());
         uploadFileParamsDto.setChunks(uploadVo.getChunks());
         uploadFileParamsDto.setChunk(uploadVo.getChunk());
-//        uploadFileParamsDto.getDyPublish().setAbout(uploadVo.getUid());
+        uploadFileParamsDto.getDyPublish().setAuthor(uploadVo.getUserId());
         return uploadService.uploadChunk(uploadFileParamsDto, uploadVo.getFile().getBytes());
     }
 
@@ -138,7 +140,6 @@ public class PublishController {
         String contentType = uploadVo.getFile().getContentType();
         uploadFileParamsDto.setContentType(contentType);
         uploadFileParamsDto.setFileSize(uploadVo.getFile().getSize());
-        uploadFileParamsDto.getDyPublish().setAbout(uploadVo.getUid());
         uploadFileParamsDto.getDyPublish().setMediaId(uploadVo.getMediaId());
 
         if(contentType.indexOf("image")>=0){

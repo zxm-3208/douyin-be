@@ -147,6 +147,7 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
         map.put("authorization", jwt);
         map.put("token_type", "jwt");
         map.put("expire_time", String.valueOf(loginUser.getExpireTime()));
+        map.put("userId", user.getId());
         return BaseResponse.success(map);
 
     }
@@ -183,11 +184,14 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
 
         log.info(jwt);
 
+        DyUser user = dyUserMapper.selectUserByUsername(userNameLoginUserVo.getUserName());
+
         // 返回响应
         Map<String, Object> map = new HashMap<>();
         map.put("authorization", jwt);
         map.put("token_type", "jwt");
         map.put("expire_time", String.valueOf(userNameLoginUserDTO.getExpireTime()));
+        map.put("userId", user.getId());
         return BaseResponse.success(map);
 
     }
