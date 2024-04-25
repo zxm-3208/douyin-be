@@ -50,6 +50,9 @@ public class ShowlistServiceImpl implements ShowlistService {
     public BaseResponse showPublist(PublistVO publistVO) {
 
         String userId = publistVO.getUserId();
+
+        // TODO:查询Redis
+
         // 查询数据库
         DyPublish[] imgUrl = publishMapper.selectByUserId(userId);
 
@@ -72,27 +75,5 @@ public class ShowlistServiceImpl implements ShowlistService {
         map.put("mediaId", mediaId);
         // 返回结果
         return BaseResponse.success(map);
-    }
-
-    @Override
-    public BaseResponse clickPlay(String mediaId) {
-        // 查询Redis
-        Map<String, String> map = new HashMap<>();
-        String url = (String) redisTemplate.opsForHash().get(RedisConstants.PUBLIST_USER_KEY + mediaId, RedisConstants.COVER_URL_KEY);
-
-        if(url==null) {
-            // 查询数据库
-            String tempUrl = mediaFilesMapper.getUrlByMediaId(mediaId);
-            // 获取外链
-//            String url = null;
-            try {
-                url = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_files).object(tempUrl).method(Method.GET).build());
-            } catch (Exception e) {
-                e.printStackTrace();
-                return BaseResponse.fail("获取外链失败");
-            }
-        }
-        // 返回结果
-        return BaseResponse.success(url);
     }
 }

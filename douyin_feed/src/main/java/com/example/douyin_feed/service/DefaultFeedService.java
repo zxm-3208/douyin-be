@@ -1,6 +1,7 @@
 package com.example.douyin_feed.service;
 
 import com.example.douyin_commons.core.domain.BaseResponse;
+import com.example.douyin_feed.domain.vo.ClickPlayVo;
 import com.example.douyin_feed.domain.vo.MediaPlayVo;
 import com.example.douyin_feed.domain.vo.UrlListVo;
 
@@ -16,4 +17,8 @@ public interface DefaultFeedService {
     BaseResponse getAllPublist(MediaPlayVo mediaPlayVo);
 
     BaseResponse getMediaPlay(UrlListVo urlListVo);
+
+    BaseResponse clickPlayList(ClickPlayVo clickPlayVo);
+
+    BaseResponse getUserPlay(ClickPlayVo clickPlayVo);
 }

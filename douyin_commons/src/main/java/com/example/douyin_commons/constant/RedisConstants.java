@@ -12,8 +12,14 @@ public class RedisConstants {
     public static final String MEDIA_CHUNKMD5_KEY = "mediaChunk:md5:";
     public static final Long MEDIA_CHUNKMD5_TTL = 60L;
 
+    // 视频播放列表(各用户推荐栏中的视频列表)
     public static final String MEDIA_URL_KEY = "mediaUrl";
     public static final String COVER_URL_KEY = "coverUrl";
-    public static final String PUBLIST_USER_KEY = "publist:mediaID:";
-    public static final Long PUBLIST_USER_TTL = 7L;       //单位:天
+    public static final String PUBLIST_MEDIAID_KEY = "publist:mediaID:";
+    public static final Long PUBLIST_MEDIAID_TTL = 7L;       //单位:天
+
+    // 视频播放列表(各用户发布的视频列表)
+    public static final String PUBLIST_USER_KEY = "publist:userId:";
+    public static final Long PUBLIST_USER_TTL = 7L;
+
 }

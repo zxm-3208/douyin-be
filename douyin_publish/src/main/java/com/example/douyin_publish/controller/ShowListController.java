@@ -1,7 +1,6 @@
 package com.example.douyin_publish.controller;
 
 import com.example.douyin_commons.core.domain.BaseResponse;
-import com.example.douyin_publish.domain.vo.ClickPlayVo;
 import com.example.douyin_publish.domain.vo.PublistVO;
 import com.example.douyin_publish.service.ShowlistService;
 import lombok.extern.slf4j.Slf4j;
@@ -28,9 +27,5 @@ public class ShowListController {
         return showlistService.showPublist(publistVO);
     }
 
-    @PostMapping("/clickPlay")
-    public BaseResponse clickPlay(@RequestBody ClickPlayVo clickPlayVo){
-        return showlistService.clickPlay(clickPlayVo.getMediaId());
-    }
 
 }

@@ -12,6 +12,4 @@ import com.example.douyin_publish.domain.vo.PublistVO;
 public interface ShowlistService {
 
     BaseResponse showPublist(PublistVO publistVO);
-
-    BaseResponse clickPlay(String mediaId);
 }

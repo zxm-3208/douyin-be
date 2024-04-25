@@ -1,6 +1,7 @@
 package com.example.douyin_feed.controller;
 
 import com.example.douyin_commons.core.domain.BaseResponse;
+import com.example.douyin_feed.domain.vo.ClickPlayVo;
 import com.example.douyin_feed.domain.vo.MediaPlayVo;
 import com.example.douyin_feed.domain.vo.UrlListVo;
 import com.example.douyin_feed.service.DefaultFeedService;
@@ -31,5 +32,15 @@ public class DefaultFeedController {
     @PostMapping("/getUrl")
     public BaseResponse getMediaPlay(@RequestBody UrlListVo urlListVo){
         return defaultFeedService.getMediaPlay(urlListVo);
+    }
+
+    @PostMapping("/getUserUrl")
+    public BaseResponse getUserPlay(@RequestBody ClickPlayVo clickPlayVo){
+        return defaultFeedService.getUserPlay(clickPlayVo);
+    }
+
+    @PostMapping("/clickPlay")
+    public BaseResponse getClickPlay(@RequestBody ClickPlayVo clickPlayVo){
+        return defaultFeedService.clickPlayList(clickPlayVo);
     }
 }
