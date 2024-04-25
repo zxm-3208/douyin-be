@@ -160,7 +160,6 @@ public class PublishController {
 
     @PostMapping(value="editPublist")
     public UploadFileResultDTO edit(@RequestBody EditVo editVo){
-        log.info("edit{}{}",editVo.getTitle(), editVo.getMediaId());
         return uploadService.editPublist(editVo);
     }
 

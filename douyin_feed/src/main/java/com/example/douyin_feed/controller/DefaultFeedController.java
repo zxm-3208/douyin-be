@@ -2,6 +2,8 @@ package com.example.douyin_feed.controller;
 
 import com.example.douyin_commons.core.domain.BaseResponse;
 import com.example.douyin_feed.domain.vo.MediaPlayVo;
+import com.example.douyin_feed.domain.vo.UrlListVo;
+import com.example.douyin_feed.service.DefaultFeedService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -19,10 +21,15 @@ import org.springframework.web.bind.annotation.*;
 public class DefaultFeedController {
 
     @Autowired
-    DefaultFeedController defaultFeedController;
+    DefaultFeedService defaultFeedService;
+
+    @PostMapping("/getAllPublist")
+    public BaseResponse getAllPublist(@RequestBody MediaPlayVo mediaPlayVo){
+        return defaultFeedService.getAllPublist(mediaPlayVo);
+    }
 
     @PostMapping("/getUrl")
-    public BaseResponse getMediaPlay(@RequestBody MediaPlayVo mediaPlayVo){
-        return defaultFeedController.getMediaPlay(mediaPlayVo);
+    public BaseResponse getMediaPlay(@RequestBody UrlListVo urlListVo){
+        return defaultFeedService.getMediaPlay(urlListVo);
     }
 }

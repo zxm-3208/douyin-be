@@ -14,6 +14,6 @@ public class RedisConstants {
 
     public static final String MEDIA_URL_KEY = "mediaUrl";
     public static final String COVER_URL_KEY = "coverUrl";
-    public static final String PUBLIST_USER_KEY = "publist:user:";
+    public static final String PUBLIST_USER_KEY = "publist:mediaID:";
     public static final Long PUBLIST_USER_TTL = 7L;       //单位:天
 }

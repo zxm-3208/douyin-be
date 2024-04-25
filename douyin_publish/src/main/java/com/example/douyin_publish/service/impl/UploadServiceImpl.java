@@ -407,7 +407,7 @@ public class UploadServiceImpl implements UploadService {
                 // 拷贝基本信息
                 BeanUtils.copyProperties(uploadFileParamsDTO.getDyMedia(), dyMedia);
 
-                dyMedia.setMediaUrl("/" + bucket_videofiles + "/" + objectName);
+                dyMedia.setMediaUrl(objectName);
                 //            dyMedia.setMd5(uploadFileParamsDTO.);
                 //保存文件信息到DyMedia表
                 int insert = mediaFilesMapper.insert(dyMedia);

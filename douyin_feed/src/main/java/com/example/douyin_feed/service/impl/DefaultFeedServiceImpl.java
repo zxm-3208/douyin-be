@@ -1,10 +1,27 @@
 package com.example.douyin_feed.service.impl;
 
+import com.example.douyin_commons.constant.RedisConstants;
 import com.example.douyin_commons.core.domain.BaseResponse;
 import com.example.douyin_feed.domain.vo.MediaPlayVo;
+import com.example.douyin_feed.domain.vo.UrlListVo;
+import com.example.douyin_feed.mapper.MediaFilesMapper;
+import com.example.douyin_feed.mapper.PublishMapper;
 import com.example.douyin_feed.service.DefaultFeedService;
+import io.minio.GetPresignedObjectUrlArgs;
+import io.minio.MinioClient;
+import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author : zxm
@@ -16,11 +33,81 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class DefaultFeedServiceImpl implements DefaultFeedService {
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+    @Autowired
+    private MinioClient minioClient;
+    @Autowired
+    private MediaFilesMapper mediaFilesMapper;
+    @Autowired
+    private PublishMapper publishMapper;
+    // 视频文件桶
+    @Value("${minio.bucket.videofiles}")
+    private String bucket_videofiles;
+    // 普通文件桶
+    @Value("${minio.bucket.files}")
+    private String bucket_files;
+
+    /**
+     * @description:  获取播放列表对应的mediaId(所有)
+     * @param mediaPlayVo
+     * @return: com.example.douyin_commons.core.domain.BaseResponse (data:mediaId)
+     * @author zxm
+     * @date: 2024/4/25 16:06
+     */
     @Override
-    public BaseResponse getMediaPlay(MediaPlayVo mediaPlayVo) {
-
-
-
-        return null;
+    public BaseResponse getAllPublist(MediaPlayVo mediaPlayVo) {
+//        // 查询Redis
+//        Set<Object> keys = redisTemplate.keys(RedisConstants.PUBLIST_USER_KEY+"*");
+//        return BaseResponse.success(keys);
+        // 查询数据库
+        String[] mediaIdList = mediaFilesMapper.getAllMediaId();
+        return BaseResponse.success(mediaIdList);
     }
+
+    @Override
+    public BaseResponse getMediaPlay(UrlListVo urlListVo) {
+        // 获取Redis Keys
+        ArrayList<String> mediaId = urlListVo.getMediaIdList();
+        log.info("mediaId:{}",mediaId);
+        // 获取Redis value
+        ArrayList<String> values = new ArrayList<>();
+        for(int i=0;i<mediaId.size();i++) {
+            if(redisTemplate.opsForHash().hasKey(RedisConstants.PUBLIST_USER_KEY+mediaId.get(i), "mediaUrl")) {
+                values.add((String) redisTemplate.opsForHash().get(RedisConstants.PUBLIST_USER_KEY+mediaId.get(i), "mediaUrl"));
+            }
+            else{
+                // redis中不存在，从数据库中获取并缓存到Redis中
+                log.info("mediaId:{}",mediaId.get(i));
+                // 查询数据库获取mediaUrl和coverUrl
+                String temp_cover_url = publishMapper.getCoverUrlByid(mediaId.get(i));
+                String temp_media_url = mediaFilesMapper.getMediaUrlByid(mediaId.get(i));
+
+                log.info("封面url;为：{}",temp_cover_url);
+                log.info("视频url为：{}",temp_media_url);
+
+                String cover_url = null;
+                String media_url = null;
+                try {
+                    cover_url = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_files).object(temp_cover_url).method(Method.GET).build());
+                    media_url = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_videofiles).object(temp_media_url).method(Method.GET).build());
+                }catch (Exception e) {
+                    e.printStackTrace();
+                    return BaseResponse.fail("获取外链失败");
+                }
+                log.info("封面外链为：{}",cover_url);
+                log.info("视频外链为：{}",media_url);
+
+                // 将发布的视频推送给Redis (key: 用户id, map:{media_url:xxx, cover_url:xxx})
+                Map<String, String> map = new HashMap<>();
+                map.put(RedisConstants.MEDIA_URL_KEY, media_url);
+                map.put(RedisConstants.COVER_URL_KEY, cover_url);
+                redisTemplate.opsForHash().putAll(RedisConstants.PUBLIST_USER_KEY+mediaId.get(i),map);
+                redisTemplate.expire(RedisConstants.PUBLIST_USER_KEY+mediaId.get(i), RedisConstants.PUBLIST_USER_TTL, TimeUnit.DAYS);
+                values.add(media_url);
+            }
+        }
+        return BaseResponse.success(values);
+    }
+
 }
