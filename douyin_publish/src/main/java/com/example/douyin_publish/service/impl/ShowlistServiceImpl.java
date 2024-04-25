@@ -1,6 +1,7 @@
 package com.example.douyin_publish.service.impl;
 
 import com.example.douyin_commons.constant.Constants;
+import com.example.douyin_commons.constant.RedisConstants;
 import com.example.douyin_commons.core.domain.BaseResponse;
 import com.example.douyin_publish.domain.po.DyPublish;
 import com.example.douyin_publish.domain.vo.PublistVO;
@@ -13,9 +14,11 @@ import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author : zxm
@@ -36,6 +39,9 @@ public class ShowlistServiceImpl implements ShowlistService {
     @Autowired
     private MinioClient minioClient;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
     // 普通文件桶
     @Value("${minio.bucket.files}")
     private String bucket_files;
@@ -44,7 +50,6 @@ public class ShowlistServiceImpl implements ShowlistService {
     public BaseResponse showPublist(PublistVO publistVO) {
 
         String userId = publistVO.getUserId();
-        log.info("userId:{}",userId);
         // 查询数据库
         DyPublish[] imgUrl = publishMapper.selectByUserId(userId);
 
@@ -61,7 +66,6 @@ public class ShowlistServiceImpl implements ShowlistService {
             return BaseResponse.fail("获取外链失败");
         }
 
-        log.info("media:{}", mediaId);
 
         HashMap<String, Object> map = new HashMap<>();
         map.put("url", url);
@@ -72,15 +76,21 @@ public class ShowlistServiceImpl implements ShowlistService {
 
     @Override
     public BaseResponse clickPlay(String mediaId) {
-        // 查询数据库
-        String tempUrl = mediaFilesMapper.getUrlByMediaId(mediaId);
-        // 获取外链
-        String url = null;
-        try {
-            url = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_files).object(tempUrl).method(Method.GET).build());
-        }catch (Exception e){
-            e.printStackTrace();
-            return BaseResponse.fail("获取外链失败");
+        // 查询Redis
+        Map<String, String> map = new HashMap<>();
+        String url = (String) redisTemplate.opsForHash().get(RedisConstants.PUBLIST_USER_KEY + mediaId, RedisConstants.COVER_URL_KEY);
+
+        if(url==null) {
+            // 查询数据库
+            String tempUrl = mediaFilesMapper.getUrlByMediaId(mediaId);
+            // 获取外链
+//            String url = null;
+            try {
+                url = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_files).object(tempUrl).method(Method.GET).build());
+            } catch (Exception e) {
+                e.printStackTrace();
+                return BaseResponse.fail("获取外链失败");
+            }
         }
         // 返回结果
         return BaseResponse.success(url);

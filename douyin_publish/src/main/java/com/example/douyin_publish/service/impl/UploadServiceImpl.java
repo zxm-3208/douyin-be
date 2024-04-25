@@ -473,9 +473,16 @@ public class UploadServiceImpl implements UploadService {
     public UploadFileResultDTO editPublist(EditVo editVo) {
         String title = editVo.getTitle();
         int update = publishMapper.updateTitle(editVo.getMediaId(), editVo.getTitle());
+
         if (update < 0) {
             MsgException.cast("保存文件信息失败");
         }
+        // 将发布的视频推送给Redis (key: 用户id, map:{media_url:xxx, cover_url:xxx})
+        Map<String, String> map = new HashMap<>();
+        map.put(RedisConstants.MEDIA_URL_KEY, editVo.getMediaUrl());
+        map.put(RedisConstants.COVER_URL_KEY, editVo.getCoverUrl());
+        redisTemplate.opsForHash().putAll(RedisConstants.PUBLIST_USER_KEY+editVo.getMediaId(),map);
+        redisTemplate.expire(RedisConstants.PUBLIST_USER_KEY+editVo.getMediaId(), RedisConstants.PUBLIST_USER_TTL, TimeUnit.DAYS);
         return UploadFileResultDTO.success();
     }
 

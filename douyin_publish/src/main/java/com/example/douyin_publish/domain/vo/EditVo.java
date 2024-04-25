@@ -12,4 +12,6 @@ import lombok.Data;
 public class EditVo {
     private String title;
     private String mediaId;
+    private String coverUrl;
+    private String mediaUrl;
 }
