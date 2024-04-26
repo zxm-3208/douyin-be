@@ -10,6 +10,7 @@ import lombok.Data;
  */
 @Data
 public class EditVo {
+    private String userId;
     private String title;
     private String mediaId;
     private String coverUrl;

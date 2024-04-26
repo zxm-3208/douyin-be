@@ -46,7 +46,7 @@ public class AuthorizeFilter implements Ordered, GlobalFilter {
         ServerHttpResponse response = exchange.getResponse();
         // 2.判断是否登录
         String uriPath = (request.getURI().getPath());
-        log.info(uriPath);
+        log.info("请求访问的uri地址:{}",uriPath);
         if(uriPath.contains("/code")||uriPath.contains("/login")||uriPath.contains("/captchaImage")||uriPath.contains("/logout")||uriPath.contains("/logoinbyusername")){
             return chain.filter(exchange);
         }
@@ -69,7 +69,6 @@ public class AuthorizeFilter implements Ordered, GlobalFilter {
             Long exp = (Long)claims.get(Constants.EXP);
 //            long exp = claims.getExpiration().getTime();
             long currentTimeMillis = System.currentTimeMillis();
-            log.info("==={},{}",currentTimeMillis,exp);
             if(currentTimeMillis > exp){
                 log.info("token已过期");
                 response.setStatusCode(HttpStatus.UNAUTHORIZED);
@@ -85,7 +84,6 @@ public class AuthorizeFilter implements Ordered, GlobalFilter {
             response.setStatusCode(HttpStatus.UNAUTHORIZED);
             return response.setComplete();
         }
-        log.info("-----------------");
         // 6. 放行
         return chain.filter(exchange);
     }

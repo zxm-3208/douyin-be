@@ -6,6 +6,8 @@ import com.example.douyin_commons.constant.RedisConstants;
 import com.example.douyin_commons.constant.SystemConstants;
 import com.example.douyin_commons.core.domain.BaseResponse;
 import com.example.douyin_commons.core.exception.MsgException;
+import com.example.douyin_publish.domain.dto.CoverPublistDTO;
+import com.example.douyin_publish.domain.dto.MediaPublistDTO;
 import com.example.douyin_publish.domain.dto.UploadFileParamsDTO;
 import com.example.douyin_publish.domain.dto.UploadFileResultDTO;
 import com.example.douyin_publish.domain.po.DyMedia;
@@ -16,6 +18,7 @@ import com.example.douyin_publish.mapper.PublishMapper;
 import com.example.douyin_publish.service.UploadService;
 import com.example.douyin_publish.utils.ExecutorsPools;
 import com.example.douyin_publish.utils.MediaUtils;
+import com.example.douyin_publish.utils.ZSetUtils;
 import com.j256.simplemagic.ContentInfo;
 import com.j256.simplemagic.ContentInfoUtil;
 import io.micrometer.common.util.StringUtils;
@@ -27,6 +30,8 @@ import org.apache.commons.io.IOUtils;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.bytedeco.javacv.Frame;
 import org.bytedeco.javacv.Java2DFrameConverter;
+import org.checkerframework.checker.units.qual.A;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +74,9 @@ public class UploadServiceImpl implements UploadService {
 
     @Autowired
     private SnowflakeGenerator snowflakeGenerator;
+
+    @Autowired
+    private ZSetUtils zSetUtils;
 
     private CountDownLatch countDownLatch;
 
@@ -472,17 +480,23 @@ public class UploadServiceImpl implements UploadService {
     @Override
     public UploadFileResultDTO editPublist(EditVo editVo) {
         String title = editVo.getTitle();
+        // 读取数据库
         int update = publishMapper.updateTitle(editVo.getMediaId(), editVo.getTitle());
+        Long scope = publishMapper.selectByMediaId(editVo.getMediaId()).getUpdateTime().getTime();
 
         if (update < 0) {
             MsgException.cast("保存文件信息失败");
         }
-        // 将发布的视频推送给Redis (key: 用户id, map:{media_url:xxx, cover_url:xxx})
-        Map<String, String> map = new HashMap<>();
-        map.put(RedisConstants.MEDIA_URL_KEY, editVo.getMediaUrl());
-        map.put(RedisConstants.COVER_URL_KEY, editVo.getCoverUrl());
-        redisTemplate.opsForHash().putAll(RedisConstants.PUBLIST_USER_KEY+editVo.getMediaId(),map);
-        redisTemplate.expire(RedisConstants.PUBLIST_USER_KEY+editVo.getMediaId(), RedisConstants.PUBLIST_USER_TTL, TimeUnit.DAYS);
+        // 将发布的视频推送给Redis
+        CoverPublistDTO coverPublistDTO = new CoverPublistDTO(editVo.getMediaId(), editVo.getCoverUrl());
+        MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(editVo.getMediaId(), editVo.getMediaUrl());
+
+        zSetUtils.addObjectToZSet(RedisConstants.PUBLIST_USER_COVER_KEY + editVo.getUserId(), coverPublistDTO, scope);
+        redisTemplate.expire(RedisConstants.PUBLIST_USER_COVER_KEY + editVo.getUserId(), RedisConstants.PUBLIST_USER_COVER_TTL, TimeUnit.DAYS);
+
+        zSetUtils.addObjectToZSet(RedisConstants.PUBLIST_USER_MEDIA_KEY + editVo.getUserId(), mediaPublistDTO, scope);
+        redisTemplate.expire(RedisConstants.PUBLIST_USER_MEDIA_KEY + editVo.getUserId(), RedisConstants.PUBLIST_USER_MEDIA_TTL, TimeUnit.DAYS);
+
         return UploadFileResultDTO.success();
     }
 

@@ -11,5 +11,7 @@ import lombok.Data;
 @Data
 public class ClickPlayVo {
     private String userId;
+    private String lastId;
+    private String offset;
     private String[] mediaIdList;
 }

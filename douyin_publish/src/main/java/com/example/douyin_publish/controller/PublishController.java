@@ -78,6 +78,7 @@ public class PublishController {
         UploadFileParamsDTO uploadFileParamsDTO = new UploadFileParamsDTO(new DyMedia(),new DyPublish());
         uploadFileParamsDTO.getDyPublish().setFileName(mergeChunksVO.getFileName());
         uploadFileParamsDTO.getDyPublish().setAuthor(mergeChunksVO.getUserId());
+        uploadFileParamsDTO.getDyMedia().setAuthor(mergeChunksVO.getUserId());
         log.info("xxxxuserId{}", uploadFileParamsDTO.getDyPublish().getAuthor());
         uploadFileParamsDTO.getDyMedia().setMd5(mergeChunksVO.getFileMd5());
         uploadFileParamsDTO.setChunks(mergeChunksVO.getChunkTotal());

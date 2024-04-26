@@ -2,7 +2,6 @@ package com.example.douyin_publish.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.douyin_publish.domain.po.DyMedia;
-import com.example.douyin_publish.domain.po.DyPublish;
 import org.apache.ibatis.annotations.Select;
 
 /**

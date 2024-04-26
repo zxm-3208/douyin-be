@@ -12,5 +12,6 @@ import lombok.Data;
 public class PublistVO {
 
     private String userId;
-
+    private String lastId;
+    private String offset;
 }

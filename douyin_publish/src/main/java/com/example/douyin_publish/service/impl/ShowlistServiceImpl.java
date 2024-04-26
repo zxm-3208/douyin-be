@@ -1,13 +1,14 @@
 package com.example.douyin_publish.service.impl;
 
-import com.example.douyin_commons.constant.Constants;
 import com.example.douyin_commons.constant.RedisConstants;
 import com.example.douyin_commons.core.domain.BaseResponse;
+import com.example.douyin_publish.domain.dto.CoverPublistDTO;
 import com.example.douyin_publish.domain.po.DyPublish;
 import com.example.douyin_publish.domain.vo.PublistVO;
 import com.example.douyin_publish.mapper.MediaFilesMapper;
 import com.example.douyin_publish.mapper.PublishMapper;
 import com.example.douyin_publish.service.ShowlistService;
+import com.example.douyin_publish.utils.ZSetUtils;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
 import io.minio.http.Method;
@@ -15,10 +16,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author : zxm
@@ -42,6 +44,9 @@ public class ShowlistServiceImpl implements ShowlistService {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    @Autowired
+    private ZSetUtils zSetUtils;
+
     // 普通文件桶
     @Value("${minio.bucket.files}")
     private String bucket_files;
@@ -51,29 +56,76 @@ public class ShowlistServiceImpl implements ShowlistService {
 
         String userId = publistVO.getUserId();
 
-        // TODO:查询Redis
+        // 查询视频列表视频总数Redis
+        Long num = redisTemplate.opsForZSet().size(RedisConstants.PUBLIST_USER_COVER_KEY + publistVO.getUserId());
 
-        // 查询数据库
-        DyPublish[] imgUrl = publishMapper.selectByUserId(userId);
-
-        // 获取外链
-        String[] url = new String[imgUrl.length];
-        String[] mediaId = new String[imgUrl.length];
-        try {
-            for(int i=0;i< imgUrl.length;i++) {
-                mediaId[i] = imgUrl[i].getMediaId();
-                url[i] = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_files).object(imgUrl[i].getImgUrl()).method(Method.GET).build());
+        // 判断总数是否与Redis缓存中的视频url数量一致
+        // 不一致
+        if(num==null || num.equals(0L)){
+            // 读取数据库
+            DyPublish[] temp_num = publishMapper.selectByUserId(userId);
+            // 保存到Redis
+            for(int i=0;i<temp_num.length;i++){
+                try {
+                    long scope = temp_num[i].getUpdateTime().getTime();
+                    // 判断该数据是否已存在与redis
+//                    if(redisTemplate.opsForZSet().count(RedisConstants.PUBLIST_USER_COVER_KEY+publistVO.getUserId(), scope, scope+1)>0){
+//                        continue;
+//                    }
+                    // 记录到Redis中
+                    String tempCoverUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_files).object(temp_num[i].getImgUrl()).method(Method.GET).build());
+                    CoverPublistDTO coverPublistDTO = new CoverPublistDTO(temp_num[i].getMediaId(),tempCoverUrl);
+                    zSetUtils.addObjectToZSet(RedisConstants.PUBLIST_USER_COVER_KEY + publistVO.getUserId(), coverPublistDTO, scope);
+//                    redisTemplate.opsForZSet().add(RedisConstants.PUBLIST_USER_COVER_KEY + publistVO.getUserId(), tempCoverUrl, temp_num[i].getUpdateTime().getTime());
+                }catch (Exception e){
+                    e.printStackTrace();
+                    return BaseResponse.fail("获取外链失败");
+                }
             }
-        }catch (Exception e){
-            e.printStackTrace();
-            return BaseResponse.fail("获取外链失败");
+            if(temp_num.length>0){
+                redisTemplate.expire(RedisConstants.PUBLIST_USER_COVER_KEY+publistVO.getUserId(), RedisConstants.PUBLIST_USER_COVER_TTL, TimeUnit.DAYS);
+            }
         }
 
+        // 分页读取
+        Long mediaCount = redisTemplate.opsForZSet().size(RedisConstants.PUBLIST_USER_COVER_KEY+publistVO.getUserId());
+        Long lastId = Long.valueOf(publistVO.getLastId());
+        Long offset = Long.valueOf(publistVO.getOffset());
+        Set<ZSetOperations.TypedTuple<CoverPublistDTO>> imgUrl = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(RedisConstants.PUBLIST_USER_COVER_KEY+publistVO.getUserId(), 0, lastId, offset, 100);
+        log.info("{}",imgUrl);
+        if(imgUrl==null || imgUrl.isEmpty()){
+            return BaseResponse.success();
+        }
+        long minTime = 0;
+        int os = 1;
+        // 从Redis中读取
+        List<String> url = new ArrayList<>(imgUrl.size());
+        List<String> mediaId = new ArrayList<>(imgUrl.size());
 
+        for (ZSetOperations.TypedTuple<CoverPublistDTO> tuple : imgUrl) {
+            try {
+                mediaId.add(tuple.getValue().getMediaId());
+                url.add(tuple.getValue().getCoverUrl());
+            }catch (Exception e){
+                e.printStackTrace();
+                return BaseResponse.fail("获取外链失败");
+            }
+            long time = tuple.getScore().longValue();
+            if (time == minTime) {
+                os++;
+            }else {
+                minTime = time;
+                os = 1;
+            }
+        }
         HashMap<String, Object> map = new HashMap<>();
         map.put("url", url);
         map.put("mediaId", mediaId);
+        map.put("minTime", minTime);
+        map.put("offset", os);
+        map.put("mediaCount", mediaCount);
         // 返回结果
         return BaseResponse.success(map);
+//        return null;
     }
 }

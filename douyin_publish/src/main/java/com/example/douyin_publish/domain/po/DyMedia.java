@@ -30,6 +30,9 @@ public class DyMedia implements Serializable {
      * MD5
      */
     private String md5;
-
+    /**
+     * 作者
+     */
+    private String author;
 }
 

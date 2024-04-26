@@ -16,4 +16,7 @@ public interface PublishMapper extends BaseMapper<DyPublish> {
     @Select("select img_url from dy_publish u where u.media_id = #{id}")
     String getCoverUrlByid(String id);
 
+    @Select("select * from dy_publish u where u.author = #{userId}")
+    DyPublish[] selectByUserId(String userId);
+
 }

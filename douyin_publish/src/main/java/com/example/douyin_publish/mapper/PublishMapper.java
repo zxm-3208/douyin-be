@@ -25,4 +25,5 @@ public interface PublishMapper extends BaseMapper<DyPublish> {
     @Select("select * from dy_publish u where u.author = #{userId}")
     DyPublish[] selectByUserId(String userId);
 
+
 }

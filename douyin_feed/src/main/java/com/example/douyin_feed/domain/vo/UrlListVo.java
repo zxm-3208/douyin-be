@@ -12,5 +12,8 @@ import java.util.ArrayList;
  */
 @Data
 public class UrlListVo {
-    private ArrayList<String> mediaIdList;
+    private String userId;
+    private String lastId;
+    private String offset;
+    private String[] mediaIdList;
 }

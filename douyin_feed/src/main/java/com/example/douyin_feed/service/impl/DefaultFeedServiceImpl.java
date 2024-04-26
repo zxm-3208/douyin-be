@@ -2,27 +2,28 @@ package com.example.douyin_feed.service.impl;
 
 import com.example.douyin_commons.constant.RedisConstants;
 import com.example.douyin_commons.core.domain.BaseResponse;
-import com.example.douyin_commons.core.exception.MsgException;
+import com.example.douyin_feed.domain.dto.MediaPublistDTO;
+import com.example.douyin_feed.domain.po.DyMedia;
+import com.example.douyin_feed.domain.po.DyPublish;
+import com.example.douyin_feed.domain.po.MediaJoinPublish;
 import com.example.douyin_feed.domain.vo.ClickPlayVo;
 import com.example.douyin_feed.domain.vo.MediaPlayVo;
 import com.example.douyin_feed.domain.vo.UrlListVo;
 import com.example.douyin_feed.mapper.MediaFilesMapper;
 import com.example.douyin_feed.mapper.PublishMapper;
 import com.example.douyin_feed.service.DefaultFeedService;
+import com.example.douyin_feed.utils.ZSetUtils;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
 import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -43,6 +44,8 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
     private MediaFilesMapper mediaFilesMapper;
     @Autowired
     private PublishMapper publishMapper;
+    @Autowired
+    private ZSetUtils zSetUtils;
     // 视频文件桶
     @Value("${minio.bucket.videofiles}")
     private String bucket_videofiles;
@@ -59,10 +62,6 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
      */
     @Override
     public BaseResponse getAllPublist(MediaPlayVo mediaPlayVo) {
-        // TODO: 分页
-//        // 查询Redis
-//        Set<Object> keys = redisTemplate.keys(RedisConstants.PUBLIST_USER_KEY+"*");
-//        return BaseResponse.success(keys);
         // 查询数据库
         String[] mediaIdList = mediaFilesMapper.getAllMediaId();
         return BaseResponse.success(mediaIdList);
@@ -77,21 +76,7 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
      */
     @Override
     public BaseResponse clickPlayList(ClickPlayVo clickPlayVo) {
-        // TODO: 分页
-        // TODO: 1. 根据userId在Redis中获取相应视频播放列表（分页读取）。 2. 根据mediaId定位视频在播放列表位置。 3. 返回播放列表对应的mediaId
-        String userId = clickPlayVo.getUserId();
         String[] mediaIdList = clickPlayVo.getMediaIdList();
-//        // 取一个用户发布的视频列表，可以用Redis存储最新视频，如果当需要访问的视频不在Redis中时，在从Mysql中读取。
-//        ArrayList<String> values = new ArrayList<>();
-//        for(int i=0;i<mediaIdList.length;i++) {
-//            if (redisTemplate.opsForHash().hasKey(RedisConstants.PUBLIST_USER_KEY + clickPlayVo.getUserId() + ":" + mediaIdList[i], "mediaUrl")) {
-//                values.add((String) redisTemplate.opsForHash().get(RedisConstants.PUBLIST_USER_KEY + clickPlayVo.getUserId() + ":" + mediaIdList[i], "mediaUrl"));
-//            }
-//            else{
-//                HashMap<String, String> url_map = getExtUrl(mediaIdList[i], RedisConstants.PUBLIST_USER_KEY, RedisConstants.PUBLIST_USER_TTL);
-//                values.add(url_map.get("mediaUrl"));
-//            }
-//        }
         return BaseResponse.success(mediaIdList);
     }
 
@@ -104,20 +89,78 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
      */
     @Override
     public BaseResponse getUserPlay(ClickPlayVo clickPlayVo) {
-        // 获取Redis Keys
         String[] mediaIdList = clickPlayVo.getMediaIdList();
-        // 取一个用户发布的视频列表，可以用Redis存储最新视频，如果当需要访问的视频不在Redis中时，在从Mysql中读取。
-        ArrayList<String> values = new ArrayList<>();
-        for(int i=0;i<mediaIdList.length;i++) {
-            if (redisTemplate.opsForHash().hasKey(RedisConstants.PUBLIST_USER_KEY + clickPlayVo.getUserId() + ":" + mediaIdList[i], "mediaUrl")) {
-                values.add((String) redisTemplate.opsForHash().get(RedisConstants.PUBLIST_USER_KEY + clickPlayVo.getUserId() + ":" + mediaIdList[i], "mediaUrl"));
+        String userId = clickPlayVo.getUserId();
+        // 从Redis中获取
+        Long num = redisTemplate.opsForZSet().size(RedisConstants.PUBLIST_USER_MEDIA_KEY + userId);
+        log.info("num:{}",num);
+        if(num == null || num.equals(0L)){
+            // 读取数据库
+            // TODO: 级联查询
+            DyPublish[] temp_dypublish = publishMapper.selectByUserId(userId);
+            String[] temp_media_url_list = mediaFilesMapper.getMediaUrlByUserId(userId);
+            // 保存到Redis
+            for(int i=0;i<temp_dypublish.length;i++){
+                try {
+                    long scope = temp_dypublish[i].getUpdateTime().getTime();
+                    // 判断该数据是否已存在与redis
+//                    if(redisTemplate.opsForZSet().count(RedisConstants.PUBLIST_USER_MEDIA_KEY+userId, scope, scope+1)>0){
+//                        continue;
+//                    }
+                    // 记录到Redis中
+                    String tempMediaUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_videofiles).object(temp_media_url_list[i]).method(Method.GET).build());
+                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(mediaIdList[i],tempMediaUrl);
+                    zSetUtils.addObjectToZSet(RedisConstants.PUBLIST_USER_MEDIA_KEY + userId, mediaPublistDTO, scope);
+//                    redisTemplate.opsForZSet().add(RedisConstants.PUBLIST_USER_MEDIA_KEY + publistVO.getUserId(), tempCoverUrl, temp_num[i].getUpdateTime().getTime());
+                }catch (Exception e){
+                    e.printStackTrace();
+                    return BaseResponse.fail("获取外链失败");
+                }
             }
-            else{
-                HashMap<String, String> url_map = getExtUrl(mediaIdList[i], RedisConstants.PUBLIST_USER_KEY, RedisConstants.PUBLIST_USER_TTL);
-                values.add(url_map.get("mediaUrl"));
+            if(temp_dypublish.length>0){
+                redisTemplate.expire(RedisConstants.PUBLIST_USER_MEDIA_KEY+userId, RedisConstants.PUBLIST_USER_MEDIA_TTL, TimeUnit.DAYS);
             }
         }
-        return BaseResponse.success(values);
+
+        // 分页读取
+        Long mediaCount = redisTemplate.opsForZSet().size(RedisConstants.PUBLIST_USER_MEDIA_KEY+userId);
+        Long lastId = Long.valueOf(clickPlayVo.getLastId());
+        Long offset = Long.valueOf(clickPlayVo.getOffset());
+        Set<ZSetOperations.TypedTuple<MediaPublistDTO>> mediaUrl = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(RedisConstants.PUBLIST_USER_MEDIA_KEY+userId, 0, lastId, offset, 5);
+        if(mediaUrl==null || mediaUrl.isEmpty()){
+            return BaseResponse.success();
+        }
+        long minTime = 0;
+        int os = 1;
+        // 从Redis中读取
+        List<String> url = new ArrayList<>(mediaUrl.size());
+//        List<String> mediaId = new ArrayList<>(mediaUrl.size());
+
+        for (ZSetOperations.TypedTuple<MediaPublistDTO> tuple : mediaUrl) {
+            try {
+//                mediaId.add(tuple.getValue().getMediaId());
+                log.info("tuple:{}", Objects.requireNonNull(tuple.getValue()).getMediaId());
+                url.add(tuple.getValue().getMediaUrl());
+            }catch (Exception e){
+                e.printStackTrace();
+                return BaseResponse.fail("获取外链失败");
+            }
+            long time = tuple.getScore().longValue();
+            if (time == minTime) {
+                os++;
+            }else {
+                minTime = time;
+                os = 1;
+            }
+        }
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("url", url);
+//        map.put("mediaId", mediaId);
+        map.put("minTime", minTime);
+        map.put("offset", os);
+        map.put("mediaCount", mediaCount);
+        // 返回结果
+        return BaseResponse.success(map);
     }
 
 
@@ -130,64 +173,73 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
      */
     @Override
     public BaseResponse getMediaPlay(UrlListVo urlListVo) {
-        // 获取Redis Keys
-        ArrayList<String> mediaId = urlListVo.getMediaIdList();
-        log.info("mediaId:{}",mediaId);
-        // 获取Redis value
-        ArrayList<String> values = new ArrayList<>();
-        for(int i=0;i<mediaId.size();i++) {
-            if(redisTemplate.opsForHash().hasKey(RedisConstants.PUBLIST_MEDIAID_KEY+mediaId.get(i), "mediaUrl")) {
-                values.add((String) redisTemplate.opsForHash().get(RedisConstants.PUBLIST_MEDIAID_KEY+mediaId.get(i), "mediaUrl"));
+        // TODO: 默认视频流分页读取
+        String[] mediaIdList = urlListVo.getMediaIdList();
+        // 从Redis中获取
+        Long num = redisTemplate.opsForZSet().size(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY);
+        log.info("num:{}",num);
+        if(num == null || num.equals(0L)){
+            // 读取数据库
+            // TODO: 级联
+            List<MediaJoinPublish> temp_entry = mediaFilesMapper.findMediaUrlAndUpdateTime();
+            // 保存到Redis
+            for(int i=0;i<temp_entry.size();i++){
+                try {
+                    log.info("updateTime:{}",temp_entry.get(i));
+                    long scope = temp_entry.get(i).getDyPublish().getUpdateTime().getTime();
+                    // 记录到Redis中
+                    String tempMediaUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_videofiles).object(temp_entry.get(i).getMediaUrl()).method(Method.GET).build());
+                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(mediaIdList[i],tempMediaUrl);
+                    zSetUtils.addObjectToZSet(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY, mediaPublistDTO, scope);
+//                    redisTemplate.opsForZSet().add(RedisConstants.PUBLIST_USER_MEDIA_KEY + publistVO.getUserId(), tempCoverUrl, temp_num[i].getUpdateTime().getTime());
+                }catch (Exception e){
+                    e.printStackTrace();
+                    return BaseResponse.fail("获取外链失败");
+                }
             }
-            else{
-                HashMap<String, String> url_map = getExtUrl(mediaId.get(i), RedisConstants.PUBLIST_MEDIAID_KEY, RedisConstants.PUBLIST_MEDIAID_TTL);
-                values.add(url_map.get("mediaUrl"));
+            if(temp_entry.size()>0){
+                redisTemplate.expire(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY, RedisConstants.PUBLIST_DEFAULT_MEDIA_TTL, TimeUnit.DAYS);
             }
         }
-        return BaseResponse.success(values);
-    }
 
-    /**
-     * @description: 从数据库中读取封面和视频url，并转换为外链保存到Redis中
-     * @param mediaId
-     * @return: java.util.HashMap<java.lang.String,java.lang.String>
-     * @author zxm
-     * @date: 2024/4/25 21:27
-     */
-    private HashMap<String, String> getExtUrl(String mediaId, String mediaIdPrefix, Long ttlPrefix){
-        // redis中不存在，从数据库中获取并缓存到Redis中
-        log.info("mediaId:{}",mediaId);
-        // 查询数据库获取mediaUrl和coverUrl
-        String temp_cover_url = publishMapper.getCoverUrlByid(mediaId);
-        String temp_media_url = mediaFilesMapper.getMediaUrlByid(mediaId);
-
-        log.info("封面url;为：{}",temp_cover_url);
-        log.info("视频url为：{}",temp_media_url);
-
-        String cover_url = null;
-        String media_url = null;
-        try {
-            cover_url = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_files).object(temp_cover_url).method(Method.GET).build());
-            media_url = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_videofiles).object(temp_media_url).method(Method.GET).build());
-        }catch (Exception e) {
-            e.printStackTrace();
-            log.error("获取外链失败");
-            return null;
+        // 分页读取
+        Long mediaCount = redisTemplate.opsForZSet().size(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY);
+        Long lastId = Long.valueOf(urlListVo.getLastId());
+        Long offset = Long.valueOf(urlListVo.getOffset());
+        Set<ZSetOperations.TypedTuple<MediaPublistDTO>> mediaUrl = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY, 0, lastId, offset, 5);
+        if(mediaUrl==null || mediaUrl.isEmpty()){
+            return BaseResponse.success();
         }
-        log.info("封面外链为：{}",cover_url);
-        log.info("视频外链为：{}",media_url);
+        long minTime = 0;
+        int os = 1;
+        // 从Redis中读取
+        List<String> url = new ArrayList<>(mediaUrl.size());
 
-        // 将发布的视频推送给Redis (key: 用户id, map:{media_url:xxx, cover_url:xxx})
-        Map<String, String> mediaMap = new HashMap<>();
-        mediaMap.put(RedisConstants.MEDIA_URL_KEY, media_url);
-        mediaMap.put(RedisConstants.COVER_URL_KEY, cover_url);
-        redisTemplate.opsForHash().putAll(mediaIdPrefix+mediaId,mediaMap);
-        redisTemplate.expire(mediaIdPrefix+mediaId, ttlPrefix, TimeUnit.DAYS);
-
-        HashMap<String, String> urlMap = new HashMap<>();
-        urlMap.put("mediaUrl", media_url);
-        urlMap.put("coverUrl", cover_url);
-        return urlMap;
+        for (ZSetOperations.TypedTuple<MediaPublistDTO> tuple : mediaUrl) {
+            try {
+//                mediaId.add(tuple.getValue().getMediaId());
+                log.info("tuple:{}", Objects.requireNonNull(tuple.getValue()).getMediaId());
+                url.add(tuple.getValue().getMediaUrl());
+            }catch (Exception e){
+                e.printStackTrace();
+                return BaseResponse.fail("获取外链失败");
+            }
+            long time = tuple.getScore().longValue();
+            if (time == minTime) {
+                os++;
+            }else {
+                minTime = time;
+                os = 1;
+            }
+        }
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("url", url);
+//        map.put("mediaId", mediaId);
+        map.put("minTime", minTime);
+        map.put("offset", os);
+        map.put("mediaCount", mediaCount);
+        // 返回结果
+        return BaseResponse.success(map);
     }
 
 }
