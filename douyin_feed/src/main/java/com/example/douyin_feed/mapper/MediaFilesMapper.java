@@ -2,7 +2,6 @@ package com.example.douyin_feed.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.douyin_feed.domain.po.DyMedia;
-import com.example.douyin_feed.domain.po.MediaJoinPublish;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.ArrayList;
@@ -33,5 +32,5 @@ public interface MediaFilesMapper extends BaseMapper<DyMedia> {
     @Select("select media_url from dy_media u")
     String[] getAllMediaUrl();
 
-    List<MediaJoinPublish> findMediaUrlAndUpdateTime();
+    List<DyMedia> findMediaUrlAndUpdateTime();
 }

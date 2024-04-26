@@ -2,6 +2,7 @@ package com.example.douyin_publish.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.douyin_publish.domain.po.DyMedia;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Select;
 
 /**
@@ -17,6 +18,12 @@ public interface MediaFilesMapper extends BaseMapper<DyMedia> {
     @Select("select id from dy_media u where u.md5 = #{md5}")
     String getMediaIdByMd5(String md5);
 
-    @Select("select media_url from dy_media u where u.id = #{mediaId}")
+    @Select("select mediaUrl from dy_media u where u.id = #{mediaId}")
     String getUrlByMediaId(String mediaId);
+
+    @Select("select * from dy_media u where u.id = #{id}")
+    DyMedia selectById(String id);
+
+    @Insert("insert into dy_media(id, mediaUrl, status, md5, author) values(#{id}, #{mediaUrl}, #{status}, #{md5}, #{author})")
+    int insert(DyMedia dyMedia);
 }

@@ -1,7 +1,7 @@
 package com.example.douyin_feed.utils;
 
-import com.example.douyin_feed.domain.dto.CoverPublistDTO;
-import com.example.douyin_feed.domain.dto.MediaPublistDTO;
+import com.example.douyin_commons.core.domain.CoverPublistDTO;
+import com.example.douyin_commons.core.domain.MediaPublistDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;

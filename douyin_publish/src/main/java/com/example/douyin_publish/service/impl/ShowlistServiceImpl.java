@@ -2,7 +2,7 @@ package com.example.douyin_publish.service.impl;
 
 import com.example.douyin_commons.constant.RedisConstants;
 import com.example.douyin_commons.core.domain.BaseResponse;
-import com.example.douyin_publish.domain.dto.CoverPublistDTO;
+import com.example.douyin_commons.core.domain.CoverPublistDTO;
 import com.example.douyin_publish.domain.po.DyPublish;
 import com.example.douyin_publish.domain.vo.PublistVO;
 import com.example.douyin_publish.mapper.MediaFilesMapper;

@@ -1,6 +1,8 @@
 package com.example.douyin_publish.domain.po;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
@@ -11,6 +13,8 @@ import java.io.Serializable;
  * @version: 1.0
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class DyMedia implements Serializable {
     private static final long serialVersionUID = 118414433334990999L;
     /**

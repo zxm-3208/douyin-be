@@ -2,10 +2,9 @@ package com.example.douyin_feed.service.impl;
 
 import com.example.douyin_commons.constant.RedisConstants;
 import com.example.douyin_commons.core.domain.BaseResponse;
-import com.example.douyin_feed.domain.dto.MediaPublistDTO;
+import com.example.douyin_commons.core.domain.MediaPublistDTO;
 import com.example.douyin_feed.domain.po.DyMedia;
 import com.example.douyin_feed.domain.po.DyPublish;
-import com.example.douyin_feed.domain.po.MediaJoinPublish;
 import com.example.douyin_feed.domain.vo.ClickPlayVo;
 import com.example.douyin_feed.domain.vo.MediaPlayVo;
 import com.example.douyin_feed.domain.vo.UrlListVo;
@@ -97,18 +96,20 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
         if(num == null || num.equals(0L)){
             // 读取数据库
             // TODO: 级联查询
-            DyPublish[] temp_dypublish = publishMapper.selectByUserId(userId);
-            String[] temp_media_url_list = mediaFilesMapper.getMediaUrlByUserId(userId);
+            List<DyMedia> temp_entry = mediaFilesMapper.findMediaUrlAndUpdateTime();
+
+//            DyPublish[] temp_dypublish = publishMapper.selectByUserId(userId);
+//            String[] temp_media_url_list = mediaFilesMapper.getMediaUrlByUserId(userId);
             // 保存到Redis
-            for(int i=0;i<temp_dypublish.length;i++){
+            for(int i=0;i<temp_entry.size();i++){
                 try {
-                    long scope = temp_dypublish[i].getUpdateTime().getTime();
+                    long scope = temp_entry.get(i).getDyPublish().getUpdateTime().getTime();
                     // 判断该数据是否已存在与redis
 //                    if(redisTemplate.opsForZSet().count(RedisConstants.PUBLIST_USER_MEDIA_KEY+userId, scope, scope+1)>0){
 //                        continue;
 //                    }
                     // 记录到Redis中
-                    String tempMediaUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_videofiles).object(temp_media_url_list[i]).method(Method.GET).build());
+                    String tempMediaUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_videofiles).object(temp_entry.get(i).getMediaUrl()).method(Method.GET).build());
                     MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(mediaIdList[i],tempMediaUrl);
                     zSetUtils.addObjectToZSet(RedisConstants.PUBLIST_USER_MEDIA_KEY + userId, mediaPublistDTO, scope);
 //                    redisTemplate.opsForZSet().add(RedisConstants.PUBLIST_USER_MEDIA_KEY + publistVO.getUserId(), tempCoverUrl, temp_num[i].getUpdateTime().getTime());
@@ -117,7 +118,7 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
                     return BaseResponse.fail("获取外链失败");
                 }
             }
-            if(temp_dypublish.length>0){
+            if(temp_entry.size()>0){
                 redisTemplate.expire(RedisConstants.PUBLIST_USER_MEDIA_KEY+userId, RedisConstants.PUBLIST_USER_MEDIA_TTL, TimeUnit.DAYS);
             }
         }
@@ -126,7 +127,7 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
         Long mediaCount = redisTemplate.opsForZSet().size(RedisConstants.PUBLIST_USER_MEDIA_KEY+userId);
         Long lastId = Long.valueOf(clickPlayVo.getLastId());
         Long offset = Long.valueOf(clickPlayVo.getOffset());
-        Set<ZSetOperations.TypedTuple<MediaPublistDTO>> mediaUrl = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(RedisConstants.PUBLIST_USER_MEDIA_KEY+userId, 0, lastId, offset, 5);
+        Set<ZSetOperations.TypedTuple<MediaPublistDTO>> mediaUrl = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(RedisConstants.PUBLIST_USER_MEDIA_KEY+userId, 0, lastId, offset, 10);
         if(mediaUrl==null || mediaUrl.isEmpty()){
             return BaseResponse.success();
         }
@@ -139,7 +140,7 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
         for (ZSetOperations.TypedTuple<MediaPublistDTO> tuple : mediaUrl) {
             try {
 //                mediaId.add(tuple.getValue().getMediaId());
-                log.info("tuple:{}", Objects.requireNonNull(tuple.getValue()).getMediaId());
+                log.info("tuple:{}", tuple.getValue());
                 url.add(tuple.getValue().getMediaUrl());
             }catch (Exception e){
                 e.printStackTrace();
@@ -173,15 +174,15 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
      */
     @Override
     public BaseResponse getMediaPlay(UrlListVo urlListVo) {
-        // TODO: 默认视频流分页读取
+        // 默认视频流分页读取
         String[] mediaIdList = urlListVo.getMediaIdList();
         // 从Redis中获取
         Long num = redisTemplate.opsForZSet().size(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY);
         log.info("num:{}",num);
         if(num == null || num.equals(0L)){
             // 读取数据库
-            // TODO: 级联
-            List<MediaJoinPublish> temp_entry = mediaFilesMapper.findMediaUrlAndUpdateTime();
+            // 级联
+            List<DyMedia> temp_entry = mediaFilesMapper.findMediaUrlAndUpdateTime();
             // 保存到Redis
             for(int i=0;i<temp_entry.size();i++){
                 try {
@@ -206,7 +207,7 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
         Long mediaCount = redisTemplate.opsForZSet().size(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY);
         Long lastId = Long.valueOf(urlListVo.getLastId());
         Long offset = Long.valueOf(urlListVo.getOffset());
-        Set<ZSetOperations.TypedTuple<MediaPublistDTO>> mediaUrl = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY, 0, lastId, offset, 5);
+        Set<ZSetOperations.TypedTuple<MediaPublistDTO>> mediaUrl = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY, 0, lastId, offset, 10);
         if(mediaUrl==null || mediaUrl.isEmpty()){
             return BaseResponse.success();
         }
@@ -218,7 +219,7 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
         for (ZSetOperations.TypedTuple<MediaPublistDTO> tuple : mediaUrl) {
             try {
 //                mediaId.add(tuple.getValue().getMediaId());
-                log.info("tuple:{}", Objects.requireNonNull(tuple.getValue()).getMediaId());
+                log.info("tuple:{}", tuple.getValue());
                 url.add(tuple.getValue().getMediaUrl());
             }catch (Exception e){
                 e.printStackTrace();

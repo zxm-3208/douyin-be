@@ -1,4 +1,4 @@
-package com.example.douyin_publish.domain.dto;
+package com.example.douyin_commons.core.domain;
 
 import lombok.Data;
 

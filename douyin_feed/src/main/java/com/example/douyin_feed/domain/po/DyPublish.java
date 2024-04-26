@@ -1,6 +1,8 @@
 package com.example.douyin_feed.domain.po;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -12,6 +14,8 @@ import java.util.Date;
  * @version: 1.0
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class DyPublish implements Serializable {
     private static final long serialVersionUID = 466767465347550373L;
     /**
