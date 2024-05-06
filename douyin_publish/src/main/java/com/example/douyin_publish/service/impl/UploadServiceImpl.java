@@ -122,6 +122,7 @@ public class UploadServiceImpl implements UploadService {
             // 上传至文件系统
             addMediaFilesToMinIO(bytes, objectName, bucket_files, uploadFileParamsDTO.getContentType());
             // 写入数据库表
+            uploadFileParamsDTO.getDyPublish().setStatus("0");
             getService().addMediaFilesToDb(uploadFileParamsDTO, objectName);
             // 写入Redis
             addMediaFilesToSingleRedis(uploadFileParamsDTO);
@@ -153,6 +154,7 @@ public class UploadServiceImpl implements UploadService {
             // 上传至文件系统
             addMediaFilesToMinIO(bytes, objectName, bucket_files, uploadFileParamsDTO.getContentType());
             // 写入数据库表
+            uploadFileParamsDTO.getDyPublish().setStatus("1");
             getService().addCoverFilesToDb(fileId, objectName);
             // 写入Redis
             addMediaFilesToSingleRedis(uploadFileParamsDTO);
@@ -292,6 +294,7 @@ public class UploadServiceImpl implements UploadService {
 
             // 写入数据库
 //            System.out.println(getService().getClass());
+            uploadFileParamsDTO.getDyPublish().setStatus("0");
             Boolean is_finish = getService().addMediaFilesToDb(uploadFileParamsDTO, mergeFilePath);
             log.info("写入数据库：{}", is_finish);
             // 写入Redis
@@ -414,7 +417,6 @@ public class UploadServiceImpl implements UploadService {
                 dyMedia = new DyMedia();
                 // 拷贝基本信息
                 BeanUtils.copyProperties(uploadFileParamsDTO.getDyMedia(), dyMedia);
-
                 dyMedia.setMediaUrl(objectName);
                 //            dyMedia.setMd5(uploadFileParamsDTO.);
                 //保存文件信息到DyMedia表
@@ -427,6 +429,7 @@ public class UploadServiceImpl implements UploadService {
                 dyPublish = new DyPublish();
                 // 拷贝基本信息
                 BeanUtils.copyProperties(uploadFileParamsDTO.getDyPublish(), dyPublish);
+                dyPublish.setStatus(uploadFileParamsDTO.getDyPublish().getStatus());
 //                if (contentType.indexOf("image") >= 0) {
 //                    dyPublish.setImgUrl("/" + bucket_videofiles + "/" + objectName);
 //                }
@@ -483,6 +486,8 @@ public class UploadServiceImpl implements UploadService {
         // 读取数据库
         int update = publishMapper.updateTitle(editVo.getMediaId(), editVo.getTitle());
         Long scope = publishMapper.selectByMediaId(editVo.getMediaId()).getUpdateTime().getTime();
+        int updateNum = publishMapper.updateStatus(editVo.getMediaId(), "1");
+        log.info("{}个文件已被更新", updateNum);
 
         if (update < 0) {
             MsgException.cast("保存文件信息失败");
@@ -644,9 +649,11 @@ public class UploadServiceImpl implements UploadService {
      * @date: 2024/4/15 16:11
      */
     private void addMediaFilesToMergeRedis(UploadFileParamsDTO uploadFileParamsDTO) {
-        redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1", RedisConstants.MEDIA_MERGEMD5_TTL, TimeUnit.MINUTES);
-        if(redisTemplate.opsForSet().size(RedisConstants.MEDIA_CHUNKMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5())!=0){
-            redisTemplate.delete(RedisConstants.MEDIA_CHUNKMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5());
+        if(uploadFileParamsDTO.getDyPublish().getStatus().equals("1")) {
+            redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1", RedisConstants.MEDIA_MERGEMD5_TTL, TimeUnit.MINUTES);
+            if (redisTemplate.opsForSet().size(RedisConstants.MEDIA_CHUNKMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5()) != 0) {
+                redisTemplate.delete(RedisConstants.MEDIA_CHUNKMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5());
+            }
         }
     }
 
@@ -658,13 +665,14 @@ public class UploadServiceImpl implements UploadService {
      * @date: 2024/4/14 21:14
      */
     private void addMediaFilesToSingleRedis(UploadFileParamsDTO uploadFileParamsDTO){
-        if(uploadFileParamsDTO.getContentType().indexOf("image")>=0) {
-            redisTemplate.opsForValue().set(RedisConstants.COVERMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1", RedisConstants.COVERMD5_TTL, TimeUnit.MINUTES);
-        }
-        else {
-            redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1", RedisConstants.MEDIA_MERGEMD5_TTL, TimeUnit.MINUTES);
-            if(redisTemplate.opsForSet().size(RedisConstants.MEDIA_CHUNKMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5())!=0){
-                redisTemplate.delete(RedisConstants.MEDIA_CHUNKMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5());
+        if (uploadFileParamsDTO.getDyPublish().getStatus().equals("1") ){
+            if (uploadFileParamsDTO.getContentType().indexOf("image") >= 0) {
+                redisTemplate.opsForValue().set(RedisConstants.COVERMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1", RedisConstants.COVERMD5_TTL, TimeUnit.MINUTES);
+            } else {
+                redisTemplate.opsForValue().set(RedisConstants.MEDIA_MERGEMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5(), "1", RedisConstants.MEDIA_MERGEMD5_TTL, TimeUnit.MINUTES);
+                if (redisTemplate.opsForSet().size(RedisConstants.MEDIA_CHUNKMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5()) != 0) {
+                    redisTemplate.delete(RedisConstants.MEDIA_CHUNKMD5_KEY + uploadFileParamsDTO.getDyMedia().getMd5());
+                }
             }
         }
     }

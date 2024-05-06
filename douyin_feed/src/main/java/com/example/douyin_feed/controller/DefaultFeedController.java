@@ -25,8 +25,8 @@ public class DefaultFeedController {
     DefaultFeedService defaultFeedService;
 
     @PostMapping("/getAllPublist")
-    public BaseResponse getAllPublist(@RequestBody MediaPlayVo mediaPlayVo){
-        return defaultFeedService.getAllPublist(mediaPlayVo);
+    public BaseResponse getAllPublist(){
+        return defaultFeedService.getAllPublist();
     }
 
     @PostMapping("/getUrl")

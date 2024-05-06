@@ -32,5 +32,7 @@ public interface MediaFilesMapper extends BaseMapper<DyMedia> {
     @Select("select media_url from dy_media u")
     String[] getAllMediaUrl();
 
-    List<DyMedia> findMediaUrlAndUpdateTime();
+    List<DyMedia> findMediaUrlAndUpdateTimeByUserId(String userId);
+
+    List<DyMedia> findMediaUrlAndUpdateTimeByStatus(String status);
 }

@@ -38,6 +38,18 @@ public class DyMedia implements Serializable {
      * 作者
      */
     private String author;
+    /**
+     * 点赞数
+     */
+    private int likeCount;
+    /**
+     * 转发数
+     */
+    private int forwardCount;
+    /**
+     * 浏览量
+     */
+    private int readCount;
     private DyPublish dyPublish;
 
 }

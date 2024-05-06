@@ -14,7 +14,7 @@ import com.example.douyin_feed.domain.vo.UrlListVo;
 
 public interface DefaultFeedService {
 
-    BaseResponse getAllPublist(MediaPlayVo mediaPlayVo);
+    BaseResponse getAllPublist();
 
     BaseResponse getMediaPlay(UrlListVo urlListVo);
 

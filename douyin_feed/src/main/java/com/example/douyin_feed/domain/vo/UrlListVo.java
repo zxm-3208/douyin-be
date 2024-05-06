@@ -15,5 +15,4 @@ public class UrlListVo {
     private String userId;
     private String lastId;
     private String offset;
-    private String[] mediaIdList;
 }

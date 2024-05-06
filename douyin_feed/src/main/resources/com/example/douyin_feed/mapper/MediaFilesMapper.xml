@@ -14,20 +14,27 @@
         <result column="md5" property="md5"></result>
         <result column="author" property="author"></result>
         <association property="dyPublish" javaType="com.example.douyin_feed.domain.po.DyPublish">
-            <id column="id" property="id"></id>
-            <result column="mediaId" property="mediaId"></result>
+            <id column="mediaId" property="mediaId"></id>
+            <result column="id" property="id"></result>
             <result column="fileName" property="fileName"></result>
             <result column="title" property="title"></result>
             <result column="uploadTime" property="uploadTime"></result>
             <result column="updateTime" property="updateTime"></result>
-            <result column="dpauthor" property="author"></result>
-            <result column="dpstatus" property="status"></result>
+            <result column="author" property="author"></result>
+            <result column="status" property="status"></result>
             <result column="type" property="type"></result>
             <result column="imgUrl" property="imgUrl"></result>
             <result column="tag" property="tag"></result>
         </association>
     </resultMap>
-    <select id="findMediaUrlAndUpdateTime" resultMap="mediaFilesMapper">
-        select * from dy_media o LEFT JOIN dy_publish u on o.id=u.mediaId
+
+
+    <select id="findMediaUrlAndUpdateTimeByUserId" resultMap="mediaFilesMapper">
+        select * from dy_media o LEFT JOIN dy_publish u on o.id=u.mediaId where o.author=#{userId}
     </select>
+
+    <select id="findMediaUrlAndUpdateTimeByStatus" resultMap="mediaFilesMapper">
+        select * from dy_media o LEFT JOIN dy_publish u on o.id=u.mediaId where u.status=#{status}
+    </select>
+
 </mapper>
