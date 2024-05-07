@@ -1,17 +1,23 @@
 package com.example.douyin_gateway.filter;
 
 import com.example.douyin_commons.constant.Constants;
+import com.example.douyin_commons.constant.RedisConstants;
 import com.example.douyin_commons.core.domain.BaseResponse;
 import com.example.douyin_commons.core.domain.ResultCode;
+import com.example.douyin_commons.core.domain.UserDTO;
+import com.example.douyin_commons.utils.UserHolder;
 import com.example.douyin_gateway.utils.JwtUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -19,6 +25,8 @@ import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author : zxm
@@ -35,6 +43,9 @@ public class AuthorizeFilter implements Ordered, GlobalFilter {
 
     @Value("${token.secret}")
     private String secret;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
 //    @Value("${token.expireTime}")
 //    private int expireTime;
@@ -67,24 +78,23 @@ public class AuthorizeFilter implements Ordered, GlobalFilter {
                     .parseClaimsJws(token)
                     .getBody();
             Long exp = (Long)claims.get(Constants.EXP);
-//            long exp = claims.getExpiration().getTime();
             long currentTimeMillis = System.currentTimeMillis();
             if(currentTimeMillis > exp){
                 log.info("token已过期");
                 response.setStatusCode(HttpStatus.UNAUTHORIZED);
                 return response.setComplete();
             }
-//            int result = JwtUtil.verifyToken(claims);
-//            if (result == 1 || result == 2) {
-//                response.setStatusCode(HttpStatus.UNAUTHORIZED);
-//                return response.setComplete();
-//            }
         }catch (Exception e){
             e.printStackTrace();
             response.setStatusCode(HttpStatus.UNAUTHORIZED);
             return response.setComplete();
         }
-        // 6. 放行
+        // 6. 基于token获取redis中的用户信息，如果redis没有，则去mysql查询
+        UserDTO userDTO = (UserDTO) redisTemplate.opsForValue().get(RedisConstants.USER_TOKEN_KEY+token);
+        // 7. 将查询到的信息转换为UserDTO对象并保存到ThreadLocal中
+        UserHolder.saveUser(userDTO);
+        log.info("UserHolder:{}", UserHolder.getUser());
+        // 8. 放行
         return chain.filter(exchange);
     }
 

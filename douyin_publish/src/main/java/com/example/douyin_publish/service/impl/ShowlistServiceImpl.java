@@ -91,7 +91,7 @@ public class ShowlistServiceImpl implements ShowlistService {
         Long mediaCount = redisTemplate.opsForZSet().size(RedisConstants.PUBLIST_USER_COVER_KEY+publistVO.getUserId());
         Long lastId = Long.valueOf(publistVO.getLastId());
         Long offset = Long.valueOf(publistVO.getOffset());
-        Set<ZSetOperations.TypedTuple<CoverPublistDTO>> imgUrl = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(RedisConstants.PUBLIST_USER_COVER_KEY+publistVO.getUserId(), 0, lastId, offset, 5);
+        Set<ZSetOperations.TypedTuple<CoverPublistDTO>> imgUrl = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(RedisConstants.PUBLIST_USER_COVER_KEY+publistVO.getUserId(), 0, lastId, offset, 100);
         log.info("{}",imgUrl);
         if(imgUrl==null || imgUrl.isEmpty()){
             return BaseResponse.success();

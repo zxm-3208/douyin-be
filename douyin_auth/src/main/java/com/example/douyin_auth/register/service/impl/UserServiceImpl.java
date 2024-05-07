@@ -15,6 +15,7 @@ import com.example.douyin_commons.constant.Constants;
 import com.example.douyin_commons.constant.RedisConstants;
 import com.example.douyin_commons.constant.SystemConstants;
 import com.example.douyin_commons.core.domain.BaseResponse;
+import com.example.douyin_commons.core.domain.UserDTO;
 import com.example.douyin_commons.utils.RegexUtils;
 import com.wf.captcha.SpecCaptcha;
 import lombok.extern.slf4j.Slf4j;
@@ -139,8 +140,10 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
         // 6. 如果认证通过，使用userId生成一个JWT （tokenService.createToken方法中缓存了token）
         PhoneLoginUserDTO loginUser = (PhoneLoginUserDTO) authentication.getPrincipal();
         String jwt = tokenService.createToken(loginUser);
-//        LoginUserDTO loginUserDTO = BeanUtil.copyProperties(loginUser, LoginUserDTO.class);
-
+        // TODO: 保存用户信息
+        UserDTO userDTO = new UserDTO(loginUser.getDyUser().getId(),loginUser.getDyUser().getUserName(), loginUser.getDyUser().getIcon());
+        log.info("jwt:{}", jwt);
+        redisTemplate.opsForValue().set(RedisConstants.USER_TOKEN_KEY+jwt, userDTO, RedisConstants.USER_TOKEN_TTL, TimeUnit.HOURS);
 
         // 7. 封装ResponseResult，并返回
         Map<String, String> map = new HashMap<>();
@@ -181,9 +184,10 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
         // 生成令牌
         UserNameLoginUserDTO userNameLoginUserDTO = (UserNameLoginUserDTO) authenticate.getPrincipal();
         String jwt = tokenService.createToken(userNameLoginUserDTO);
-
         log.info(jwt);
-
+        // TODO: 保存用户信息
+        UserDTO userDTO = new UserDTO(userNameLoginUserDTO.getDyUser().getId(),userNameLoginUserDTO.getDyUser().getUserName(), userNameLoginUserDTO.getDyUser().getIcon());
+        redisTemplate.opsForValue().set(RedisConstants.USER_TOKEN_KEY+jwt, userDTO, RedisConstants.USER_TOKEN_TTL, TimeUnit.HOURS);
         DyUser user = dyUserMapper.selectUserByUsername(userNameLoginUserVo.getUserName());
 
         // 返回响应

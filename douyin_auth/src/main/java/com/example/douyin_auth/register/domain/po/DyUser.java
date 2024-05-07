@@ -14,7 +14,6 @@ import java.util.Date;
  * @since 2024-03-20 11:22:01
  */
 @Data
-@TableName(value = "dy_user")
 public class DyUser implements Serializable {
     private static final long serialVersionUID = 546492953131891610L;
 /**
@@ -59,7 +58,10 @@ public class DyUser implements Serializable {
      * 最后登陆的时间
      */
     private Date loginTime;
-
+    /**
+     * 用户头像
+     */
+    private String icon;
 
 }
 

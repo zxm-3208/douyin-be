@@ -230,7 +230,7 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
 
         for (ZSetOperations.TypedTuple<MediaPublistDTO> tuple : mediaUrl) {
             try {
-//                mediaId.add(tuple.getValue().getMediaId());
+                // mediaId.add(tuple.getValue().getMediaId());
                 log.info("tuple:{}", tuple.getValue());
                 url.add(tuple.getValue().getMediaUrl());
             }catch (Exception e){
@@ -247,7 +247,7 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
         }
         HashMap<String, Object> map = new HashMap<>();
         map.put("url", url);
-//        map.put("mediaId", mediaId);
+        // map.put("mediaId", mediaId);
         map.put("minTime", minTime);
         map.put("offset", os);
         map.put("mediaCount", mediaCount);

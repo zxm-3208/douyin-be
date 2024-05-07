@@ -58,6 +58,9 @@ public class DyUser implements Serializable {
      * 最后登陆的时间
      */
     private Date loginTime;
-
+    /**
+     * 用户头像
+     */
+    private String icon;
 
 }
