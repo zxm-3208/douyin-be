@@ -10,5 +10,5 @@ import com.example.douyin_commons.core.domain.BaseResponse;
  */
 public interface LikeService {
 
-    BaseResponse addLike(Long id);
+    BaseResponse addLike(String mediaId);
 }

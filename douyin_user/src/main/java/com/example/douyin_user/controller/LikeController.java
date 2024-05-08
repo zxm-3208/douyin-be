@@ -21,9 +21,9 @@ public class LikeController {
     @Autowired
     LikeService likeServiceImpl;
 
-    @PutMapping("/mediaLike/{id}")
-    public BaseResponse addLike(@PathVariable("id") Long id){
-        return likeServiceImpl.addLike(id);
+    @PutMapping("/mediaLike/{mediaId}")
+    public BaseResponse addLike(@PathVariable("mediaId") String mediaId){
+        return likeServiceImpl.addLike(mediaId);
     }
 
 

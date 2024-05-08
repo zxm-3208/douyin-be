@@ -27,11 +27,15 @@ public class RedisConstants {
     public static final Long PUBLIST_USER_MEDIA_TTL = 7L;
 
     // 视频播放列表(默认发布的视频列表的视频url)
-    public static final String PUBLIST_DEFAULT_MEDIA_KEY = "publist:feed:default:";
+    public static final String PUBLIST_DEFAULT_MEDIA_KEY = "publist:feed:default";
     public static final Long PUBLIST_DEFAULT_MEDIA_TTL = 7L;
 
     // 存储用户名
     public static final String USER_TOKEN_KEY = "user:token:";
     public static final Long USER_TOKEN_TTL = 48L;
+
+    // 存储视频点赞
+    public static final String MEDIA_USER_LIKE_KEY = "liked:media:";
+//    public static final Long MEDIA_USER_LIKE_TTL = 48L;
 
 }

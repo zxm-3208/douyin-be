@@ -10,7 +10,7 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 @EnableDiscoveryClient
 @SpringBootApplication
 @EnableFeignClients
-@MapperScan("com.example.douyin_user.**.mapper")
+@MapperScan("com.example.douyin_user.mapper.**")
 @EnableAspectJAutoProxy(exposeProxy = true)
 public class DouyinUserApplication {
 

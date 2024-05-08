@@ -1,4 +1,4 @@
-package com.example.douyin_user.domain.po;
+package com.example.douyin_user.domain.po.dbAuth;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;

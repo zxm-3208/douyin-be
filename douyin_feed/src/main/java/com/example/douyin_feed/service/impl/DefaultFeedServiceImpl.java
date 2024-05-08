@@ -60,7 +60,8 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
         log.info("查询到的数据有{}条", temp_entry.size());
         if(temp_entry.size()!=zSetUtils.getObjectSize(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY)) {
             // 删除Redis
-            zSetUtils.delAllObjectToZSet(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY);
+            if(redisTemplate.opsForZSet().size(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY)>0)
+                zSetUtils.delAllObjectToZSet(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY);
             // 保存到Redis
             for (int i = 0; i < temp_entry.size(); i++) {
                 try {
