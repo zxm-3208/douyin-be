@@ -24,6 +24,6 @@ public interface MediaFilesMapper extends BaseMapper<DyMedia> {
     @Select("select * from dy_media u where u.id = #{id}")
     DyMedia selectById(String id);
 
-    @Insert("insert into dy_media(id, mediaUrl, status, md5, author) values(#{id}, #{mediaUrl}, #{status}, #{md5}, #{author})")
+    @Insert("insert into dy_media(id, mediaUrl, status, md5, author, likeCount, forwardCount, readCount) values(#{id}, #{mediaUrl}, #{status}, #{md5}, #{author}, #{likeCount}, #{forwardCount}, #{readCount})")
     int insert(DyMedia dyMedia);
 }

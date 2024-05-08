@@ -1,6 +1,7 @@
 package com.example.douyin_user.service;
 
 import com.example.douyin_commons.core.domain.BaseResponse;
+import com.example.douyin_user.domain.vo.VediaUserLikes;
 
 /**
  * @author : zxm
@@ -10,5 +11,5 @@ import com.example.douyin_commons.core.domain.BaseResponse;
  */
 public interface LikeService {
 
-    BaseResponse addLike(String mediaId);
+    BaseResponse addLike(VediaUserLikes vediaUserLikes);
 }

@@ -25,7 +25,7 @@ import javax.sql.DataSource;
 public class SecondDataSourceConfig {
 
     // 精确到 cluster 目录，以便跟其他数据源隔离
-    static final String PACKAGE = "com.springboot.dao.second";
+    static final String PACKAGE = "com.example.douyin_user.mapper.second";
     static final String MAPPER_LOCATION = "classpath:com/example/douyin_user/mapper/second/*.xml";
 
     @Value("${spring.datasource.second.url}")

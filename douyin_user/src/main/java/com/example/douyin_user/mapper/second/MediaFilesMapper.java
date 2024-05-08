@@ -3,6 +3,7 @@ package com.example.douyin_user.mapper.second;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.douyin_user.domain.po.dbMedia.DyMedia;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 /**
  * @author : zxm
@@ -12,9 +13,9 @@ import org.apache.ibatis.annotations.Select;
  */
 public interface MediaFilesMapper extends BaseMapper<DyMedia> {
 
-    @Select("UPDATE dyMedia SET likeCount = likeCount + 1 WHERE id = #{id}")
-    int addMediaLikeById(String id);
+    @Update("UPDATE dy_media SET likeCount = likeCount + 1 WHERE id = #{id}")
+    Integer addMediaLikeById(String id);
 
-    @Select("UPDATE dyMedia SET likeCount = likeCount - 1 WHERE id = #{id}")
-    int delMediaLikeById(String id);
+    @Update("UPDATE dy_media SET likeCount = likeCount - 1 WHERE id = #{id}")
+    Integer delMediaLikeById(String id);
 }

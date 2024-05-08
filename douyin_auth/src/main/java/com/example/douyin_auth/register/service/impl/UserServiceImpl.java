@@ -17,6 +17,7 @@ import com.example.douyin_commons.constant.SystemConstants;
 import com.example.douyin_commons.core.domain.BaseResponse;
 import com.example.douyin_commons.core.domain.UserDTO;
 import com.example.douyin_commons.utils.RegexUtils;
+import com.example.douyin_commons.utils.UserHolder;
 import com.wf.captcha.SpecCaptcha;
 import lombok.extern.slf4j.Slf4j;
 import org.passay.CharacterRule;
@@ -139,6 +140,7 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
 
         // 6. 如果认证通过，使用userId生成一个JWT （tokenService.createToken方法中缓存了token）
         PhoneLoginUserDTO loginUser = (PhoneLoginUserDTO) authentication.getPrincipal();
+        log.info("userId:{}", UserHolder.getUser());
         String jwt = tokenService.createToken(loginUser);
         // TODO: 保存用户信息
         UserDTO userDTO = new UserDTO(loginUser.getDyUser().getId(),loginUser.getDyUser().getUserName(), loginUser.getDyUser().getIcon());
@@ -157,7 +159,6 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
 
     @Override
     public BaseResponse loginByUserName(UserNameLoginUserVo userNameLoginUserVo) {
-
         // 从Redis中获取验证码
         String verifyKey = Constants.CAPTCHA_CODE_KEY + userNameLoginUserVo.getUuid();
         log.info(verifyKey);

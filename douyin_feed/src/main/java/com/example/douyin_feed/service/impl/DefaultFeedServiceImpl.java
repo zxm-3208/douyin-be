@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
  * @Description: 按照发布时间排序
  * @version: 1.0
  */
+// TODO: Feed流需要返回mediaIdList
 @Service
 @Slf4j
 public class DefaultFeedServiceImpl implements DefaultFeedService {
@@ -55,9 +56,14 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
      */
     @Override
     public BaseResponse getAllPublist() {
+        List<String> mediaIdList = new ArrayList<>();
         // 查询数据库
         List<DyMedia> temp_entry = mediaFilesMapper.findMediaUrlAndUpdateTimeByStatus("1");
         log.info("查询到的数据有{}条", temp_entry.size());
+        // 记录meidaIdList数据
+        for(DyMedia x: temp_entry){
+            mediaIdList.add(x.getId());
+        }
         if(temp_entry.size()!=zSetUtils.getObjectSize(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY)) {
             // 删除Redis
             if(redisTemplate.opsForZSet().size(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY)>0)
@@ -80,7 +86,7 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
                 redisTemplate.expire(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY, RedisConstants.PUBLIST_DEFAULT_MEDIA_TTL, TimeUnit.DAYS);
             }
         }
-        return BaseResponse.success();
+        return BaseResponse.success(mediaIdList);
     }
 
     /**

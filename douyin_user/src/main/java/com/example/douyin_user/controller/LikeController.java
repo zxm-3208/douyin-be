@@ -1,6 +1,7 @@
 package com.example.douyin_user.controller;
 
 import com.example.douyin_commons.core.domain.BaseResponse;
+import com.example.douyin_user.domain.vo.VediaUserLikes;
 import com.example.douyin_user.service.LikeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,9 +22,9 @@ public class LikeController {
     @Autowired
     LikeService likeServiceImpl;
 
-    @PutMapping("/mediaLike/{mediaId}")
-    public BaseResponse addLike(@PathVariable("mediaId") String mediaId){
-        return likeServiceImpl.addLike(mediaId);
+    @PostMapping("/mediaLike")
+    public BaseResponse addLike(@RequestBody VediaUserLikes vediaUserLikes){
+        return likeServiceImpl.addLike(vediaUserLikes);
     }
 
 

@@ -55,8 +55,9 @@
    7. 根据视频状态获取feed流 (√)
    8. 预加载 (主要利用CDN，相关产品有腾讯云的edgeOne, 由于收费，暂时不使用)
    9. 获取下一个分页    (前端还未实现)  
-   10. 关注 (推拉等模式)    (关注列表，投喂，消息队列)
-   11. 推荐
+   10. Feed需要实时获取点赞、转发数据
+   11. 关注 (推拉等模式)    (关注列表，投喂，消息队列)
+   12. 推荐
 5. 用户模块
    1. 点赞功能
    2. 关注功能
@@ -135,7 +136,7 @@
    5. JWT是无状态的，不需要存储到Redis里面，如果存在了Redis体现不出JWT无状态的特性。但是如果不存储到Redis里面，后续在进行doFilterInternal时需要从mysql中读取用户数据。
    6. TODO(检测用户异常): 由于JWT的无状态性，当发现用户异常时需要采取措施。但这里一般是通过客户端的Https协议保障，为了进一步防止该情况的话，可以通过手机验证码进行二次验证。
    7. 多种验证方式下，如何配置多个AuthenticationManager？AuthenticationManager的实现ProviderManager管理了众多的AuthenticationProvider，每一个AuthenticationProvider都支持特定类型的Authentication。将不同的认证方式分别交给不同的每一个AuthenticationProvider都支持特定类型的Authentication就可以了。只要用一个AuthenticationProvider认证通过，就算认证通过了。
-   8. Spring cloud 如何保证使用Thredlocal保存用户信息，不会产生内存泄漏。(gateway库与MVC库冲突，无法使用拦截器)
+   8. Spring cloud 如何保证使用Thredlocal保存用户信息，不会产生内存泄漏。(gateway库与MVC库冲突，无法使用拦截器)(不同微服务之间由于线程不同，每个微服务有自己的线程池)
 2. 微服务架构
    1. 微服务间的数据库如何设计。
    2. nacos2.x 新增了gRPC 的通信方式(用于客户端向服务端发起连接请求)，新增了两个端口。这两个端口在nacos原先的端口上(默认8848)，进行一定偏移量自动生成
@@ -162,3 +163,4 @@
    5. BUG: minio上有，数据库上没有的时候不会获取封面。
 5. 用户模块
    1. 一个服务模块如何连接多个数据库。 需要对不同数据源进行配置
+   2. 

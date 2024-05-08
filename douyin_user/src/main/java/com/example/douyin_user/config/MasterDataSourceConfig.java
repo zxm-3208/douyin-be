@@ -26,7 +26,7 @@ import javax.sql.DataSource;
 public class MasterDataSourceConfig {
 
     // 精确到 master 目录，以便跟其他数据源隔离
-    static final String PACKAGE = "org.spring.springboot.dao.master";
+    static final String PACKAGE = "com.example.douyin_user.mapper.master";
     static final String MAPPER_LOCATION = "classpath:com/example/douyin_user/mapper/master/*.xml";
 
     @Value("${spring.datasource.master.url}")
