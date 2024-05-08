@@ -27,5 +27,14 @@ public class LikeController {
         return likeServiceImpl.addLike(vediaUserLikes);
     }
 
+    @PostMapping("/initLikeFlag")
+    public BaseResponse initLikeFlag(@RequestBody VediaUserLikes vediaUserLikes){
+        return likeServiceImpl.initLikeFlag(vediaUserLikes);
+    }
+
+    @PostMapping("/getLikeCount")
+    public BaseResponse getLikeCount(@RequestBody VediaUserLikes vediaUserLikes){
+        return likeServiceImpl.getLikeCount(vediaUserLikes);
+    }
 
 }

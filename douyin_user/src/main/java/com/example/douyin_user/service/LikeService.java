@@ -12,4 +12,8 @@ import com.example.douyin_user.domain.vo.VediaUserLikes;
 public interface LikeService {
 
     BaseResponse addLike(VediaUserLikes vediaUserLikes);
+
+    BaseResponse getLikeCount(VediaUserLikes vediaUserLikes);
+
+    BaseResponse initLikeFlag(VediaUserLikes vediaUserLikes);
 }

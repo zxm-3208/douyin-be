@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 
 /**
  * @author : zxm
@@ -37,16 +38,41 @@ public class LikeServiceImpl implements LikeService {
             // 没有，则添加
             Integer isSuccess = mediaFilesMapper.addMediaLikeById(mediaId);
             log.info("isSuccess:{}",isSuccess);
-            if (isSuccess != null) {
+            if (isSuccess != 0) {
                 redisTemplate.opsForZSet().add(key, userId.toString(), System.currentTimeMillis());
             }
         }else {
             // 有则删除
             Integer isSuccess = mediaFilesMapper.delMediaLikeById(mediaId);
-            if (isSuccess != null) {
+            if (isSuccess != 0) {
                 redisTemplate.opsForZSet().remove(key, userId.toString());
             }
         }
         return null;
+    }
+
+    @Override
+    public BaseResponse getLikeCount(VediaUserLikes vediaUserLikes) {
+        String mediaId = vediaUserLikes.getMediaId();
+        String key = RedisConstants.MEDIA_USER_LIKE_KEY + mediaId;
+        String userId = vediaUserLikes.getUserId();
+        log.info("key:{}",key);
+        Long size = redisTemplate.opsForZSet().size(key);
+        return BaseResponse.success(size);
+    }
+
+    @Override
+    public BaseResponse initLikeFlag(VediaUserLikes vediaUserLikes) {
+        String mediaId = vediaUserLikes.getMediaId();
+        String key = RedisConstants.MEDIA_USER_LIKE_KEY + mediaId;
+        String userId = vediaUserLikes.getUserId();
+        Double score = redisTemplate.opsForZSet().score(key, userId);
+        log.info("score:{}", score);
+        if(score==null){
+            return BaseResponse.success(-1);
+        }
+        else{
+            return BaseResponse.success(1);
+        }
     }
 }
