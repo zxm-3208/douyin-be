@@ -37,4 +37,9 @@ public class LikeController {
         return likeServiceImpl.getLikeCount(vediaUserLikes);
     }
 
+    @PostMapping("/userLikeList")
+    public BaseResponse getUserLikeList(@RequestBody VediaUserLikes vediaUserLikes){
+        return likeServiceImpl.getUserLikeList(vediaUserLikes);
+    }
+
 }

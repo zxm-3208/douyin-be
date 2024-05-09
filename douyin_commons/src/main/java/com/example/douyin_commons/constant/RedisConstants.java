@@ -36,6 +36,8 @@ public class RedisConstants {
 
     // 存储视频点赞
     public static final String MEDIA_USER_LIKE_KEY = "liked:media:";
-//    public static final Long MEDIA_USER_LIKE_TTL = 48L;
+
+    // 用户视频点赞列表
+    public static final String USER_LIKE_MEDIA_LIST_KEY = "liked:user:";
 
 }

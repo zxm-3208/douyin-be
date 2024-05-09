@@ -16,4 +16,6 @@ public interface LikeService {
     BaseResponse getLikeCount(VediaUserLikes vediaUserLikes);
 
     BaseResponse initLikeFlag(VediaUserLikes vediaUserLikes);
+
+    BaseResponse getUserLikeList(VediaUserLikes vediaUserLikes);
 }
