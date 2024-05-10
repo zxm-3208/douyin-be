@@ -142,7 +142,7 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
         PhoneLoginUserDTO loginUser = (PhoneLoginUserDTO) authentication.getPrincipal();
         log.info("userId:{}", UserHolder.getUser());
         String jwt = tokenService.createToken(loginUser);
-        // TODO: 保存用户信息
+        // 保存用户信息
         UserDTO userDTO = new UserDTO(loginUser.getDyUser().getId(),loginUser.getDyUser().getUserName(), loginUser.getDyUser().getIcon());
         log.info("jwt:{}", jwt);
         redisTemplate.opsForValue().set(RedisConstants.USER_TOKEN_KEY+jwt, userDTO, RedisConstants.USER_TOKEN_TTL, TimeUnit.HOURS);
@@ -186,7 +186,7 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
         UserNameLoginUserDTO userNameLoginUserDTO = (UserNameLoginUserDTO) authenticate.getPrincipal();
         String jwt = tokenService.createToken(userNameLoginUserDTO);
         log.info(jwt);
-        // TODO: 保存用户信息
+        // 保存用户信息
         UserDTO userDTO = new UserDTO(userNameLoginUserDTO.getDyUser().getId(),userNameLoginUserDTO.getDyUser().getUserName(), userNameLoginUserDTO.getDyUser().getIcon());
         redisTemplate.opsForValue().set(RedisConstants.USER_TOKEN_KEY+jwt, userDTO, RedisConstants.USER_TOKEN_TTL, TimeUnit.HOURS);
         DyUser user = dyUserMapper.selectUserByUsername(userNameLoginUserVo.getUserName());

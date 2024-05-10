@@ -135,6 +135,7 @@ public class ShowlistServiceImpl implements ShowlistService {
 //        return null;
     }
 
+    // Redis存储格式
     @Override
     public BaseResponse showLikeList(PublistVO publistVO) {
         String userId = publistVO.getUserId();
@@ -162,8 +163,8 @@ public class ShowlistServiceImpl implements ShowlistService {
                 try {
                     long scope = tempList.get(i).getUpdateTime().getTime();
                     // 记录到Redis中
-                    String tempCoverUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_files).object(tempList.get(i).getCoverUrl()).method(Method.GET).build());
-                    CoverPublistDTO coverPublistDTO = new CoverPublistDTO(tempList.get(i).getMediaId(),tempCoverUrl);
+                    CoverPublistDTO coverPublistDTO = new CoverPublistDTO(tempList.get(i).getMediaId(),tempList.get(i).getCoverUrl());
+                    System.out.println(coverPublistDTO.getCoverUrl());
                     zSetUtils.addObjectToZSet(RedisConstants.LIKE_USER_COVER_KEY + publistVO.getUserId(), coverPublistDTO, scope);
                 }catch (Exception e){
                     e.printStackTrace();
@@ -192,7 +193,8 @@ public class ShowlistServiceImpl implements ShowlistService {
         for (ZSetOperations.TypedTuple<CoverPublistDTO> tuple : imgUrl) {
             try {
                 mediaId.add(tuple.getValue().getMediaId());
-                url.add(tuple.getValue().getCoverUrl());
+                String tempCoverUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_files).object(tuple.getValue().getCoverUrl()).method(Method.GET).build());
+                url.add(tempCoverUrl);
             }catch (Exception e){
                 e.printStackTrace();
                 return BaseResponse.fail("获取外链失败");

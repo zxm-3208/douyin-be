@@ -18,4 +18,7 @@ public interface MediaFilesMapper extends BaseMapper<DyMedia> {
 
     @Update("UPDATE dy_media SET likeCount = likeCount - 1 WHERE id = #{id}")
     Integer delMediaLikeById(String id);
+
+    @Select("select * from dy_media u where u.id = #{id}")
+    DyMedia getMediaUrlByMediaId(String mediaId);
 }

@@ -226,6 +226,8 @@ public class UploadServiceImpl implements UploadService {
         String fileId = String.valueOf(snowflakeGenerator.next());
         uploadFileParamsDTO.getDyMedia().setId(fileId);
         uploadFileParamsDTO.getDyPublish().setMediaId(fileId);
+        String publishId = String.valueOf(snowflakeGenerator.next());
+        uploadFileParamsDTO.getDyPublish().setId(publishId);
 
 
         try {
@@ -285,8 +287,8 @@ public class UploadServiceImpl implements UploadService {
             }
 
             // 写入数据库
-//            System.out.println(getService().getClass());
             uploadFileParamsDTO.getDyPublish().setStatus("0");
+            System.out.println(uploadFileParamsDTO.getDyPublish().getId());
             Boolean is_finish = getService().addMediaFilesToDb(uploadFileParamsDTO, mergeFilePath);
             log.info("写入数据库：{}", is_finish);
             // 写入Redis
@@ -428,11 +430,15 @@ public class UploadServiceImpl implements UploadService {
 //                if (contentType.indexOf("image") >= 0) {
 //                    dyPublish.setImgUrl("/" + bucket_videofiles + "/" + objectName);
 //                }
+                System.out.println(uploadFileParamsDTO.getDyPublish().getId());
+                dyPublish.setId(uploadFileParamsDTO.getDyPublish().getId());
+                System.out.println(dyPublish.getId());
                 log.info("用户ID{}",uploadFileParamsDTO.getDyPublish().getAuthor());
                 dyPublish.setAuthor(uploadFileParamsDTO.getDyPublish().getAuthor());
                 if(dyPublish.getUploadTime()==null)
                     dyPublish.setUploadTime(new Timestamp(System.currentTimeMillis()));
                 dyPublish.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+                System.out.println(dyPublish);
                 //保存文件信息到DyPublish表
                 int insert = publishMapper.insert(dyPublish);
                 if (insert < 0) {

@@ -26,10 +26,10 @@ public class RedisConstants {
     public static final String PUBLIST_USER_MEDIA_KEY = "publist:userId:media:";
     public static final Long PUBLIST_USER_MEDIA_TTL = 7L;
 
-    public static final String LIKE_USER_COVER_KEY = "like:userId:cover:";
+    public static final String LIKE_USER_COVER_KEY = "liked:userId:cover:";
     public static final Long LIKE_USER_COVER_TTL = 7L;
     // 视频播放列表(各用户发布的视频列表的视频url)
-    public static final String LIKE_USER_MEDIA_KEY = "like:userId:media:";
+    public static final String LIKE_USER_MEDIA_KEY = "liked:userId:media:";
     public static final Long LIKE_USER_MEDIA_TTL = 7L;
 
     // 视频播放列表(默认发布的视频列表的视频url)

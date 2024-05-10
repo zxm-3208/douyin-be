@@ -20,7 +20,7 @@ import java.util.Map;
  */
 @Slf4j
 public class MediaUtils {
-    // TODO: 清空临时文件
+    // 清空临时文件
     public static Map<String, String> getScreenshot(String filePath) {
         try {
             Map<String, String> result = new HashMap<String, String>();

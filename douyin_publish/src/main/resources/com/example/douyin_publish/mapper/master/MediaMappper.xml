@@ -3,4 +3,14 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 
 <mapper namespace="com.example.douyin_publish.mapper.master.MediaFilesMapper">
+    <resultMap id="dyMediaMapper" type="com.example.douyin_publish.domain.po.DyMedia">
+        <result column="id" property="id"></result>
+        <result column="mediaUrl" property="mediaUrl"></result>
+        <result column="status" property="status"></result>
+        <result column="md5" property="md5"></result>
+        <result column="author" property="author"></result>
+        <result column="likeCount" property="likeCount"></result>
+        <result column="forwardCount" property="forwardCount"></result>
+        <result column="readCount" property="readCount"></result>
+    </resultMap>
 </mapper>

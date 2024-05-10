@@ -3,6 +3,7 @@ package com.example.douyin_feed.service.impl;
 import com.example.douyin_commons.constant.RedisConstants;
 import com.example.douyin_commons.core.domain.BaseResponse;
 import com.example.douyin_commons.core.domain.MediaPublistDTO;
+import com.example.douyin_feed.domain.dto.LikeFeedDTO;
 import com.example.douyin_feed.domain.po.DyMedia;
 import com.example.douyin_feed.domain.po.DyUserLikeMedia;
 import com.example.douyin_feed.domain.vo.ClickPlayVo;
@@ -31,7 +32,7 @@ import java.util.concurrent.TimeUnit;
  * @Description: 按照发布时间排序
  * @version: 1.0
  */
-// TODO: Feed流需要返回mediaIdList
+// Feed流需要返回mediaIdList
 @Service
 @Slf4j
 public class DefaultFeedServiceImpl implements DefaultFeedService {
@@ -120,7 +121,7 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
         log.info("num:{}",num);
         if(num == null || num.equals(0L)){
             // 读取数据库
-            // TODO: 级联查询
+            // 级联查询
             List<DyMedia> temp_entry = mediaFilesMapper.findMediaUrlAndUpdateTimeByUserId(userId);
 //            DyPublish[] temp_dypublish = publishMapper.selectByUserId(userId);
 //            String[] temp_media_url_list = mediaFilesMapper.getMediaUrlByUserId(userId);
@@ -195,37 +196,50 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
     public BaseResponse getUserLikePlay(ClickPlayVo clickPlayVo) {
         String userId = clickPlayVo.getUserId();
         // 从Redis中获取
-        Long num = redisTemplate.opsForZSet().size(RedisConstants.USER_LIKE_MEDIA_LIST_KEY+userId);
+        Long num = redisTemplate.opsForZSet().size(RedisConstants.USER_LIKE_MEDIA_LIST_KEY + userId);
         List mediaIdList = new ArrayList();
         log.info("num:{}",num);
         if(num == null || num.equals(0L)){
             // 读取数据库
             // 级联
-            List<DyMedia> temp_entry = mediaFilesMapper.findMediaUrlAndUpdateTimeByUserLike(userId);
+            // TODO: 现在like表中查mediaId, 再在Publish表中获取url，最后再转化为外链
+            log.info("userId:{}",userId);
+            List<DyMedia> dyMedia = mediaFilesMapper.getByAuthor(userId);
+            List<DyUserLikeMedia> dyUserLikeMedia = dyUserLikeMediaMapper.getMediaIdByUserId(userId);
+            List<LikeFeedDTO> likeFeedDTOS = new ArrayList<>();
+
+            for(DyMedia x: dyMedia){
+                for(DyUserLikeMedia y: dyUserLikeMedia){
+                    if(x.getId().equals(y.getMediaid())){
+                        likeFeedDTOS.add(new LikeFeedDTO(x.getId(), y.getUpdateTime(), x.getMediaUrl()));
+                    }
+                }
+            }
+            log.info("size:{}",likeFeedDTOS.size());
             // 保存到Redis
-            for(int i=0;i<temp_entry.size();i++){
+            for(int i=0;i<likeFeedDTOS.size();i++){
                 try {
-                    log.info("updateTime:{}",temp_entry.get(i).getDyUserLikeMedia().getUpdateTime());
-                    long scope = temp_entry.get(i).getDyUserLikeMedia().getUpdateTime().getTime();
+                    log.info("updateTime:{}",likeFeedDTOS.get(i).getUpdateTime());
+                    long scope = likeFeedDTOS.get(i).getUpdateTime().getTime();
                     // 记录到Redis中
-                    String tempMediaUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_videofiles).object(temp_entry.get(i).getMediaUrl()).method(Method.GET).build());
-                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(temp_entry.get(i).getId(),tempMediaUrl);
-                    zSetUtils.addObjectToZSet(RedisConstants.PUBLIST_USER_MEDIA_KEY, mediaPublistDTO, scope);
+//                    String tempMediaUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_videofiles).object(likeFeedDTOS.get(i).getMediaUrl()).method(Method.GET).build());
+                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(likeFeedDTOS.get(i).getMediaId(),likeFeedDTOS.get(i).getMediaUrl());
+                    zSetUtils.addObjectToZSet(RedisConstants.USER_LIKE_MEDIA_LIST_KEY + userId, mediaPublistDTO, scope);
                 }catch (Exception e){
                     e.printStackTrace();
                     return BaseResponse.fail("获取外链失败");
                 }
             }
-            if(temp_entry.size()>0){
-                redisTemplate.expire(RedisConstants.PUBLIST_USER_MEDIA_KEY, RedisConstants.PUBLIST_USER_MEDIA_TTL, TimeUnit.DAYS);
-            }
+//            if(likeFeedDTOS.size()>0){
+//                redisTemplate.expire(RedisConstants.USER_LIKE_MEDIA_LIST_KEY, RedisConstants.USER_LIKE_MEDIA_LIST_TTL, TimeUnit.DAYS);
+//            }
         }
 
         // 分页读取
-        Long mediaCount = redisTemplate.opsForZSet().size(RedisConstants.PUBLIST_USER_MEDIA_KEY);
+        Long mediaCount = redisTemplate.opsForZSet().size(RedisConstants.USER_LIKE_MEDIA_LIST_KEY + userId);
         Long lastId = Long.valueOf(clickPlayVo.getLastId());
         Long offset = Long.valueOf(clickPlayVo.getOffset());
-        Set<ZSetOperations.TypedTuple<MediaPublistDTO>> mediaUrl = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(RedisConstants.PUBLIST_USER_MEDIA_KEY, 0, lastId, offset, 100);
+        Set<ZSetOperations.TypedTuple<MediaPublistDTO>> mediaUrl = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(RedisConstants.USER_LIKE_MEDIA_LIST_KEY + userId, 0, lastId, offset, 100);
         if(mediaUrl==null || mediaUrl.isEmpty()){
             return BaseResponse.success();
         }
@@ -239,7 +253,9 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
                 // mediaId.add(tuple.getValue().getMediaId());
                 log.info("tuple:{}", tuple.getValue());
                 mediaIdList.add(tuple.getValue().getMediaId());
-                url.add(tuple.getValue().getMediaUrl());
+                String tempMediaUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_videofiles).object(tuple.getValue().getMediaUrl()).method(Method.GET).build());
+                log.info("url:{}",tempMediaUrl);
+                url.add(tempMediaUrl);
             }catch (Exception e){
                 e.printStackTrace();
                 return BaseResponse.fail("获取外链失败");

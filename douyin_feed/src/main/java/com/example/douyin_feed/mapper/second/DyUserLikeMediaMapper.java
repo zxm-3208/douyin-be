@@ -16,6 +16,7 @@ import java.util.List;
  * @version: 1.0
  */
 public interface DyUserLikeMediaMapper extends BaseMapper<DyUserLikeMedia> {
-
+    @Select("select * from dy_user_like_media u where u.userId = #{userId}")
+    List<DyUserLikeMedia> getMediaIdByUserId(String userId);
 }
 

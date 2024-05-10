@@ -37,26 +37,5 @@
         select * from dy_media o LEFT JOIN dy_publish u on o.id=u.mediaId where u.status=#{status} ORDER BY o.id
     </select>
 
-    <resultMap id="userLikeFilesMapper" type="com.example.douyin_feed.domain.po.DyMedia">
-        <!--手动指定字段与实体属性的映射关系
-            column: 数据表的字段名称
-            property：实体的属性名称
-        -->
-        <id column="id" property="id"></id>
-        <result column="mediaUrl" property="mediaUrl"></result>
-        <result column="status" property="status"></result>
-        <result column="md5" property="md5"></result>
-        <result column="author" property="author"></result>
-        <association property="dyUserLikeMedia" javaType="com.example.douyin_feed.domain.po.DyUserLikeMedia">
-            <id column="id" property="id"></id>
-            <result column="userId" property="userId"></result>
-            <result column="mediaId" property="mediaId"></result>
-            <result column="updateTime" property="updateTime"></result>
-        </association>
-    </resultMap>
-
-    <select id="findMediaUrlAndUpdateTimeByUserLike" resultMap="userLikeFilesMapper">
-        select * from dy_media o LEFT JOIN dy_user_like_media u on o.id=u.mediaId where u.userId=#{userId} ORDER BY o.id
-    </select>
 
 </mapper>
