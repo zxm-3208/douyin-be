@@ -51,6 +51,7 @@ public class DyMedia implements Serializable {
      */
     private int readCount;
     private DyPublish dyPublish;
+    private DyUserLikeMedia dyUserLikeMedia;
 
 }
 

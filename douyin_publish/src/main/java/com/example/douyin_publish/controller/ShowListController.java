@@ -27,5 +27,10 @@ public class ShowListController {
         return showlistService.showPublist(publistVO);
     }
 
+    @PostMapping("/likeList")
+    public BaseResponse showLikeList(@RequestBody PublistVO publistVO){
+        return showlistService.showLikeList(publistVO);
+    }
+
 
 }

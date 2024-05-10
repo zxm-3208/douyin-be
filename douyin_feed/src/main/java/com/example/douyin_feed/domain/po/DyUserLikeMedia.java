@@ -3,6 +3,7 @@ package com.example.douyin_feed.domain.po;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * @author : zxm
@@ -25,4 +26,8 @@ public class DyUserLikeMedia implements Serializable {
      * 外键，用户ID
      */
     private String mediaid;
+    /**
+     * 更新时间
+     */
+    private Date updateTime;
 }

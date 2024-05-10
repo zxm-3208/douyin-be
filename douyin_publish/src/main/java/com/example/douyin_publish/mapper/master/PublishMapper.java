@@ -1,4 +1,4 @@
-package com.example.douyin_publish.mapper;
+package com.example.douyin_publish.mapper.master;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.douyin_publish.domain.po.DyMedia;
@@ -6,6 +6,8 @@ import com.example.douyin_publish.domain.po.DyPublish;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+
+import java.util.List;
 
 /**
  * @author : zxm
@@ -32,4 +34,6 @@ public interface PublishMapper extends BaseMapper<DyPublish> {
 
     @Insert("insert into dy_publish(id, mediaId, fileName, title, uploadTime, updateTime, author, status, type, imgUrl, tag) values(#{id}, #{mediaId}, #{fileName}, #{title}, #{uploadTime}, #{updateTime}, #{author}, #{status}, #{type}, #{imgUrl}, #{tag})")
     int insert(DyPublish dyPublish);
+
+    List<DyPublish> findUrl();
 }

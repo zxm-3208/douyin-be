@@ -4,15 +4,18 @@ import com.example.douyin_commons.constant.RedisConstants;
 import com.example.douyin_commons.core.domain.BaseResponse;
 import com.example.douyin_commons.core.domain.MediaPublistDTO;
 import com.example.douyin_feed.domain.po.DyMedia;
+import com.example.douyin_feed.domain.po.DyUserLikeMedia;
 import com.example.douyin_feed.domain.vo.ClickPlayVo;
 import com.example.douyin_feed.domain.vo.UrlListVo;
 import com.example.douyin_feed.mapper.master.MediaFilesMapper;
+import com.example.douyin_feed.mapper.second.DyUserLikeMediaMapper;
 import com.example.douyin_feed.service.DefaultFeedService;
 import com.example.douyin_feed.utils.ZSetUtils;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
 import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -39,6 +42,8 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
     private MinioClient minioClient;
     @Autowired
     private MediaFilesMapper mediaFilesMapper;
+    @Autowired
+    private DyUserLikeMediaMapper dyUserLikeMediaMapper;
     @Autowired
     private ZSetUtils zSetUtils;
     // 视频文件桶
@@ -161,6 +166,77 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
         for (ZSetOperations.TypedTuple<MediaPublistDTO> tuple : mediaUrl) {
             try {
 //                mediaId.add(tuple.getValue().getMediaId());
+                log.info("tuple:{}", tuple.getValue());
+                mediaIdList.add(tuple.getValue().getMediaId());
+                url.add(tuple.getValue().getMediaUrl());
+            }catch (Exception e){
+                e.printStackTrace();
+                return BaseResponse.fail("获取外链失败");
+            }
+            long time = tuple.getScore().longValue();
+            if (time == minTime) {
+                os++;
+            }else {
+                minTime = time;
+                os = 1;
+            }
+        }
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("url", url);
+        map.put("mediaId", mediaIdList);
+        map.put("minTime", minTime);
+        map.put("offset", os);
+        map.put("mediaCount", mediaCount);
+        // 返回结果
+        return BaseResponse.success(map);
+    }
+
+    @Override
+    public BaseResponse getUserLikePlay(ClickPlayVo clickPlayVo) {
+        String userId = clickPlayVo.getUserId();
+        // 从Redis中获取
+        Long num = redisTemplate.opsForZSet().size(RedisConstants.USER_LIKE_MEDIA_LIST_KEY+userId);
+        List mediaIdList = new ArrayList();
+        log.info("num:{}",num);
+        if(num == null || num.equals(0L)){
+            // 读取数据库
+            // 级联
+            List<DyMedia> temp_entry = mediaFilesMapper.findMediaUrlAndUpdateTimeByUserLike(userId);
+            // 保存到Redis
+            for(int i=0;i<temp_entry.size();i++){
+                try {
+                    log.info("updateTime:{}",temp_entry.get(i).getDyUserLikeMedia().getUpdateTime());
+                    long scope = temp_entry.get(i).getDyUserLikeMedia().getUpdateTime().getTime();
+                    // 记录到Redis中
+                    String tempMediaUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_videofiles).object(temp_entry.get(i).getMediaUrl()).method(Method.GET).build());
+                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(temp_entry.get(i).getId(),tempMediaUrl);
+                    zSetUtils.addObjectToZSet(RedisConstants.PUBLIST_USER_MEDIA_KEY, mediaPublistDTO, scope);
+                }catch (Exception e){
+                    e.printStackTrace();
+                    return BaseResponse.fail("获取外链失败");
+                }
+            }
+            if(temp_entry.size()>0){
+                redisTemplate.expire(RedisConstants.PUBLIST_USER_MEDIA_KEY, RedisConstants.PUBLIST_USER_MEDIA_TTL, TimeUnit.DAYS);
+            }
+        }
+
+        // 分页读取
+        Long mediaCount = redisTemplate.opsForZSet().size(RedisConstants.PUBLIST_USER_MEDIA_KEY);
+        Long lastId = Long.valueOf(clickPlayVo.getLastId());
+        Long offset = Long.valueOf(clickPlayVo.getOffset());
+        Set<ZSetOperations.TypedTuple<MediaPublistDTO>> mediaUrl = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(RedisConstants.PUBLIST_USER_MEDIA_KEY, 0, lastId, offset, 100);
+        if(mediaUrl==null || mediaUrl.isEmpty()){
+            return BaseResponse.success();
+        }
+        long minTime = 0;
+        int os = 1;
+        // 从Redis中读取
+        List<String> url = new ArrayList<>(mediaUrl.size());
+
+        for (ZSetOperations.TypedTuple<MediaPublistDTO> tuple : mediaUrl) {
+            try {
+                // mediaId.add(tuple.getValue().getMediaId());
                 log.info("tuple:{}", tuple.getValue());
                 mediaIdList.add(tuple.getValue().getMediaId());
                 url.add(tuple.getValue().getMediaUrl());

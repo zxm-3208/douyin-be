@@ -3,10 +3,13 @@ package com.example.douyin_publish.service.impl;
 import com.example.douyin_commons.constant.RedisConstants;
 import com.example.douyin_commons.core.domain.BaseResponse;
 import com.example.douyin_commons.core.domain.CoverPublistDTO;
+import com.example.douyin_publish.domain.dto.UserLikeMediaDTO;
 import com.example.douyin_publish.domain.po.DyPublish;
+import com.example.douyin_publish.domain.po.DyUserLikeMedia;
 import com.example.douyin_publish.domain.vo.PublistVO;
-import com.example.douyin_publish.mapper.MediaFilesMapper;
-import com.example.douyin_publish.mapper.PublishMapper;
+import com.example.douyin_publish.mapper.master.MediaFilesMapper;
+import com.example.douyin_publish.mapper.master.PublishMapper;
+import com.example.douyin_publish.mapper.second.DyUserLikeMediaMapper;
 import com.example.douyin_publish.service.ShowlistService;
 import com.example.douyin_publish.utils.ZSetUtils;
 import io.minio.GetPresignedObjectUrlArgs;
@@ -37,6 +40,9 @@ public class ShowlistServiceImpl implements ShowlistService {
 
     @Autowired
     MediaFilesMapper mediaFilesMapper;
+
+    @Autowired
+    DyUserLikeMediaMapper dyUserLikeMediaMapper;
 
     @Autowired
     private MinioClient minioClient;
@@ -127,5 +133,85 @@ public class ShowlistServiceImpl implements ShowlistService {
         // 返回结果
         return BaseResponse.success(map);
 //        return null;
+    }
+
+    @Override
+    public BaseResponse showLikeList(PublistVO publistVO) {
+        String userId = publistVO.getUserId();
+
+        // 查询视频列表视频总数Redis
+        Long num = redisTemplate.opsForZSet().size(RedisConstants.LIKE_USER_COVER_KEY + publistVO.getUserId());
+
+        // 判断总数是否与Redis缓存中的视频url数量一致
+        // 不一致
+        if(num==null || num.equals(0L)){
+            // 读取数据库
+            List<DyPublish> temp_num = publishMapper.findUrl();
+            List<DyUserLikeMedia> dyUserLikeMedia = dyUserLikeMediaMapper.selectByUserId(userId);
+            // 提取mediaIdList和coverUrl
+            List<UserLikeMediaDTO> tempList = new ArrayList<>();
+            for(DyPublish x : temp_num){
+                for(DyUserLikeMedia y : dyUserLikeMedia){
+                    if(y.getMediaid().equals(x.getMediaId())){
+                        tempList.add(new UserLikeMediaDTO(x.getMediaId(), y.getUpdateTime(), x.getImgUrl()));
+                    }
+                }
+            }
+            // 保存到Redis
+            for(int i=0;i<tempList.size();i++){
+                try {
+                    long scope = tempList.get(i).getUpdateTime().getTime();
+                    // 记录到Redis中
+                    String tempCoverUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_files).object(tempList.get(i).getCoverUrl()).method(Method.GET).build());
+                    CoverPublistDTO coverPublistDTO = new CoverPublistDTO(tempList.get(i).getMediaId(),tempCoverUrl);
+                    zSetUtils.addObjectToZSet(RedisConstants.LIKE_USER_COVER_KEY + publistVO.getUserId(), coverPublistDTO, scope);
+                }catch (Exception e){
+                    e.printStackTrace();
+                    return BaseResponse.fail("获取外链失败");
+                }
+            }
+            if(tempList.size()>0){
+                redisTemplate.expire(RedisConstants.LIKE_USER_COVER_KEY+publistVO.getUserId(), RedisConstants.LIKE_USER_COVER_TTL, TimeUnit.DAYS);
+            }
+        }
+
+        // 分页读取
+        Long mediaCount = redisTemplate.opsForZSet().size(RedisConstants.LIKE_USER_COVER_KEY+publistVO.getUserId());
+        Long lastId = Long.valueOf(publistVO.getLastId());
+        Long offset = Long.valueOf(publistVO.getOffset());
+        Set<ZSetOperations.TypedTuple<CoverPublistDTO>> imgUrl = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(RedisConstants.LIKE_USER_COVER_KEY+publistVO.getUserId(), 0, lastId, offset, 100);
+        if(imgUrl==null || imgUrl.isEmpty()){
+            return BaseResponse.success();
+        }
+        long minTime = 0;
+        int os = 1;
+        // 从Redis中读取
+        List<String> url = new ArrayList<>(imgUrl.size());
+        List<String> mediaId = new ArrayList<>(imgUrl.size());
+
+        for (ZSetOperations.TypedTuple<CoverPublistDTO> tuple : imgUrl) {
+            try {
+                mediaId.add(tuple.getValue().getMediaId());
+                url.add(tuple.getValue().getCoverUrl());
+            }catch (Exception e){
+                e.printStackTrace();
+                return BaseResponse.fail("获取外链失败");
+            }
+            long time = tuple.getScore().longValue();
+            if (time == minTime) {
+                os++;
+            }else {
+                minTime = time;
+                os = 1;
+            }
+        }
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("url", url);
+        map.put("mediaId", mediaId);
+        map.put("minTime", minTime);
+        map.put("offset", os);
+        map.put("mediaCount", mediaCount);
+        // 返回结果
+        return BaseResponse.success(map);
     }
 }

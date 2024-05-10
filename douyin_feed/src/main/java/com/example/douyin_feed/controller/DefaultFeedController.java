@@ -43,4 +43,9 @@ public class DefaultFeedController {
     public BaseResponse getClickPlay(@RequestBody ClickPlayVo clickPlayVo){
         return defaultFeedService.clickPlayList(clickPlayVo);
     }
+
+    @PostMapping("/getUserLikeUrl")
+    public BaseResponse getUserLikePlay(@RequestBody ClickPlayVo clickPlayVo){
+        return defaultFeedService.getUserLikePlay(clickPlayVo);
+    }
 }

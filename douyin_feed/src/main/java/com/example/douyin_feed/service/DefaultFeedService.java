@@ -21,4 +21,6 @@ public interface DefaultFeedService {
     BaseResponse clickPlayList(ClickPlayVo clickPlayVo);
 
     BaseResponse getUserPlay(ClickPlayVo clickPlayVo);
+
+    BaseResponse getUserLikePlay(ClickPlayVo clickPlayVo);
 }

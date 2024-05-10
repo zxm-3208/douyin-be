@@ -1,9 +1,12 @@
 package com.example.douyin_feed.mapper.master;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.example.douyin_feed.domain.po.DyMedia;
 import com.example.douyin_feed.domain.po.DyPublish;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+
+import java.util.List;
 
 /**
  * @author : zxm

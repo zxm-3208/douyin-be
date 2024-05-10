@@ -1,9 +1,11 @@
-package com.example.douyin_publish.mapper;
+package com.example.douyin_publish.mapper.master;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.douyin_publish.domain.po.DyMedia;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 /**
  * @author : zxm
@@ -26,4 +28,6 @@ public interface MediaFilesMapper extends BaseMapper<DyMedia> {
 
     @Insert("insert into dy_media(id, mediaUrl, status, md5, author, likeCount, forwardCount, readCount) values(#{id}, #{mediaUrl}, #{status}, #{md5}, #{author}, #{likeCount}, #{forwardCount}, #{readCount})")
     int insert(DyMedia dyMedia);
+
+    List<DyMedia> findUrlAndUpdateTimeByUserLike(String userId);
 }

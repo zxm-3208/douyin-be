@@ -1,10 +1,8 @@
-package com.example.douyin_feed.mapper.second;
+package com.example.douyin_publish.mapper.second;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.example.douyin_feed.domain.po.DyMedia;
-import com.example.douyin_feed.domain.po.DyUserLikeMedia;
-import org.apache.ibatis.annotations.Delete;
-import org.apache.ibatis.annotations.Insert;
+import com.example.douyin_publish.domain.po.DyPublish;
+import com.example.douyin_publish.domain.po.DyUserLikeMedia;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
@@ -16,6 +14,7 @@ import java.util.List;
  * @version: 1.0
  */
 public interface DyUserLikeMediaMapper extends BaseMapper<DyUserLikeMedia> {
-
+    @Select("select * from dy_user_like_media u where u.userId = #{userId}")
+    List<DyUserLikeMedia> selectByUserId(String userId);
 }
 

@@ -1,4 +1,4 @@
-package com.example.douyin_user.domain.po.dbAuth;
+package com.example.douyin_publish.domain.po;
 
 import lombok.Data;
 
@@ -12,20 +12,20 @@ import java.util.Date;
  * @version: 1.0
  */
 @Data
-public class DyLikeListOfUser implements Serializable {
-    private static final long serialVersionUID = -44388768307976415L;
+public class DyUserLikeMedia implements Serializable {
+    private static final long serialVersionUID = -76335406885067508L;
     /**
      * 主键
      */
     private Long id;
     /**
-     * 外键，视频ID
-     */
-    private String mediaid;
-    /**
      * 外键，用户ID
      */
     private String userid;
+    /**
+     * 外键，用户ID
+     */
+    private String mediaid;
     /**
      * 更新时间
      */
