@@ -4,12 +4,9 @@ import com.example.douyin_commons.constant.RedisConstants;
 import com.example.douyin_commons.core.domain.BaseResponse;
 import com.example.douyin_commons.core.domain.MediaPublistDTO;
 import com.example.douyin_feed.domain.po.DyMedia;
-import com.example.douyin_feed.domain.po.DyPublish;
 import com.example.douyin_feed.domain.vo.ClickPlayVo;
-import com.example.douyin_feed.domain.vo.MediaPlayVo;
 import com.example.douyin_feed.domain.vo.UrlListVo;
-import com.example.douyin_feed.mapper.MediaFilesMapper;
-import com.example.douyin_feed.mapper.PublishMapper;
+import com.example.douyin_feed.mapper.master.MediaFilesMapper;
 import com.example.douyin_feed.service.DefaultFeedService;
 import com.example.douyin_feed.utils.ZSetUtils;
 import io.minio.GetPresignedObjectUrlArgs;
@@ -98,6 +95,7 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
      */
     @Override
     public BaseResponse clickPlayList(ClickPlayVo clickPlayVo) {
+
         return BaseResponse.success();
     }
 
@@ -111,6 +109,7 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
     @Override
     public BaseResponse getUserPlay(ClickPlayVo clickPlayVo) {
         String userId = clickPlayVo.getUserId();
+        List mediaIdList = new ArrayList();
         // 从Redis中获取
         Long num = redisTemplate.opsForZSet().size(RedisConstants.PUBLIST_USER_MEDIA_KEY + userId);
         log.info("num:{}",num);
@@ -163,6 +162,7 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
             try {
 //                mediaId.add(tuple.getValue().getMediaId());
                 log.info("tuple:{}", tuple.getValue());
+                mediaIdList.add(tuple.getValue().getMediaId());
                 url.add(tuple.getValue().getMediaUrl());
             }catch (Exception e){
                 e.printStackTrace();
@@ -178,7 +178,7 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
         }
         HashMap<String, Object> map = new HashMap<>();
         map.put("url", url);
-//        map.put("mediaId", mediaId);
+        map.put("mediaId", mediaIdList);
         map.put("minTime", minTime);
         map.put("offset", os);
         map.put("mediaCount", mediaCount);
@@ -198,6 +198,7 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
     public BaseResponse getMediaPlay(UrlListVo urlListVo) {
         // 从Redis中获取
         Long num = redisTemplate.opsForZSet().size(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY);
+        List mediaIdList = new ArrayList();
         log.info("num:{}",num);
         if(num == null || num.equals(0L)){
             // 读取数据库
@@ -239,6 +240,7 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
             try {
                 // mediaId.add(tuple.getValue().getMediaId());
                 log.info("tuple:{}", tuple.getValue());
+                mediaIdList.add(tuple.getValue().getMediaId());
                 url.add(tuple.getValue().getMediaUrl());
             }catch (Exception e){
                 e.printStackTrace();
@@ -254,7 +256,7 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
         }
         HashMap<String, Object> map = new HashMap<>();
         map.put("url", url);
-        // map.put("mediaId", mediaId);
+         map.put("mediaId", mediaIdList);
         map.put("minTime", minTime);
         map.put("offset", os);
         map.put("mediaCount", mediaCount);

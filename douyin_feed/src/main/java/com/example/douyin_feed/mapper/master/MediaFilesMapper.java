@@ -1,4 +1,4 @@
-package com.example.douyin_feed.mapper;
+package com.example.douyin_feed.mapper.master;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.douyin_feed.domain.po.DyMedia;

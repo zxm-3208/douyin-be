@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 
-<mapper namespace="com.example.douyin_feed.mapper.MediaFilesMapper">
+<mapper namespace="com.example.douyin_feed.mapper.master.MediaFilesMapper">
     <resultMap id="mediaFilesMapper" type="com.example.douyin_feed.domain.po.DyMedia">
         <!--手动指定字段与实体属性的映射关系
             column: 数据表的字段名称
@@ -30,11 +30,11 @@
 
 
     <select id="findMediaUrlAndUpdateTimeByUserId" resultMap="mediaFilesMapper">
-        select * from dy_media o LEFT JOIN dy_publish u on o.id=u.mediaId where o.author=#{userId}
+        select * from dy_media o LEFT JOIN dy_publish u on o.id=u.mediaId where o.author=#{userId}  ORDER BY o.id
     </select>
 
     <select id="findMediaUrlAndUpdateTimeByStatus" resultMap="mediaFilesMapper">
-        select * from dy_media o LEFT JOIN dy_publish u on o.id=u.mediaId where u.status=#{status}
+        select * from dy_media o LEFT JOIN dy_publish u on o.id=u.mediaId where u.status=#{status} ORDER BY o.id
     </select>
 
 </mapper>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.douyin_feed.mapper.second.DyUserLikeMediaMapper">
+
+    <resultMap type="com.example.douyin_feed.mapper.second.DyUserLikeMediaMapper" id="DyUserLikeMediaMap">
+        <result property="id" column="id" jdbcType="VARCHAR"/>
+        <result property="userid" column="userId" jdbcType="VARCHAR"/>
+        <result property="mediaid" column="mediaId" jdbcType="VARCHAR"/>
+    </resultMap>
+
+</mapper>
+
