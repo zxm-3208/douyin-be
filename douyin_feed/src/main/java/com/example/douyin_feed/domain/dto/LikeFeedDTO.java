@@ -20,4 +20,6 @@ public class LikeFeedDTO {
     private String mediaId;
     private Date updateTime;
     private String mediaUrl;
+    private String userId;
+    private String Title;
 }

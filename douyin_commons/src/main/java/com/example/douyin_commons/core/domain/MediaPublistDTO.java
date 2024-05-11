@@ -15,9 +15,20 @@ public class MediaPublistDTO {
         this.mediaUrl = mediaUrl;
     }
 
+    public MediaPublistDTO(String mediaId, String mediaUrl, String userId, String mediaTitle) {
+        this.mediaId = mediaId;
+        this.mediaUrl = mediaUrl;
+        this.userId = userId;
+        this.mediaTitle = mediaTitle;
+    }
+
     public MediaPublistDTO() {
     }
 
     private String mediaId;
     private String mediaUrl;
+    private String mediaTitle;
+    private String userId;
+    private String userName;
+    private String userIcon;
 }

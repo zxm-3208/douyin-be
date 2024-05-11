@@ -60,6 +60,9 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
     @Override
     public BaseResponse getAllPublist() {
         List<String> mediaIdList = new ArrayList<>();
+//        List userIdList = new ArrayList();
+//        List mediaTitleList = new ArrayList();
+//        List urlList = new ArrayList();
         // 查询数据库
         List<DyMedia> temp_entry = mediaFilesMapper.findMediaUrlAndUpdateTimeByStatus("1");
         log.info("查询到的数据有{}条", temp_entry.size());
@@ -76,10 +79,15 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
                 try {
                     log.info("updateTime:{}", temp_entry.get(i));
                     long scope = temp_entry.get(i).getDyPublish().getUpdateTime().getTime();
+                    String userId = temp_entry.get(i).getDyPublish().getId();
+                    String title = temp_entry.get(i).getDyPublish().getTitle();
                     // 记录到Redis中
                     String tempMediaUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_videofiles).object(temp_entry.get(i).getMediaUrl()).method(Method.GET).build());
-                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(temp_entry.get(i).getId(), tempMediaUrl);
+                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(temp_entry.get(i).getId(), tempMediaUrl, userId, title);
                     zSetUtils.addObjectToZSet(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY, mediaPublistDTO, scope);
+//                    userIdList.add(userId);
+//                    mediaTitleList.add(title);
+//                    urlList.add(tempMediaUrl);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return BaseResponse.fail("获取外链失败");
@@ -89,6 +97,7 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
                 redisTemplate.expire(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY, RedisConstants.PUBLIST_DEFAULT_MEDIA_TTL, TimeUnit.DAYS);
             }
         }
+
         return BaseResponse.success(mediaIdList);
     }
 
@@ -116,6 +125,8 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
     public BaseResponse getUserPlay(ClickPlayVo clickPlayVo) {
         String userId = clickPlayVo.getUserId();
         List mediaIdList = new ArrayList();
+        List userIdList = new ArrayList();
+        List mediaTitleList = new ArrayList();
         // 从Redis中获取
         Long num = redisTemplate.opsForZSet().size(RedisConstants.PUBLIST_USER_MEDIA_KEY + userId);
         log.info("num:{}",num);
@@ -130,13 +141,16 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
                 try {
                     long scope = temp_entry.get(i).getDyPublish().getUpdateTime().getTime();
                     String mediaId = temp_entry.get(i).getId();
+                    String title =  temp_entry.get(i).getDyPublish().getTitle();
+
                     // 判断该数据是否已存在与redis
 //                    if(redisTemplate.opsForZSet().count(RedisConstants.PUBLIST_USER_MEDIA_KEY+userId, scope, scope+1)>0){
 //                        continue;
 //                    }
                     // 记录到Redis中
                     String tempMediaUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_videofiles).object(temp_entry.get(i).getMediaUrl()).method(Method.GET).build());
-                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(mediaId,tempMediaUrl);
+                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(mediaId,tempMediaUrl,userId,title);
+                    log.info("DTO:{}", mediaPublistDTO);
                     zSetUtils.addObjectToZSet(RedisConstants.PUBLIST_USER_MEDIA_KEY + userId, mediaPublistDTO, scope);
                     redisTemplate.expire(RedisConstants.PUBLIST_USER_MEDIA_KEY + userId, RedisConstants.PUBLIST_USER_MEDIA_TTL, TimeUnit.DAYS);
 //                    redisTemplate.opsForZSet().add(RedisConstants.PUBLIST_USER_MEDIA_KEY + publistVO.getUserId(), tempCoverUrl, temp_num[i].getUpdateTime().getTime());
@@ -168,6 +182,8 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
             try {
 //                mediaId.add(tuple.getValue().getMediaId());
                 log.info("tuple:{}", tuple.getValue());
+                userIdList.add(tuple.getValue().getUserId());
+                mediaTitleList.add(tuple.getValue().getMediaTitle());
                 mediaIdList.add(tuple.getValue().getMediaId());
                 url.add(tuple.getValue().getMediaUrl());
             }catch (Exception e){
@@ -188,6 +204,8 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
         map.put("minTime", minTime);
         map.put("offset", os);
         map.put("mediaCount", mediaCount);
+        map.put("userId", userIdList);
+        map.put("mediaTitle", mediaTitleList);
         // 返回结果
         return BaseResponse.success(map);
     }
@@ -195,6 +213,8 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
     @Override
     public BaseResponse getUserLikePlay(ClickPlayVo clickPlayVo) {
         String userId = clickPlayVo.getUserId();
+        List userIdList = new ArrayList();
+        List mediaTitleList = new ArrayList();
         // 从Redis中获取
         Long num = redisTemplate.opsForZSet().size(RedisConstants.USER_LIKE_MEDIA_LIST_KEY + userId);
         List mediaIdList = new ArrayList();
@@ -204,14 +224,14 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
             // 级联
             // TODO: 现在like表中查mediaId, 再在Publish表中获取url，最后再转化为外链
             log.info("userId:{}",userId);
-            List<DyMedia> dyMedia = mediaFilesMapper.getByAuthor(userId);
+            List<DyMedia> dyMedia = mediaFilesMapper.findMediaUrlAndUpdateTimeByUserId(userId);
             List<DyUserLikeMedia> dyUserLikeMedia = dyUserLikeMediaMapper.getMediaIdByUserId(userId);
             List<LikeFeedDTO> likeFeedDTOS = new ArrayList<>();
 
             for(DyMedia x: dyMedia){
                 for(DyUserLikeMedia y: dyUserLikeMedia){
                     if(x.getId().equals(y.getMediaid())){
-                        likeFeedDTOS.add(new LikeFeedDTO(x.getId(), y.getUpdateTime(), x.getMediaUrl()));
+                        likeFeedDTOS.add(new LikeFeedDTO(x.getId(), y.getUpdateTime(), x.getMediaUrl(), x.getDyPublish().getId(), x.getDyPublish().getTitle()));
                     }
                 }
             }
@@ -221,9 +241,10 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
                 try {
                     log.info("updateTime:{}",likeFeedDTOS.get(i).getUpdateTime());
                     long scope = likeFeedDTOS.get(i).getUpdateTime().getTime();
+                    String title = likeFeedDTOS.get(i).getTitle();
                     // 记录到Redis中
 //                    String tempMediaUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_videofiles).object(likeFeedDTOS.get(i).getMediaUrl()).method(Method.GET).build());
-                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(likeFeedDTOS.get(i).getMediaId(),likeFeedDTOS.get(i).getMediaUrl());
+                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(likeFeedDTOS.get(i).getMediaId(),likeFeedDTOS.get(i).getMediaUrl(), userId, title);
                     zSetUtils.addObjectToZSet(RedisConstants.USER_LIKE_MEDIA_LIST_KEY + userId, mediaPublistDTO, scope);
                 }catch (Exception e){
                     e.printStackTrace();
@@ -253,6 +274,8 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
                 // mediaId.add(tuple.getValue().getMediaId());
                 log.info("tuple:{}", tuple.getValue());
                 mediaIdList.add(tuple.getValue().getMediaId());
+                userIdList.add(tuple.getValue().getUserId());
+                mediaTitleList.add(tuple.getValue().getMediaTitle());
                 String tempMediaUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_videofiles).object(tuple.getValue().getMediaUrl()).method(Method.GET).build());
                 log.info("url:{}",tempMediaUrl);
                 url.add(tempMediaUrl);
@@ -274,6 +297,8 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
         map.put("minTime", minTime);
         map.put("offset", os);
         map.put("mediaCount", mediaCount);
+        map.put("userId", userIdList);
+        map.put("mediaTitle", mediaTitleList);
         // 返回结果
         return BaseResponse.success(map);
     }
@@ -291,19 +316,24 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
         // 从Redis中获取
         Long num = redisTemplate.opsForZSet().size(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY);
         List mediaIdList = new ArrayList();
+        List userIdList = new ArrayList();
+        List mediaTitleList = new ArrayList();
+        List userNameList = new ArrayList();        // 暂时还没有相关数据(需要关联user数据库)
+        List userIconList = new ArrayList();        // 暂时还没有相关数据(需要关联user数据库)
         log.info("num:{}",num);
         if(num == null || num.equals(0L)){
             // 读取数据库
-            // 级联
+            // 级联 //
             List<DyMedia> temp_entry = mediaFilesMapper.findMediaUrlAndUpdateTimeByUserId(urlListVo.getUserId());
             // 保存到Redis
             for(int i=0;i<temp_entry.size();i++){
                 try {
-                    log.info("updateTime:{}",temp_entry.get(i));
                     long scope = temp_entry.get(i).getDyPublish().getUpdateTime().getTime();
+                    String mediaTitle = temp_entry.get(i).getDyPublish().getTitle();
+                    String userId = temp_entry.get(i).getDyPublish().getAuthor();
                     // 记录到Redis中
                     String tempMediaUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_videofiles).object(temp_entry.get(i).getMediaUrl()).method(Method.GET).build());
-                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(temp_entry.get(i).getId(),tempMediaUrl);
+                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(temp_entry.get(i).getId(),tempMediaUrl, userId, mediaTitle);
                     zSetUtils.addObjectToZSet(RedisConstants.PUBLIST_DEFAULT_MEDIA_KEY, mediaPublistDTO, scope);
                 }catch (Exception e){
                     e.printStackTrace();
@@ -333,6 +363,8 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
                 // mediaId.add(tuple.getValue().getMediaId());
                 log.info("tuple:{}", tuple.getValue());
                 mediaIdList.add(tuple.getValue().getMediaId());
+                userIdList.add(tuple.getValue().getUserId());
+                mediaTitleList.add(tuple.getValue().getMediaTitle());
                 url.add(tuple.getValue().getMediaUrl());
             }catch (Exception e){
                 e.printStackTrace();
@@ -348,10 +380,14 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
         }
         HashMap<String, Object> map = new HashMap<>();
         map.put("url", url);
-         map.put("mediaId", mediaIdList);
+        map.put("mediaId", mediaIdList);
         map.put("minTime", minTime);
         map.put("offset", os);
         map.put("mediaCount", mediaCount);
+        map.put("userId", userIdList);
+        map.put("mediaTitle", mediaTitleList);
+//        map.put("userName", userNameList);
+//        map.put("userIcon", userIconList);
         // 返回结果
         return BaseResponse.success(map);
     }
