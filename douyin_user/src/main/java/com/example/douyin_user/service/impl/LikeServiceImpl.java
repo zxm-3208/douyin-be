@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 /**
  * @author : zxm
@@ -108,6 +109,16 @@ public class LikeServiceImpl implements LikeService {
         String mediaId = vediaUserLikes.getMediaId();
         String key = RedisConstants.MEDIA_USER_LIKE_KEY + mediaId;
         Long size = redisTemplate.opsForZSet().size(key);
+        if(size.equals(0L)) {
+            System.out.println("000000000000");
+            Double score = redisTemplate.opsForZSet().score(key, mediaId);
+            if (score == null){
+                List<DyUserLikeMedia> dyUserLikeMediaList = dyUserLikeMediaMapper.getMediaLikeCountBymediaId(mediaId);
+                for(DyUserLikeMedia x: dyUserLikeMediaList) {
+                    redisTemplate.opsForZSet().add(key, x.getUserid(), System.currentTimeMillis());
+                }
+            }
+        }
         log.info("视频:{}的点赞数量：{}",mediaId, size);
         return BaseResponse.success(size);
     }
