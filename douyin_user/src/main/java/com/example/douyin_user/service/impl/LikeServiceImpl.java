@@ -41,6 +41,8 @@ public class LikeServiceImpl implements LikeService {
     @Autowired
     private PublishMapper publishMapper;
 
+    // TODO: 点赞的时候 MediaPublistDTO 需要增加title和authorId
+
     @Override
     public BaseResponse addLike(VediaUserLikes vediaUserLikes) {
         String userId = vediaUserLikes.getUserId();
@@ -64,9 +66,9 @@ public class LikeServiceImpl implements LikeService {
             isSuccess = dyUserLikeMediaMapper.addLikeMeida(userId, mediaId, new Timestamp(System.currentTimeMillis()));
             log.info("用户点赞的视频列表添加是否成功：{}", isSuccess);
             if (isSuccess != 0) {
-                DyMedia dyMedia = mediaFilesMapper.getMediaUrlByMediaId(mediaId);
+                DyMedia dyMedia = mediaFilesMapper.getByMediaId(mediaId);
                 if(dyMedia!=null) {
-                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(mediaId, dyMedia.getMediaUrl());
+                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(mediaId, dyMedia.getMediaUrl(), dyMedia.getDyPublish().getAuthor(), dyMedia.getDyPublish().getTitle());
                     redisTemplate.opsForZSet().add(userLikeMediaListKey, mediaPublistDTO, System.currentTimeMillis());
                 }
                 // 更新用户点赞的视频列表封面
@@ -88,9 +90,9 @@ public class LikeServiceImpl implements LikeService {
             isSuccess = dyUserLikeMediaMapper.delLikeMeida(userId, mediaId);
             log.info("用户点赞的视频列表删除是否成功：{}", isSuccess);
             if (isSuccess != 0) {
-                DyMedia dyMedia = mediaFilesMapper.getMediaUrlByMediaId(mediaId);
+                DyMedia dyMedia = mediaFilesMapper.getByMediaId(mediaId);
                 if(dyMedia!=null) {
-                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(mediaId, dyMedia.getMediaUrl());
+                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(mediaId, dyMedia.getMediaUrl(), dyMedia.getDyPublish().getAuthor(), dyMedia.getDyPublish().getTitle());
                     redisTemplate.opsForZSet().remove(userLikeMediaListKey, mediaPublistDTO, System.currentTimeMillis());
                 }
                 // 更新用户点赞的视频列表封面
@@ -110,7 +112,6 @@ public class LikeServiceImpl implements LikeService {
         String key = RedisConstants.MEDIA_USER_LIKE_KEY + mediaId;
         Long size = redisTemplate.opsForZSet().size(key);
         if(size.equals(0L)) {
-            System.out.println("000000000000");
             Double score = redisTemplate.opsForZSet().score(key, mediaId);
             if (score == null){
                 List<DyUserLikeMedia> dyUserLikeMediaList = dyUserLikeMediaMapper.getMediaLikeCountBymediaId(mediaId);

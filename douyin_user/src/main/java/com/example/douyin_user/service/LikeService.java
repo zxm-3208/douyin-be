@@ -1,6 +1,7 @@
 package com.example.douyin_user.service;
 
 import com.example.douyin_commons.core.domain.BaseResponse;
+import com.example.douyin_user.domain.vo.AuthorFollowVo;
 import com.example.douyin_user.domain.vo.VediaUserLikes;
 
 /**
@@ -18,4 +19,5 @@ public interface LikeService {
     BaseResponse initLikeFlag(VediaUserLikes vediaUserLikes);
 
     BaseResponse getUserLikeList(VediaUserLikes vediaUserLikes);
+
 }

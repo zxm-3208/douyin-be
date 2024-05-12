@@ -29,7 +29,7 @@ public interface PublishMapper extends BaseMapper<DyPublish> {
     @Update("update dy_publish u set status=#{status} where mediaId=#{mediaId}")
     int updateStatus(String mediaId, String status);
 
-    @Select("select * from dy_publish u where u.author = #{userId}")
+    @Select("select * from dy_publish u where u.author = #{userId} and u.status='1' ")
     DyPublish[] selectByUserId(String userId);
 
     @Insert("insert into dy_publish(id, mediaId, fileName, title, uploadTime, updateTime, author, status, type, imgUrl, tag) values(#{id}, #{mediaId}, #{fileName}, #{title}, #{uploadTime}, #{updateTime}, #{author}, #{status}, #{type}, #{imgUrl}, #{tag})")

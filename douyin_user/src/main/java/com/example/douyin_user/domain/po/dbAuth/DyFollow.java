@@ -1,9 +1,12 @@
 package com.example.douyin_user.domain.po.dbAuth;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * @author : zxm
@@ -12,6 +15,8 @@ import java.io.Serializable;
  * @version: 1.0
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class DyFollow implements Serializable {
     @Serial
     private static final long serialVersionUID = 8735023915713335848L;
@@ -27,4 +32,9 @@ public class DyFollow implements Serializable {
      * 外键
      */
     private String followerid;
+    /**
+     * 创建时间
+     */
+    private Date createTime;
+
 }

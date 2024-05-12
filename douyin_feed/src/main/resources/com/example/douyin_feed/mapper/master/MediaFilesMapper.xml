@@ -31,7 +31,11 @@
 
 
     <select id="findMediaUrlAndUpdateTimeByUserId" resultMap="mediaFilesMapper">
-        select * from dy_media o LEFT JOIN dy_publish u on o.id=u.mediaId where o.author=#{userId}  ORDER BY o.id
+        select * from dy_media o LEFT JOIN dy_publish u on o.id=u.mediaId where o.author=#{userId} and u.status="1" ORDER BY o.id
+    </select>
+
+    <select id="findMediaUrlAndUpdateTime" resultMap="mediaFilesMapper">
+        select * from dy_media o LEFT JOIN dy_publish u on o.id=u.mediaId where  u.status="1" ORDER BY o.id
     </select>
 
     <select id="findMediaUrlAndUpdateTimeByStatus" resultMap="mediaFilesMapper">
