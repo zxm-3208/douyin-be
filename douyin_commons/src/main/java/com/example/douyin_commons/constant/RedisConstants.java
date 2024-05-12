@@ -49,4 +49,7 @@ public class RedisConstants {
     // 用户关注列表
     public static final String USER_FOLLOW_LIST_KEY = "follow:user:";
 
+    // 用户粉丝列表
+    public static final String USER_FANS_LIST_KEY = "fans:user:";
+
 }

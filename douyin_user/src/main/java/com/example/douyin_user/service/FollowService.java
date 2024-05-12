@@ -13,4 +13,8 @@ public interface FollowService {
     BaseResponse authorFollow(AuthorFollowVo authorFollowVo);
 
     BaseResponse isFollow(AuthorFollowVo authorFollowVo);
+
+    BaseResponse getFollowCount(String userId);
+
+    BaseResponse getFansCount(String userId);
 }

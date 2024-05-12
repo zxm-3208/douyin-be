@@ -34,4 +34,14 @@ public class FollowController {
         return followService.isFollow(authorFollowVo);
     }
 
+    @GetMapping("/getFollowCount")
+    public BaseResponse getFollowCount(@RequestParam String userId){
+        return followService.getFollowCount(userId);
+    }
+
+    @GetMapping("/getFansCount")
+    public BaseResponse getFansCount(@RequestParam String userId){
+        return followService.getFansCount(userId);
+    }
+
 }

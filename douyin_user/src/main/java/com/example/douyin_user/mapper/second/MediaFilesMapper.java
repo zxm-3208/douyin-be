@@ -21,4 +21,6 @@ public interface MediaFilesMapper extends BaseMapper<DyMedia> {
 
     @Select("select * from dy_media u where u.id = #{id}")
     DyMedia getMediaUrlByMediaId(String mediaId);
+
+    DyMedia getByMediaId(String mediaId);
 }

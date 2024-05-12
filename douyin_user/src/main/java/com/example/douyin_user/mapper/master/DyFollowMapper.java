@@ -24,5 +24,11 @@ public interface DyFollowMapper  extends BaseMapper<DyFollow> {
     Integer delFollow(String userId, String authorId);
 
     @Select("select * from dy_follow u where u.userId = #{userId} and u.followerID = #{authorId}")
-    DyFollow getFollow(String userId, String authorId);
+    DyFollow getFollowByUserIdAndAuthorId(String userId, String authorId);
+
+    @Select("select * from dy_follow u where u.userId = #{userId}")
+    List<DyFollow> getFollowByUserId(String userId);
+
+    @Select("select * from dy_follow u where u.followerID = #{authorId}")
+    List<DyFollow> getFansByAuthorId(String authorId);
 }

@@ -51,5 +51,7 @@ public class DyMedia implements Serializable {
      * 浏览量
      */
     private int readCount;
+
+    private DyPublish dyPublish;
 }
 

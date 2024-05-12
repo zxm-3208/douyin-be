@@ -70,6 +70,7 @@ public class ShowlistServiceImpl implements ShowlistService {
         if(num==null || num.equals(0L)){
             // 读取数据库
             DyPublish[] temp_num = publishMapper.selectByUserId(userId);
+            System.out.println(temp_num.length);
             // 保存到Redis
             for(int i=0;i<temp_num.length;i++){
                 try {

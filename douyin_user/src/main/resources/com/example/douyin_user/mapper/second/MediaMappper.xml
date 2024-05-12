@@ -3,26 +3,36 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 
 <mapper namespace="com.example.douyin_user.mapper.second.MediaFilesMapper">
-<!--    <resultMap id="mediaFilesMapper" type="com.example.douyin_user.domain.po.dbMedia.DyMedia">-->
-<!--        &lt;!&ndash;手动指定字段与实体属性的映射关系-->
-<!--            column: 数据表的字段名称-->
-<!--            property：实体的属性名称-->
-<!--        &ndash;&gt;-->
-<!--        <id column="id" property="id"></id>-->
-<!--        <result column="mediaUrl" property="mediaUrl"></result>-->
-<!--        <result column="status" property="status"></result>-->
-<!--        <result column="md5" property="md5"></result>-->
-<!--        <result column="author" property="author"></result>-->
-<!--        <result column="likeCount" property="likeCount"></result>-->
-<!--        <result column="forwardCount" property="forwardCount"></result>-->
-<!--        <result column="readCount" property="readCount"></result>-->
-<!--    </resultMap>-->
+    <resultMap id="FilesMapper" type="com.example.douyin_user.domain.po.dbMedia.DyMedia">
+        <!--手动指定字段与实体属性的映射关系
+            column: 数据表的字段名称
+            property：实体的属性名称
+        -->
+        <id column="id" property="id"></id>
+        <result column="mediaUrl" property="mediaUrl"></result>
+        <result column="status" property="status"></result>
+        <result column="md5" property="md5"></result>
+        <result column="author" property="author"></result>
+        <result column="likeCount" property="likeCount"></result>
+        <result column="forwardCount" property="forwardCount"></result>
+        <result column="readCount" property="readCount"></result>
+        <association property="dyPublish" javaType="com.example.douyin_user.domain.po.dbMedia.DyPublish">
+            <id column="id" property="id"></id>
+            <result column="mediaId" property="mediaId"></result>
+            <result column="fileName" property="fileName"></result>
+            <result column="title" property="title"></result>
+            <result column="uploadTime" property="uploadTime"></result>
+            <result column="updateTime" property="updateTime"></result>
+            <result column="uploadTime" property="uploadTime"></result>
+            <result column="author" property="author"></result>
+            <result column="status" property="status"></result>
+            <result column="type" property="type"></result>
+            <result column="imgUrl" property="imgUrl"></result>
+            <result column="tag" property="tag"></result>
+        </association>
+    </resultMap>
 
-<!--    <select id="addMediaLikeById" resultMap="mediaFilesMapper">-->
-<!--        UPDATE dy_media SET likeCount = likeCount + 1 WHERE id = #{id}-->
-<!--    </select>-->
-
-<!--    <select id="delMediaLikeById" resultMap="mediaFilesMapper">-->
-<!--        UPDATE dy_media SET likeCount = likeCount - 1 WHERE id = #{id}-->
-<!--    </select>-->
+    <select id="getByMediaId" resultMap="FilesMapper">
+        select * from dy_media o LEFT JOIN dy_publish m on o.id=m.mediaId where o.id=#{mediaId} ORDER BY o.id
+    </select>
 </mapper>

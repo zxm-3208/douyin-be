@@ -112,12 +112,9 @@ public class LikeServiceImpl implements LikeService {
         String key = RedisConstants.MEDIA_USER_LIKE_KEY + mediaId;
         Long size = redisTemplate.opsForZSet().size(key);
         if(size.equals(0L)) {
-            Double score = redisTemplate.opsForZSet().score(key, mediaId);
-            if (score == null){
-                List<DyUserLikeMedia> dyUserLikeMediaList = dyUserLikeMediaMapper.getMediaLikeCountBymediaId(mediaId);
-                for(DyUserLikeMedia x: dyUserLikeMediaList) {
-                    redisTemplate.opsForZSet().add(key, x.getUserid(), System.currentTimeMillis());
-                }
+            List<DyUserLikeMedia> dyUserLikeMediaList = dyUserLikeMediaMapper.getMediaLikeCountBymediaId(mediaId);
+            for(DyUserLikeMedia x: dyUserLikeMediaList) {
+                redisTemplate.opsForZSet().add(key, x.getUserid(), System.currentTimeMillis());
             }
         }
         log.info("视频:{}的点赞数量：{}",mediaId, size);
