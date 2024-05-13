@@ -32,10 +32,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -117,7 +114,8 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
         }
 
         // 2. 一致则根据手机号查询用户
-        DyUser user = this.query().eq("phone", phone).one();
+        DyUser user = dyUserMapper.selectUserByPhone(phone);
+//        DyUser user = this.query().eq("phone", phone).one();
 
         String BC_code = passwordEncoder.encode(code);
 
@@ -227,6 +225,9 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
         user.setUserName(SystemConstants.USER_NICK_NAME_PREFIX + RandomUtil.randomString(10));
         user.setCreateTime(new Timestamp(System.currentTimeMillis()));
         user.setUpdateTime(new Timestamp(System.currentTimeMillis()));
+        user.setSex("2");
+        user.setBirthday(new Date(1));
+        user.setIntroduction("这个人很懒，什么都没有。");
 
         // 通过Passay库生成密码
         PasswordGenerator passwordGenerator = new PasswordGenerator();
@@ -235,7 +236,7 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
         user.setPassword(passwordEncoder.encode(password));
 
         user.setCode(code);
-        this.save(user);
+        dyUserMapper.save(user);
         return user;
     }
 

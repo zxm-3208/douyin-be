@@ -2,6 +2,7 @@ package com.example.douyin_auth.register.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.example.douyin_auth.register.domain.po.DyUser;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Select;
 
 /**
@@ -26,6 +27,10 @@ public interface DyUserMapper extends BaseMapper<DyUser> {
     @Select("update dy_user set code = #{code} where phone = #{phone}")
     DyUser UpdateUserByPhone(String phone, String code);
 
-    @Select("select * from dy_user u where u.user_name = #{user_name}")
+    @Select("select * from dy_user u where u.userName = #{user_name}")
     DyUser selectUserByUsername(String user_name);
+
+    @Insert("insert into dy_user(id, phone, password, code, userName, createTime, updateTime, email, loginIp, loginTime, icon, sex, birthday, introduction) " +
+            "values(#{id}, #{phone}, #{password}, #{code}, #{userName}, #{createTime}, #{updateTime}, #{email}, #{loginIp}, #{loginTime}, #{icon}, #{sex}, #{birthday}, #{introduction})")
+    Integer save(DyUser dyUser);
 }

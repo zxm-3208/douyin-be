@@ -62,6 +62,17 @@ public class DyUser implements Serializable {
      * 用户头像
      */
     private String icon;
-
+    /**
+     * 用户性别
+     */
+    private String sex;
+    /**
+     * 用户生日
+     */
+    private Date birthday;
+    /**
+     * 个人简介
+     */
+    private String introduction;
 }
 

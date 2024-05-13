@@ -137,9 +137,10 @@ public class TokenServiceImpl implements TokenService {
             String phone = (String) claims.get(Constants.PHONE);
             System.out.println(phone);
             //根据手机号查询用户信息
-            LambdaQueryWrapper<DyUser> wrapper = new LambdaQueryWrapper<>();
-            wrapper.eq(DyUser::getPhone, phone);
-            DyUser user = userMapper.selectOne(wrapper);
+//            LambdaQueryWrapper<DyUser> wrapper = new LambdaQueryWrapper<>();
+//            wrapper.eq(DyUser::getPhone, phone);
+//            DyUser user = userMapper.selectOne(wrapper);
+            DyUser user = userMapper.selectUserByPhone(phone);
             PhoneLoginUserDTO phoneLoginUserDTO = new PhoneLoginUserDTO(user);
             // 更新时间
             phoneLoginUserDTO.setLoginTime(System.currentTimeMillis());

@@ -28,9 +28,10 @@ public class UserDetailServiceImplByUserName implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         //根据用户名查询用户信息
-        LambdaQueryWrapper<DyUser> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(DyUser::getUserName, username);
-        DyUser user = userMapper.selectOne(wrapper);
+//        LambdaQueryWrapper<DyUser> wrapper = new LambdaQueryWrapper<>();
+//        wrapper.eq(DyUser::getUserName, username);
+//        DyUser user = userMapper.selectOne(wrapper);
+        DyUser user = userMapper.selectUserByUsername(username);
         return new UserNameLoginUserDTO(user);
 
     }

@@ -1,6 +1,7 @@
 package com.example.douyin_user.domain.po.dbAuth;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.example.douyin_user.domain.po.dbMedia.DyPublish;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -62,5 +63,18 @@ public class DyUser implements Serializable {
      * 用户头像
      */
     private String icon;
+    /**
+     * 用户性别
+     */
+    private String sex;
+    /**
+     * 用户生日
+     */
+    private Date birthday;
+    /**
+     * 个人简介
+     */
+    private String introduction;
 
+    private DyPublish dyPublish;
 }
