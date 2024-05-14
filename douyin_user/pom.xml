@@ -43,6 +43,19 @@
             <artifactId>druid</artifactId>
             <version>1.0.18</version>
         </dependency>
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>8.5.2</version>
+        </dependency>
+
+        <!-- 根据扩展名得到content-type -->
+        <dependency>
+            <groupId>com.j256.simplemagic</groupId>
+            <artifactId>simplemagic</artifactId>
+            <version>1.17</version>
+        </dependency>
+
     </dependencies>
 
     <build>

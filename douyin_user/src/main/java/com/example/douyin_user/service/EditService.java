@@ -1,6 +1,7 @@
 package com.example.douyin_user.service;
 
 import com.example.douyin_commons.core.domain.BaseResponse;
+import com.example.douyin_user.domain.vo.SubmitEditVO;
 
 /**
  * @author : zxm
@@ -10,4 +11,6 @@ import com.example.douyin_commons.core.domain.BaseResponse;
  */
 public interface EditService {
     BaseResponse getAttribute(String userId);
+
+    BaseResponse submitEdit(SubmitEditVO submitEditVO);
 }

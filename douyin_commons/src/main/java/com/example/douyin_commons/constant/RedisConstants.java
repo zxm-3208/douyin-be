@@ -54,5 +54,5 @@ public class RedisConstants {
 
     // 用户粉丝列表
     public static final String USER_EDIT_KEY = "user:edit:";
-
+    public static final Long USER_EDIT_TTL = 7L;
 }
