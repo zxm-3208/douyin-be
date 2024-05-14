@@ -29,18 +29,121 @@
         </association>
     </resultMap>
 
-
-    <select id="findMediaUrlAndUpdateTimeByUserId" resultMap="mediaFilesMapper">
-        select * from dy_media o LEFT JOIN dy_publish u on o.id=u.mediaId where o.author=#{userId} and u.status="1" ORDER BY o.id
-    </select>
+<!--    <select id="findMediaUrlAndUpdateTimeByUserId" resultMap="mediaFilesMapper">-->
+<!--        select * from dy_media o LEFT JOIN dy_publish u on o.id=u.mediaId where o.author=#{userId} and u.status="1" ORDER BY o.id-->
+<!--    </select>-->
 
     <select id="findMediaUrlAndUpdateTime" resultMap="mediaFilesMapper">
         select * from dy_media o LEFT JOIN dy_publish u on o.id=u.mediaId where  u.status="1" ORDER BY o.id
     </select>
 
-    <select id="findMediaUrlAndUpdateTimeByStatus" resultMap="mediaFilesMapper">
-        select * from dy_media o LEFT JOIN dy_publish u on o.id=u.mediaId where u.status=#{status} ORDER BY o.id
+<!--    <select id="findMediaUrlAndUpdateTimeByStatus" resultMap="mediaFilesMapper">-->
+<!--        select * from dy_media o LEFT JOIN dy_publish u on o.id=u.mediaId where u.status=#{status} ORDER BY o.id-->
+<!--    </select>-->
+
+    <resultMap id="mediaUserPublishMapper" type="com.example.douyin_feed.domain.po.DyMedia">
+        <!--手动指定字段与实体属性的映射关系
+            column: 数据表的字段名称
+            property：实体的属性名称
+        -->
+        <id column="id" property="id"></id>
+        <result column="mediaUrl" property="mediaUrl"></result>
+        <result column="status" property="status"></result>
+        <result column="md5" property="md5"></result>
+        <result column="author" property="author"></result>
+        <association property="dyPublish" javaType="com.example.douyin_feed.domain.po.DyPublish">
+            <id column="id" property="id"></id>
+            <result column="mediaId" property="mediaId"></result>
+            <result column="fileName" property="fileName"></result>
+            <result column="title" property="title"></result>
+            <result column="uploadTime" property="uploadTime"></result>
+            <result column="updateTime" property="updateTime"></result>
+            <result column="author" property="author"></result>
+            <result column="status" property="status"></result>
+            <result column="type" property="type"></result>
+            <result column="imgUrl" property="imgUrl"></result>
+            <result column="tag" property="tag"></result>
+        </association>
+        <collection property="dyUser" ofType="com.example.douyin_feed.domain.po.DyUser">
+            <id property="id" column="id"/>
+            <result column="phone" property="phone"/>
+            <result column="password" property="password"/>
+            <result column="code" property="code"/>
+            <result column="userName" property="userName"/>
+            <result column="createTime" property="createTime"/>
+            <result column="updateTime" property="updateTime"/>
+            <result column="email" property="email"/>
+            <result column="loginIp" property="loginIp"/>
+            <result column="loginTime" property="loginTime"/>
+            <result column="icon" property="icon"/>
+            <result column="sex" property="sex"/>
+            <result column="birthday" property="birthday"/>
+        </collection>
+    </resultMap>
+
+    <select id="findMediaUrlAndUpdateTimeByStatus" resultMap="mediaUserPublishMapper">
+        select * from dy_media o LEFT JOIN dy_publish u on o.id=u.mediaId LEFT JOIN douyin_auth.dy_user i on  i.id=u.author where u.status=#{status} ORDER BY o.id
     </select>
 
+    <select id="findMediaUrlAndUpdateTimeByUserId" resultMap="mediaUserPublishMapper">
+        select * from dy_media o LEFT JOIN dy_publish u on o.id=u.mediaId LEFT JOIN douyin_auth.dy_user i on  i.id=u.author  where o.author=#{userId} and u.status="1" ORDER BY o.id
+    </select>
+
+    <resultMap id="mediaUserPublishLikeMapper" type="com.example.douyin_feed.domain.po.DyMedia">
+        <id column="id" property="id"></id>
+        <result column="mediaUrl" property="mediaUrl"></result>
+        <result column="status" property="status"></result>
+        <result column="md5" property="md5"></result>
+        <result column="author" property="author"></result>
+        <association property="dyPublish" javaType="com.example.douyin_feed.domain.po.DyPublish">
+            <id column="id" property="id"></id>
+            <result column="mediaId" property="mediaId"></result>
+            <result column="fileName" property="fileName"></result>
+            <result column="title" property="title"></result>
+            <result column="uploadTime" property="uploadTime"></result>
+            <result column="updateTime" property="updateTime"></result>
+            <result column="author" property="author"></result>
+            <result column="status" property="status"></result>
+            <result column="type" property="type"></result>
+            <result column="imgUrl" property="imgUrl"></result>
+            <result column="tag" property="tag"></result>
+        </association>
+        <collection property="dyUser" ofType="com.example.douyin_feed.domain.po.DyUser">
+            <id property="id" column="id"/>
+            <result column="phone" property="phone"/>
+            <result column="password" property="password"/>
+            <result column="code" property="code"/>
+            <result column="userName" property="userName"/>
+            <result column="createTime" property="createTime"/>
+            <result column="updateTime" property="updateTime"/>
+            <result column="email" property="email"/>
+            <result column="loginIp" property="loginIp"/>
+            <result column="loginTime" property="loginTime"/>
+            <result column="icon" property="icon"/>
+            <result column="sex" property="sex"/>
+            <result column="birthday" property="birthday"/>
+<!--            <collection property="dyUserLikeMedia" resultMap="dyUserLikeMediaResultMap" />-->
+        </collection>
+        <collection property="dyUserLikeMedia" ofType="com.example.douyin_feed.domain.po.DyUserLikeMedia">
+            <id property="id" column="id" jdbcType="VARCHAR"/>
+            <result property="userId" column="userId" jdbcType="VARCHAR"/>
+            <result property="mediaId" column="mediaId" jdbcType="VARCHAR"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+        </collection>
+    </resultMap>
+
+<!--    <resultMap id="dyUserLikeMediaResultMap" type="com.example.douyin_feed.domain.po.DyUserLikeMedia">-->
+<!--        <result property="id" column="id" jdbcType="VARCHAR"/>-->
+<!--        <result property="userId" column="userId" jdbcType="VARCHAR"/>-->
+<!--        <result property="mediaId" column="mediaId" jdbcType="VARCHAR"/>-->
+<!--        <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>-->
+<!--    </resultMap>-->
+
+    <select id="findMediaUserPublishAndLikeByUserId" resultMap="mediaUserPublishLikeMapper">
+        select * from dy_media LEFT JOIN dy_publish on douyin_publish.dy_media.id=dy_publish.mediaId
+            LEFT JOIN douyin_auth.dy_user on  douyin_auth.dy_user.id=douyin_publish.dy_media.author
+            RIGHT JOIN  douyin_auth.dy_user_like_media on douyin_auth.dy_user_like_media.mediaId = douyin_publish.dy_media.id
+                 where douyin_auth.dy_user_like_media.userId=#{userId} and douyin_publish.dy_publish.status="1" ORDER BY douyin_publish.dy_media.id
+    </select>
 
 </mapper>

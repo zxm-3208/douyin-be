@@ -6,7 +6,12 @@
         <result property="id" column="id" jdbcType="VARCHAR"/>
         <result property="userid" column="userId" jdbcType="VARCHAR"/>
         <result property="mediaid" column="mediaId" jdbcType="VARCHAR"/>
+        <result property="updatetime" column="updateTime" jdbcType="TIMESTAMP"/>
     </resultMap>
+
+    <select id="findUserById" resultMap="DyUserLikeMediaMap">
+        select * from dy_user o where o.id=#{userId}  ORDER BY o.id
+    </select>
 
 </mapper>
 

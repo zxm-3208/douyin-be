@@ -37,6 +37,9 @@ public interface MediaFilesMapper extends BaseMapper<DyMedia> {
 
     List<DyMedia> findMediaUrlAndUpdateTimeByUserId(String userId);
 
+    // TODO: 需要优化
+    List<DyMedia> findMediaUserPublishAndLikeByUserId(String userId);
+
     List<DyMedia> findMediaUrlAndUpdateTime();
 
     List<DyMedia> findMediaUrlAndUpdateTimeByStatus(String status);

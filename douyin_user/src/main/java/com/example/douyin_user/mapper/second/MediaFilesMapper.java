@@ -5,6 +5,8 @@ import com.example.douyin_user.domain.po.dbMedia.DyMedia;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
+import java.util.List;
+
 /**
  * @author : zxm
  * @date: 2024/5/8 - 9:30
@@ -23,4 +25,6 @@ public interface MediaFilesMapper extends BaseMapper<DyMedia> {
     DyMedia getMediaUrlByMediaId(String mediaId);
 
     DyMedia getByMediaId(String mediaId);
+
+    List<DyMedia> findMediaUrlAndUpdateTimeByUserId(String userId);
 }

@@ -495,7 +495,7 @@ public class UploadServiceImpl implements UploadService {
         }
         // 将发布的视频推送给Redis
         CoverPublistDTO coverPublistDTO = new CoverPublistDTO(editVo.getMediaId(), editVo.getCoverUrl());
-        MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(editVo.getMediaId(), editVo.getMediaUrl());
+        MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(editVo.getMediaId(), editVo.getMediaUrl(), editVo.getUserId(), editVo.getTitle());
 
         zSetUtils.addObjectToZSet(RedisConstants.PUBLIST_USER_COVER_KEY + editVo.getUserId(), coverPublistDTO, scope);
         redisTemplate.expire(RedisConstants.PUBLIST_USER_COVER_KEY + editVo.getUserId(), RedisConstants.PUBLIST_USER_COVER_TTL, TimeUnit.DAYS);
