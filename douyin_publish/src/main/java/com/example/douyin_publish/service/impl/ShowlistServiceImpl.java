@@ -155,7 +155,7 @@ public class ShowlistServiceImpl implements ShowlistService {
             for(DyPublish x : temp_num){
                 for(DyUserLikeMedia y : dyUserLikeMedia){
                     if(y.getMediaid().equals(x.getMediaId())){
-                        tempList.add(new UserLikeMediaDTO(x.getMediaId(), y.getUpdateTime(), x.getImgUrl()));
+                        tempList.add(new UserLikeMediaDTO(x.getMediaId(), y.getLikeUpdateTime(), x.getImgUrl()));
                     }
                 }
             }

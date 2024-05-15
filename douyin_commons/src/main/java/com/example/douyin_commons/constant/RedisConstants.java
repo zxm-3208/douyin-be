@@ -56,4 +56,10 @@ public class RedisConstants {
     // 用户粉丝列表
     public static final String USER_EDIT_KEY = "user:edit:";
     public static final Long USER_EDIT_TTL = 7L;
+
+    // 用户关注列表信息
+    public static final String USER_FOLLOW_INFO_LIST_KEY = "follow:info:user";
+
+    // 用户粉丝列表信息
+    public static final String USER_FANS_INFO_LIST_KEY = "fans:info:user";
 }

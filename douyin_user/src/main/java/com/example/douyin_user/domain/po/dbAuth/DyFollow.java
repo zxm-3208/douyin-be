@@ -27,14 +27,16 @@ public class DyFollow implements Serializable {
     /**
      * 外键
      */
-    private String userid;
+    private String userId;
     /**
      * 外键
      */
-    private String followerid;
+    private String followerId;
     /**
      * 创建时间
      */
-    private Date createTime;
+    private Date followCreateTime;
+
+    private DyUser dyUser;
 
 }

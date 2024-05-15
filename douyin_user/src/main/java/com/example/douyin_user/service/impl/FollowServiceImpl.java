@@ -77,7 +77,7 @@ public class FollowServiceImpl implements FollowService {
         if (score == null) {
             DyFollow follow = dyFollowMapper.getFollowByUserIdAndAuthorId(userId, authorId);
             if(follow != null){
-                redisTemplate.opsForZSet().add(key, authorId, follow.getCreateTime().getTime());
+                redisTemplate.opsForZSet().add(key, authorId, follow.getFollowCreateTime().getTime());
                 return BaseResponse.success("1");
             }
             else{
@@ -94,7 +94,7 @@ public class FollowServiceImpl implements FollowService {
         if(size.equals(0L)) {
             List<DyFollow> followByUserIdList = dyFollowMapper.getFollowByUserId(userId);
             for(DyFollow x: followByUserIdList) {
-                redisTemplate.opsForZSet().add(key, x.getFollowerid(), System.currentTimeMillis());
+                redisTemplate.opsForZSet().add(key, x.getFollowerId(), x.getFollowCreateTime().getTime());
             }
             size = redisTemplate.opsForZSet().size(key);
         }
@@ -108,7 +108,7 @@ public class FollowServiceImpl implements FollowService {
         if(size.equals(0L)) {
             List<DyFollow> fansByAuthorIdList = dyFollowMapper.getFansByAuthorId(userId);
             for(DyFollow x: fansByAuthorIdList) {
-                redisTemplate.opsForZSet().add(key, x.getUserid(), System.currentTimeMillis());
+                redisTemplate.opsForZSet().add(key, x.getUserId(), x.getFollowCreateTime().getTime());
             }
             size = redisTemplate.opsForZSet().size(key);
         }
