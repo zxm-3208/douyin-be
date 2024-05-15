@@ -63,4 +63,7 @@ public class DyPublish implements Serializable {
      * 视频标签
      */
     private String tag;
+
+    private DyUser dyUser;
+    private DyUserLikeMedia dyUserLikeMedia;
 }

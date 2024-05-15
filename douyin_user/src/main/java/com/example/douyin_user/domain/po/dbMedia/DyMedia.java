@@ -1,5 +1,6 @@
 package com.example.douyin_user.domain.po.dbMedia;
 
+import com.example.douyin_user.domain.po.dbAuth.DyUser;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -53,5 +54,6 @@ public class DyMedia implements Serializable {
     private int readCount;
 
     private DyPublish dyPublish;
+    private DyUser dyUser;
 }
 

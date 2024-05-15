@@ -26,5 +26,5 @@ public interface MediaFilesMapper extends BaseMapper<DyMedia> {
 
     DyMedia getByMediaId(String mediaId);
 
-    List<DyMedia> findMediaUrlAndUpdateTimeByUserId(String userId);
+    DyMedia findMediaUrlAndUpdateTimeByUserIdAndMediaId(String mediaId);
 }

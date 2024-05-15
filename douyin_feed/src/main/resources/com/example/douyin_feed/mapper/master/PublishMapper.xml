@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.douyin_feed.mapper.master.PublishMapper">
+    <resultMap id="UserPublishLikeMapper" type="com.example.douyin_feed.domain.po.DyPublish">
+        <id column="id" property="id"></id>
+        <result column="mediaId" property="mediaId"></result>
+        <result column="fileName" property="fileName"></result>
+        <result column="title" property="title"></result>
+        <result column="uploadTime" property="uploadTime"></result>
+        <result column="updateTime" property="updateTime"></result>
+        <result column="author" property="author"></result>
+        <result column="status" property="status"></result>
+        <result column="type" property="type"></result>
+        <result column="imgUrl" property="imgUrl"></result>
+        <result column="tag" property="tag"></result>
+        <association property="dyUserLikeMedia" javaType="com.example.douyin_feed.domain.po.DyUserLikeMedia">
+            <id property="id" column="id"/>
+            <result property="userId" column="userId" />
+            <result property="mediaId" column="mediaId" />
+            <result property="updateTime" column="updateTime" />
+        </association>
+        <collection property="dyUser" ofType="com.example.douyin_feed.domain.po.DyUser">
+            <id property="id" column="id"/>
+            <result column="phone" property="phone"/>
+            <result column="password" property="password"/>
+            <result column="code" property="code"/>
+            <result column="userName" property="userName"/>
+            <result column="createTime" property="createTime"/>
+            <result column="updateTime" property="updateTime"/>
+            <result column="email" property="email"/>
+            <result column="loginIp" property="loginIp"/>
+            <result column="loginTime" property="loginTime"/>
+            <result column="icon" property="icon"/>
+            <result column="sex" property="sex"/>
+            <result column="birthday" property="birthday"/>
+            <!--            <collection property="dyUserLikeMedia" resultMap="dyUserLikeMediaResultMap" />-->
+        </collection>
+    </resultMap>
+
+    <select id="findUserPublishAndLikeByUserId" resultMap="UserPublishLikeMapper">
+        select * from dy_publish LEFT JOIN douyin_auth.dy_user on  douyin_auth.dy_user.id=douyin_publish.dy_publish.author
+                               RIGHT JOIN  douyin_auth.dy_user_like_media on douyin_auth.dy_user_like_media.mediaId = douyin_publish.dy_publish.mediaId and douyin_auth.dy_user_like_media.userId = douyin_auth.dy_user.id
+        where douyin_auth.dy_user_like_media.userId=#{userId} and douyin_publish.dy_publish.status="1"
+    </select>
+
+</mapper>

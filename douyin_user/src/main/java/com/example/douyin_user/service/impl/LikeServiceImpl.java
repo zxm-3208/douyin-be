@@ -41,8 +41,7 @@ public class LikeServiceImpl implements LikeService {
     @Autowired
     private PublishMapper publishMapper;
 
-    // TODO: 点赞的时候 MediaPublistDTO 需要增加title和authorId
-
+    // TODO: 点赞后，Redis保存的数据缺失icon和username
     @Override
     public BaseResponse addLike(VediaUserLikes vediaUserLikes) {
         String userId = vediaUserLikes.getUserId();
@@ -66,9 +65,9 @@ public class LikeServiceImpl implements LikeService {
             isSuccess = dyUserLikeMediaMapper.addLikeMeida(userId, mediaId, new Timestamp(System.currentTimeMillis()));
             log.info("用户点赞的视频列表添加是否成功：{}", isSuccess);
             if (isSuccess != 0) {
-                DyMedia dyMedia = mediaFilesMapper.getByMediaId(mediaId);
+                DyMedia dyMedia = mediaFilesMapper.findMediaUrlAndUpdateTimeByUserIdAndMediaId(mediaId);
                 if(dyMedia!=null) {
-                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(mediaId, dyMedia.getMediaUrl(), dyMedia.getDyPublish().getAuthor(), dyMedia.getDyPublish().getTitle());
+                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(mediaId, dyMedia.getMediaUrl(), dyMedia.getDyPublish().getAuthor(), dyMedia.getDyPublish().getTitle(), dyMedia.getDyUser().getUserName(), dyMedia.getDyUser().getIcon());
                     redisTemplate.opsForZSet().add(userLikeMediaListKey, mediaPublistDTO, System.currentTimeMillis());
                 }
                 // 更新用户点赞的视频列表封面
@@ -90,10 +89,10 @@ public class LikeServiceImpl implements LikeService {
             isSuccess = dyUserLikeMediaMapper.delLikeMeida(userId, mediaId);
             log.info("用户点赞的视频列表删除是否成功：{}", isSuccess);
             if (isSuccess != 0) {
-                DyMedia dyMedia = mediaFilesMapper.getByMediaId(mediaId);
+                DyMedia dyMedia = mediaFilesMapper.findMediaUrlAndUpdateTimeByUserIdAndMediaId(mediaId);
                 if(dyMedia!=null) {
-                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(mediaId, dyMedia.getMediaUrl(), dyMedia.getDyPublish().getAuthor(), dyMedia.getDyPublish().getTitle());
-                    redisTemplate.opsForZSet().remove(userLikeMediaListKey, mediaPublistDTO, System.currentTimeMillis());
+                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(mediaId, dyMedia.getMediaUrl(), dyMedia.getDyPublish().getAuthor(), dyMedia.getDyPublish().getTitle(), dyMedia.getDyUser().getUserName(), dyMedia.getDyUser().getIcon());
+                    redisTemplate.opsForZSet().remove(userLikeMediaListKey, mediaPublistDTO);
                 }
                 // 更新用户点赞的视频列表封面
                 DyPublish dPublish = publishMapper.getCoverUrlByMediaId(mediaId);

@@ -108,7 +108,13 @@
             <result column="imgUrl" property="imgUrl"></result>
             <result column="tag" property="tag"></result>
         </association>
-        <collection property="dyUser" ofType="com.example.douyin_feed.domain.po.DyUser">
+        <association property="dyUserLikeMedia" javaType="com.example.douyin_feed.domain.po.DyUserLikeMedia">
+            <id property="id" column="id" jdbcType="VARCHAR"/>
+            <result property="userId" column="userId" jdbcType="VARCHAR"/>
+            <result property="mediaId" column="mediaId" jdbcType="VARCHAR"/>
+            <result property="likeUpdateTime" column="likeUpdateTime" jdbcType="TIMESTAMP"/>
+        </association>
+        <association property="dyUser" javaType="com.example.douyin_feed.domain.po.DyUser">
             <id property="id" column="id"/>
             <result column="phone" property="phone"/>
             <result column="password" property="password"/>
@@ -122,14 +128,7 @@
             <result column="icon" property="icon"/>
             <result column="sex" property="sex"/>
             <result column="birthday" property="birthday"/>
-<!--            <collection property="dyUserLikeMedia" resultMap="dyUserLikeMediaResultMap" />-->
-        </collection>
-        <collection property="dyUserLikeMedia" ofType="com.example.douyin_feed.domain.po.DyUserLikeMedia">
-            <id property="id" column="id" jdbcType="VARCHAR"/>
-            <result property="userId" column="userId" jdbcType="VARCHAR"/>
-            <result property="mediaId" column="mediaId" jdbcType="VARCHAR"/>
-            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
-        </collection>
+        </association>
     </resultMap>
 
 <!--    <resultMap id="dyUserLikeMediaResultMap" type="com.example.douyin_feed.domain.po.DyUserLikeMedia">-->
@@ -143,7 +142,7 @@
         select * from dy_media LEFT JOIN dy_publish on douyin_publish.dy_media.id=dy_publish.mediaId
             LEFT JOIN douyin_auth.dy_user on  douyin_auth.dy_user.id=douyin_publish.dy_media.author
             RIGHT JOIN  douyin_auth.dy_user_like_media on douyin_auth.dy_user_like_media.mediaId = douyin_publish.dy_media.id
-                 where douyin_auth.dy_user_like_media.userId=#{userId} and douyin_publish.dy_publish.status="1" ORDER BY douyin_publish.dy_media.id
+                 where douyin_auth.dy_user_like_media.userId=#{userId} and douyin_publish.dy_publish.status="1"
     </select>
 
 </mapper>

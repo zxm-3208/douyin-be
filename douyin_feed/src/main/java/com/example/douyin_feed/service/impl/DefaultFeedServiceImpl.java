@@ -248,8 +248,6 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
             List<DyMedia> dyMedia = mediaFilesMapper.findMediaUserPublishAndLikeByUserId(userId);
             for(DyMedia x: dyMedia)
                 log.info("dyMedia:{}",x);
-
-
 //            List<DyMedia> dyMedia = mediaFilesMapper.findMediaUrlAndUpdateTime();
 //            List<DyUserLikeMedia> dyUserLikeMedia = dyUserLikeMediaMapper.getMediaIdByUserId(userId);
 //            List<DyUser> dyUserList = dyUserMapper.getUser();
@@ -264,16 +262,15 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
 //                    }
 //                }
 //            }
-
-
             log.info("size:{}",dyMedia.size());
             // 保存到Redis
             for(int i=0;i<dyMedia.size();i++){
                 try {
-                    log.info("updateTime:{}",dyMedia.get(i).getDyUserLikeMedia().getUpdateTime());
-                    long scope = dyMedia.get(i).getDyUserLikeMedia().getUpdateTime().getTime();
+                    log.info("updateTime:{}",dyMedia.get(i).getDyUserLikeMedia().getLikeUpdateTime());
+                    log.info("time:{},{}", dyMedia.get(i).getDyUserLikeMedia().getLikeUpdateTime(), dyMedia.get(i).getDyUserLikeMedia().getLikeUpdateTime().getTime());
+                    long scope = dyMedia.get(i).getDyUserLikeMedia().getLikeUpdateTime().getTime();
                     String title = dyMedia.get(i).getDyPublish().getTitle();
-                    String authorId = dyMedia.get(i).getDyUser().getId();
+                    String authorId = dyMedia.get(i).getDyPublish().getAuthor();
                     String userName = dyMedia.get(i).getDyUser().getUserName();
                     String iconUrl = dyMedia.get(i).getDyUser().getIcon();
                     String tempMediaUrl= null;
@@ -283,15 +280,17 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
                     }
 //                    String tempMediaUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_videofiles).object(likeFeedDTOS.get(i).getMediaUrl()).method(Method.GET).build());
                     MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(dyMedia.get(i).getId(),dyMedia.get(i).getMediaUrl(), authorId, title,userName,tempMediaUrl);
+                    log.info("保存到Redis ZSet中：{}",i);
                     zSetUtils.addObjectToZSet(RedisConstants.USER_LIKE_MEDIA_LIST_KEY + userId, mediaPublistDTO, scope);
                 }catch (Exception e){
                     e.printStackTrace();
                     return BaseResponse.fail("获取外链失败");
                 }
             }
-//            if(likeFeedDTOS.size()>0){
-//                redisTemplate.expire(RedisConstants.USER_LIKE_MEDIA_LIST_KEY, RedisConstants.USER_LIKE_MEDIA_LIST_TTL, TimeUnit.DAYS);
-//            }
+            if(dyMedia.size()>0){
+                log.info("Redis设置过期时间");
+                redisTemplate.expire(RedisConstants.USER_LIKE_MEDIA_LIST_KEY + userId, RedisConstants.USER_LIKE_MEDIA_LIST_TTL, TimeUnit.DAYS);
+            }
         }
 
         // 分页读取

@@ -45,6 +45,7 @@ public class RedisConstants {
 
     // 用户视频点赞列表
     public static final String USER_LIKE_MEDIA_LIST_KEY = "liked:user:";
+    public static final Long USER_LIKE_MEDIA_LIST_TTL = 7L;
 
     // 用户关注列表
     public static final String USER_FOLLOW_LIST_KEY = "follow:user:";

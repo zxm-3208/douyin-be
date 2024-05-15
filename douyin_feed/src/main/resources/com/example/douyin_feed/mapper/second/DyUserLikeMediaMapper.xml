@@ -6,7 +6,7 @@
         <result property="id" column="id" jdbcType="VARCHAR"/>
         <result property="userid" column="userId" jdbcType="VARCHAR"/>
         <result property="mediaid" column="mediaId" jdbcType="VARCHAR"/>
-        <result property="updatetime" column="updateTime" jdbcType="TIMESTAMP"/>
+        <result property="likeUpdateTime" column="likeUpdateTime" jdbcType="TIMESTAMP"/>
     </resultMap>
 
     <select id="findUserById" resultMap="DyUserLikeMediaMap">
