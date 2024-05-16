@@ -33,4 +33,9 @@
     <select id="getFollowInfoByUserAndFollow" resultMap="UserMapper">
         select * from dy_follow o LEFT JOIN dy_user u on o.followerId=u.id where o.userId=#{userId}
     </select>
+
+    <select id="getFansInfoByUserAndFollow" resultMap="UserMapper">
+        select * from dy_follow o LEFT JOIN dy_user u on o.userId=u.id where o.followerId=#{userId}
+    </select>
+
 </mapper>

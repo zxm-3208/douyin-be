@@ -18,5 +18,12 @@ public class UserListDTO {
     private String icon;
     private String userName;
     private String introduction;
+    private String followFlag;
 
+    public UserListDTO(String userId, String icon, String userName, String introduction) {
+        this.userId = userId;
+        this.icon = icon;
+        this.userName = userName;
+        this.introduction = introduction;
+    }
 }

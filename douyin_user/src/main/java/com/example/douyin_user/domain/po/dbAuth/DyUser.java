@@ -14,7 +14,6 @@ import java.util.Date;
  * @version: 1.0
  */
 @Data
-@TableName(value = "dy_user")
 public class DyUser implements Serializable {
     private static final long serialVersionUID = 546492953131891610L;
     /**
@@ -76,5 +75,4 @@ public class DyUser implements Serializable {
      */
     private String introduction;
 
-    private DyPublish dyPublish;
 }

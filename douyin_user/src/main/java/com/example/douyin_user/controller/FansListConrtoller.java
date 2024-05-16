@@ -1,9 +1,12 @@
 package com.example.douyin_user.controller;
 
+import com.example.douyin_commons.core.domain.BaseResponse;
+import com.example.douyin_user.domain.vo.GetListVo;
+import com.example.douyin_user.service.FansListService;
+import com.example.douyin_user.service.FollowListService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author : zxm
@@ -17,6 +20,12 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class FansListConrtoller {
 
+    @Autowired
+    private FansListService fansListService;
 
+    @PostMapping("/getFansList")
+    public BaseResponse getFollowList(@RequestBody GetListVo getListVo){
+        return fansListService.getFansList(getListVo);
+    }
 
 }

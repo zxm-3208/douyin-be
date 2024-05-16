@@ -17,7 +17,7 @@ import java.util.List;
  * @version: 1.0
  */
 public interface DyFollowMapper  extends BaseMapper<DyFollow> {
-    @Insert("INSERT INTO dy_follow (userId, followerId, createTime)  VALUES (#{userId}, #{followerId}, #{time});")
+    @Insert("INSERT INTO dy_follow (userId, followerId, followCreateTime)  VALUES (#{userId}, #{followerId}, #{time});")
     Integer addFollow(String userId, String followerId, Date time);
 
     @Delete("DELETE FROM dy_follow u WHERE u.userId = #{userId} and u.followerID = #{authorId};")
@@ -29,8 +29,16 @@ public interface DyFollowMapper  extends BaseMapper<DyFollow> {
     @Select("select * from dy_follow u where u.userId = #{userId}")
     List<DyFollow> getFollowByUserId(String userId);
 
+    @Select("select u.followerID from dy_follow u where u.userId = #{userId}")
+    List<String> getFollowIdByUserId(String userId);
+
     @Select("select * from dy_follow u where u.followerID = #{authorId}")
     List<DyFollow> getFansByAuthorId(String authorId);
 
+
     List<DyFollow> getFollowInfoByUserAndFollow(String userId);
+
+    List<DyFollow> getFansInfoByUserAndFollow(String userId);
+
+
 }

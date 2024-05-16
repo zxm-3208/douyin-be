@@ -1,6 +1,7 @@
 package com.example.douyin_user.service;
 
 import com.example.douyin_commons.core.domain.BaseResponse;
+import com.example.douyin_user.domain.vo.AuthorFollowVo;
 import com.example.douyin_user.domain.vo.GetListVo;
 
 /**
@@ -12,4 +13,5 @@ import com.example.douyin_user.domain.vo.GetListVo;
 public interface FollowListService {
 
     BaseResponse getFollowList(GetListVo getListVo);
+
 }

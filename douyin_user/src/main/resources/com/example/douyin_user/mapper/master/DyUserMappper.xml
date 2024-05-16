@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.example.douyin_user.mapper.master.DyUserMapper">
+
+<!--    <resultMap id="dyUserMapper" type="com.example.douyin_user.domain.po.dbAuth.DyUser">-->
+<!--        &lt;!&ndash;手动指定字段与实体属性的映射关系-->
+<!--            column: 数据表的字段名称-->
+<!--            property：实体的属性名称-->
+<!--        &ndash;&gt;-->
+<!--        <id column="id" property="id"></id>-->
+<!--        <result column="phone" property="phone"></result>-->
+<!--        <result column="password" property="password"></result>-->
+<!--        <result column="code" property="code"></result>-->
+<!--        <result column="userName" property="userName"></result>-->
+<!--        <result column="createTime" property="createTime"></result>-->
+<!--        <result column="updateTime" property="updateTime"></result>-->
+<!--        <result column="email" property="email"></result>-->
+<!--        <result column="loginIp" property="loginIp"></result>-->
+<!--        <result column="loginTime" property="loginTime"></result>-->
+<!--        <result column="icon" property="icon"></result>-->
+<!--        <result column="birthday" property="birthday"></result>-->
+<!--        <result column="introduction" property="introduction"></result>-->
+<!--    </resultMap>-->
+
+
+</mapper>

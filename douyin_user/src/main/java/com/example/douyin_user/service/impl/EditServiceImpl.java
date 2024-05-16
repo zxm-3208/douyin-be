@@ -46,8 +46,10 @@ public class EditServiceImpl implements EditService {
 
     @Autowired
     private DyUserMapper dyUserMapper;
+
     @Autowired
     private MinioClient minioClient;
+
     // 普通文件桶
     @Value("${minio.bucket.icon}")
     private String bucket_icon_files;

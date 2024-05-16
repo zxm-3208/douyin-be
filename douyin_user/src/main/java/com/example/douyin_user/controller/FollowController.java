@@ -43,5 +43,4 @@ public class FollowController {
     public BaseResponse getFansCount(@RequestParam String userId){
         return followService.getFansCount(userId);
     }
-
 }

@@ -17,4 +17,5 @@ public interface FollowService {
     BaseResponse getFollowCount(String userId);
 
     BaseResponse getFansCount(String userId);
+
 }

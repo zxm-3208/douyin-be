@@ -5,8 +5,11 @@ import com.example.douyin_commons.core.domain.BaseResponse;
 import com.example.douyin_commons.core.domain.MediaPublistDTO;
 import com.example.douyin_commons.core.domain.UserListDTO;
 import com.example.douyin_user.domain.po.dbAuth.DyFollow;
+import com.example.douyin_user.domain.po.dbAuth.DyUser;
+import com.example.douyin_user.domain.vo.AuthorFollowVo;
 import com.example.douyin_user.domain.vo.GetListVo;
 import com.example.douyin_user.mapper.master.DyFollowMapper;
+import com.example.douyin_user.mapper.master.DyUserMapper;
 import com.example.douyin_user.service.FollowListService;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
@@ -110,4 +113,5 @@ public class FollowListServiceImpl implements FollowListService {
         // 返回结果
         return BaseResponse.success(map);
     }
+
 }

@@ -1,6 +1,7 @@
 package com.example.douyin_user.controller;
 
 import com.example.douyin_commons.core.domain.BaseResponse;
+import com.example.douyin_user.domain.vo.AuthorFollowVo;
 import com.example.douyin_user.domain.vo.GetListVo;
 import com.example.douyin_user.service.FollowListService;
 import com.example.douyin_user.service.FollowService;
@@ -27,5 +28,6 @@ public class FollowListController {
     public BaseResponse getFollowList(@RequestBody GetListVo getListVo){
         return followListService.getFollowList(getListVo);
     }
+
 
 }
