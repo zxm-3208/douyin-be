@@ -160,7 +160,9 @@ public class DefaultFeedServiceImpl implements DefaultFeedService {
                     String userName = temp_entry.get(i).getDyUser().getUserName();
                     String iconUrl = temp_entry.get(i).getDyUser().getIcon();
                     // 获取外链
-                    String tempIconUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_icon_file).object(temp_entry.get(i).getDyUser().getIcon()).method(Method.GET).build());
+                    String tempIconUrl = null;
+                    if(temp_entry.get(i).getDyUser().getIcon()!=null)
+                        tempIconUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_icon_file).object(temp_entry.get(i).getDyUser().getIcon()).method(Method.GET).build());
                     // 记录到Redis中
                     String tempMediaUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_videofiles).object(temp_entry.get(i).getMediaUrl()).method(Method.GET).build());
                     MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(mediaId,tempMediaUrl,userId,title, userName, tempIconUrl);

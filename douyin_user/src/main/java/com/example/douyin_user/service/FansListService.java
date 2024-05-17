@@ -13,4 +13,5 @@ public interface FansListService {
 
     BaseResponse getFansList(GetListVo getListVo);
 
+    BaseResponse getOtherUserFansList(GetListVo getListVo);
 }

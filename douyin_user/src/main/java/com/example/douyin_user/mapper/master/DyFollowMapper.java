@@ -29,6 +29,9 @@ public interface DyFollowMapper  extends BaseMapper<DyFollow> {
     @Select("select * from dy_follow u where u.userId = #{userId}")
     List<DyFollow> getFollowByUserId(String userId);
 
+    @Select("select u.userId from dy_follow u where u.followerID = #{userId}")
+    List<String> getFansIdIdByFollowId(String userId);
+
     @Select("select u.followerID from dy_follow u where u.userId = #{userId}")
     List<String> getFollowIdByUserId(String userId);
 

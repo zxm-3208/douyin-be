@@ -56,6 +56,7 @@ public class FollowListServiceImpl implements FollowListService {
         List<String> iconList = new ArrayList<>();
         List<String> nameList = new ArrayList<>();
         List<String> introductionList = new ArrayList<>();
+        List<String> followFlagList = new ArrayList<>();
 
         // 1. 从Redis获取
         Long size = redisTemplate.opsForZSet().size(key);
@@ -67,16 +68,7 @@ public class FollowListServiceImpl implements FollowListService {
             dyFollowList = dyFollowMapper.getFollowInfoByUserAndFollow(getListVo.getUserId());
             if(dyFollowList.size()>0){
                 for(DyFollow x: dyFollowList) {
-                    String tempIconUrl = "";
-                    try {
-                        if (x.getDyUser().getIcon()!=null) {
-                            tempIconUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_icon_files).object(x.getDyUser().getIcon()).method(Method.GET).build());
-                        }
-                    }catch (Exception e){
-                        e.printStackTrace();
-                        return BaseResponse.fail("获取外链失败");
-                    }
-                    UserListDTO userListDTO = new UserListDTO(x.getFollowerId(), tempIconUrl, x.getDyUser().getUserName(), x.getDyUser().getIntroduction());
+                    UserListDTO userListDTO = new UserListDTO(x.getFollowerId(), x.getDyUser().getIcon(), x.getDyUser().getUserName(), x.getDyUser().getIntroduction(),"1");
                     redisTemplate.opsForZSet().add(key, userListDTO, x.getFollowCreateTime().getTime());
                 }
             }
@@ -90,9 +82,16 @@ public class FollowListServiceImpl implements FollowListService {
             try {
                 log.info("tuple:{}", tuple.getValue());
                 userIdList.add(tuple.getValue().getUserId());
-                iconList.add(tuple.getValue().getIcon());
+                log.info("{}",tuple.getValue().getIcon());
+                System.out.println(tuple.getValue().getIcon());
+                if(tuple.getValue().getIcon()!=null&&tuple.getValue().getIcon()!="")
+                    iconList.add(minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_icon_files).object(tuple.getValue().getIcon()).method(Method.GET).build()));
+                else{
+                    iconList.add(null);
+                }
                 nameList.add(tuple.getValue().getUserName());
                 introductionList.add(tuple.getValue().getIntroduction());
+                followFlagList.add(tuple.getValue().getFollowFlag());
             }catch (Exception e){
                 e.printStackTrace();
                 return BaseResponse.fail("获取外链失败");
@@ -110,6 +109,77 @@ public class FollowListServiceImpl implements FollowListService {
         map.put("iconList", iconList);
         map.put("nameList", nameList);
         map.put("introductionList", introductionList);
+        map.put("followFlagList", followFlagList);
+        // 返回结果
+        return BaseResponse.success(map);
+    }
+
+    @Override
+    public BaseResponse getotherUserFollowList(GetListVo getListVo) {
+        String key = RedisConstants.USER_FOLLOW_INFO_LIST_KEY + getListVo.getUserId();  // 目标用户
+        String realUserKey = RedisConstants.USER_FOLLOW_INFO_LIST_KEY + getListVo.getRealUserId();  // 真实用户
+        List<String> userIdList = new ArrayList<>();
+        List<String> iconList = new ArrayList<>();
+        List<String> nameList = new ArrayList<>();
+        List<String> introductionList = new ArrayList<>();
+        List<String> followFlagList = new ArrayList<>();
+
+        // 1. 从Redis获取
+        Long size = redisTemplate.opsForZSet().size(key);
+
+        List<DyFollow> dyFollowList = null;
+        // 2. 判断是否存在
+        if(size.equals(0L)){
+            // 3. 如果不存在就从数据库中读取
+            dyFollowList = dyFollowMapper.getFollowInfoByUserAndFollow(getListVo.getUserId());
+            List<String> followByUserList = dyFollowMapper.getFollowIdByUserId(getListVo.getRealUserId());
+            if(dyFollowList.size()>0){
+                for(DyFollow x: dyFollowList) {
+                    UserListDTO userListDTO =null;
+                    if (followByUserList.contains(x.getFollowerId())) {
+                        userListDTO = new UserListDTO(x.getFollowerId(), x.getDyUser().getIcon(), x.getDyUser().getUserName(), x.getDyUser().getIntroduction(), "1");
+                    }
+                    else{
+                        userListDTO = new UserListDTO(x.getFollowerId(), x.getDyUser().getIcon(), x.getDyUser().getUserName(), x.getDyUser().getIntroduction(), "0");
+                    }
+                    redisTemplate.opsForZSet().add(key, userListDTO, x.getFollowCreateTime().getTime());
+                }
+            }
+        }
+        // 4. 如果存在
+        Set<ZSetOperations.TypedTuple<UserListDTO>> dto = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(key, 0, Long.valueOf(getListVo.getLastId()), Long.valueOf(getListVo.getOffset()), 100);
+
+        long minTime = 0;
+        int os = 1;
+        for (ZSetOperations.TypedTuple<UserListDTO> tuple : dto) {
+            try {
+                log.info("tuple:{}", tuple.getValue());
+                userIdList.add(tuple.getValue().getUserId());
+                if(tuple.getValue().getIcon()!=null&&tuple.getValue().getIcon()!="")
+                    iconList.add(minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_icon_files).object(tuple.getValue().getIcon()).method(Method.GET).build()));
+                else
+                    iconList.add(null);
+                nameList.add(tuple.getValue().getUserName());
+                introductionList.add(tuple.getValue().getIntroduction());
+                followFlagList.add(tuple.getValue().getFollowFlag());
+            }catch (Exception e){
+                e.printStackTrace();
+                return BaseResponse.fail("获取外链失败");
+            }
+            long time = tuple.getScore().longValue();
+            if (time == minTime) {
+                os++;
+            }else {
+                minTime = time;
+                os = 1;
+            }
+        }
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("userIdList", userIdList);
+        map.put("iconList", iconList);
+        map.put("nameList", nameList);
+        map.put("introductionList", introductionList);
+        map.put("followFlagList", followFlagList);
         // 返回结果
         return BaseResponse.success(map);
     }

@@ -29,5 +29,9 @@ public class FollowListController {
         return followListService.getFollowList(getListVo);
     }
 
+    @PostMapping("/getOtherUserFollowList")
+    public BaseResponse getotherUserFollowList(@RequestBody GetListVo getListVo){
+        return followListService.getotherUserFollowList(getListVo);
+    }
 
 }
