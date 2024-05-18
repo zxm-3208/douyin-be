@@ -1,0 +1,51 @@
+version: "1.0"
+
+services:
+  douyin_auth:
+    build:
+      context: ./douyin_auth
+      dockerfile: Dockerfile
+    container_name: douyinAuth
+    ports:
+      - "8000:8000"
+    networks:
+      - douyinNet
+  douyin_feed:
+    build:
+      context: ./douyin_feed
+      dockerfile: Dockerfile
+    container_name: douyin_feed
+    ports:
+      - "8050:8050"
+    networks:
+      - douyinNet
+  douyin_gateway:
+    build:
+      context: ./douyin_gateway
+      dockerfile: Dockerfile
+    container_name: douyin_gateway
+    ports:
+      - "8020:8020"
+    networks:
+      - douyinNet
+  douyin_publish:
+    build:
+      context: ./douyin_publish
+      dockerfile: Dockerfile
+    container_name: douyin_publish
+    ports:
+      - "8040:8040"
+    networks:
+      - douyinNet
+  douyin_user:
+    build:
+      context: ./douyin_user
+      dockerfile: Dockerfile
+    container_name: douyin_user
+    ports:
+      - "8051:8051"
+    networks:
+      - douyinNet
+networks:
+  douyinNet:
+    name: douyinNet
