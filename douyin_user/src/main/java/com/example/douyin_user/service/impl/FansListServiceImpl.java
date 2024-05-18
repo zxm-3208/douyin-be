@@ -47,13 +47,11 @@ public class FansListServiceImpl implements FansListService {
     @Override
     public BaseResponse getFansList(GetListVo getListVo) {
         String userId = getListVo.getUserId();      // 目标用户
-        String realUserId = getListVo.getRealUserId();  // 真实用户
         String key = RedisConstants.USER_FANS_INFO_LIST_KEY + userId;
         List<String> userIdList = new ArrayList<>();
         List<String> iconList = new ArrayList<>();
         List<String> nameList = new ArrayList<>();
         List<String> introductionList = new ArrayList<>();
-        List<String> followFlagList = new ArrayList<>();
 
         // 1. 从Redis获取
         Long size = redisTemplate.opsForZSet().size(key);
@@ -69,9 +67,9 @@ public class FansListServiceImpl implements FansListService {
                     UserListDTO userListDTO = null;
                     log.info("userId:{}, followByUserList:{}", x.getUserId(), followByUserList);
                     if (followByUserList.contains(x.getUserId())) {
-                        userListDTO = new UserListDTO(x.getUserId(), x.getDyUser().getIcon(), x.getDyUser().getUserName(), x.getDyUser().getIntroduction(), "1");
+                        userListDTO = new UserListDTO(x.getUserId(), x.getDyUser().getIcon(), x.getDyUser().getUserName(), x.getDyUser().getIntroduction());
                     }else{
-                        userListDTO = new UserListDTO(x.getUserId(), x.getDyUser().getIcon(), x.getDyUser().getUserName(), x.getDyUser().getIntroduction(), "0");
+                        userListDTO = new UserListDTO(x.getUserId(), x.getDyUser().getIcon(), x.getDyUser().getUserName(), x.getDyUser().getIntroduction());
                     }
                     redisTemplate.opsForZSet().add(key, userListDTO, x.getFollowCreateTime().getTime());
                 }
@@ -92,7 +90,6 @@ public class FansListServiceImpl implements FansListService {
                     iconList.add(null);
                 nameList.add(tuple.getValue().getUserName());
                 introductionList.add(tuple.getValue().getIntroduction());
-                followFlagList.add(tuple.getValue().getFollowFlag());
             }catch (Exception e){
                 e.printStackTrace();
                 return BaseResponse.fail("获取外链失败");
@@ -110,79 +107,9 @@ public class FansListServiceImpl implements FansListService {
         map.put("iconList", iconList);
         map.put("nameList", nameList);
         map.put("introductionList", introductionList);
-        map.put("followFlagList", followFlagList);
         // 返回结果
         return BaseResponse.success(map);
     }
 
-    @Override
-    public BaseResponse getOtherUserFansList(GetListVo getListVo) {
-        String userId = getListVo.getUserId();      // 目标用户ID
-        String key = RedisConstants.USER_FANS_INFO_LIST_KEY + userId;
-        List<String> userIdList = new ArrayList<>();
-        List<String> iconList = new ArrayList<>();
-        List<String> nameList = new ArrayList<>();
-        List<String> introductionList = new ArrayList<>();
-        List<String> followFlagList = new ArrayList<>();
-
-        // 1. 从Redis获取
-        Long size = redisTemplate.opsForZSet().size(key);
-
-        List<DyFollow> dyFansList = null;
-        // 2. 判断是否存在
-        if(size.equals(0L)){
-            // 3. 如果不存在就从数据库中读取
-            dyFansList = dyFollowMapper.getFansInfoByUserAndFollow(userId);
-            List<String> followByUserList = dyFollowMapper.getFollowIdByUserId(getListVo.getRealUserId());
-            if(dyFansList.size()>0){
-                for(DyFollow x: dyFansList) {
-                    UserListDTO userListDTO = null;
-                    log.info("userId:{}, followByUserList:{}", x.getUserId(), followByUserList);
-                    if (followByUserList.contains(x.getUserId())) {
-                        userListDTO = new UserListDTO(x.getUserId(), x.getDyUser().getIcon(), x.getDyUser().getUserName(), x.getDyUser().getIntroduction(), "1");
-                    }else{
-                        userListDTO = new UserListDTO(x.getUserId(), x.getDyUser().getIcon(), x.getDyUser().getUserName(), x.getDyUser().getIntroduction(), "0");
-                    }
-                    redisTemplate.opsForZSet().add(key, userListDTO, x.getFollowCreateTime().getTime());
-                }
-            }
-        }
-        // 4. 如果存在
-        Set<ZSetOperations.TypedTuple<UserListDTO>> dto = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(key, 0, Long.valueOf(getListVo.getLastId()), Long.valueOf(getListVo.getOffset()), 100);
-
-        long minTime = 0;
-        int os = 1;
-        for (ZSetOperations.TypedTuple<UserListDTO> tuple : dto) {
-            try {
-                log.info("tuple:{}", tuple.getValue());
-                userIdList.add(tuple.getValue().getUserId());
-                if(tuple.getValue().getIcon()!=null && tuple.getValue().getIcon()!="")
-                    iconList.add(minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_icon_files).object(tuple.getValue().getIcon()).method(Method.GET).build()));
-                else
-                    iconList.add(null);
-                nameList.add(tuple.getValue().getUserName());
-                introductionList.add(tuple.getValue().getIntroduction());
-                followFlagList.add(tuple.getValue().getFollowFlag());
-            }catch (Exception e){
-                e.printStackTrace();
-                return BaseResponse.fail("获取外链失败");
-            }
-            long time = tuple.getScore().longValue();
-            if (time == minTime) {
-                os++;
-            }else {
-                minTime = time;
-                os = 1;
-            }
-        }
-        HashMap<String, Object> map = new HashMap<>();
-        map.put("userIdList", userIdList);
-        map.put("iconList", iconList);
-        map.put("nameList", nameList);
-        map.put("introductionList", introductionList);
-        map.put("followFlagList", followFlagList);
-        // 返回结果
-        return BaseResponse.success(map);
-    }
 
 }

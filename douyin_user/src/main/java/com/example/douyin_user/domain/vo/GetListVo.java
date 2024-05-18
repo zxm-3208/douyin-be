@@ -15,4 +15,5 @@ public class GetListVo {
     private String offset;
 
     private String realUserId;
+    private String isFollow;
 }

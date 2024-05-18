@@ -5,12 +5,10 @@ import com.example.douyin_user.domain.vo.GetListVo;
 
 /**
  * @author : zxm
- * @date: 2024/5/15 - 19:05
+ * @date: 2024/5/17 - 22:07
  * @Description: com.example.douyin_user.service
  * @version: 1.0
  */
-public interface FansListService {
-
-    BaseResponse getFansList(GetListVo getListVo);
-
+public interface FollowFlagService {
+    BaseResponse getFollowFlag(GetListVo getListVo);
 }

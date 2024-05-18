@@ -62,4 +62,10 @@ public class RedisConstants {
 
     // 用户粉丝列表信息
     public static final String USER_FANS_INFO_LIST_KEY = "fans:info:user:";
+
+    // 用户关注标志列表信息
+    public static final String USER_FOLLOW_FLAG_LIST_KEY = "follow:flag:user:";
+
+    // 用户粉丝标志列表信息
+    public static final String USER_FANS_FLAG_LIST_KEY = "fans:flag:user:";
 }

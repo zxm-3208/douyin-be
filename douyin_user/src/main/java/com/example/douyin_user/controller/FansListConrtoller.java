@@ -28,9 +28,5 @@ public class FansListConrtoller {
         return fansListService.getFansList(getListVo);
     }
 
-    @PostMapping("/getOtherUserFansList")
-    public BaseResponse getOtherUserFansList(@RequestBody GetListVo getListVo){
-        return fansListService.getOtherUserFansList(getListVo);
-    }
 
 }

@@ -77,25 +77,25 @@ public class FollowServiceImpl implements FollowService {
             if(user != null) {
                 // Redis关注者列表
                 // 更新真实用户Redis关注者列表
-                UserListDTO userListDTO = new UserListDTO(user.getId(), user.getIcon(), user.getUserName(), user.getIntroduction(),"1");
+                UserListDTO userListDTO = new UserListDTO(user.getId(), user.getIcon(), user.getUserName(), user.getIntroduction());
                 redisTemplate.opsForZSet().add(followListKey, userListDTO, time);
                 // Redis粉丝列表
                 DyUser realUser = dyUserMapper.getEdit(userId);
                 if(user != null) {
                     // 更新目标用户Redis粉丝列表 (目标用户粉丝列表增加真实用户信息)
-                    userListDTO = new UserListDTO(realUser.getId(), realUser.getIcon(), realUser.getUserName(), realUser.getIntroduction(), "0");
-                    redisTemplate.opsForZSet().remove(fansListKey, userListDTO);
-                    userListDTO = new UserListDTO(realUser.getId(), realUser.getIcon(), realUser.getUserName(), realUser.getIntroduction(), "1");
-                    redisTemplate.opsForZSet().add(fansListKey, userListDTO, time);
-                    // 更新真实用户Redis粉丝列表 (真实用户粉丝列表中的目标用户 是否已关注的标签跟新)
-                    // 判断目标用户是否已在真实用户粉丝列表中
-                    List<String> fansIdList = dyFollowMapper.getFansIdIdByFollowId(authorId);
-                    if(fansIdList.contains(authorId)) {
-                        UserListDTO realUserListDTO = new UserListDTO(user.getId(), user.getIcon(), user.getUserName(), user.getIntroduction(), "0");
-                        redisTemplate.opsForZSet().remove(realUserFansListKey, realUserListDTO);
-                        realUserListDTO = new UserListDTO(user.getId(), user.getIcon(), user.getUserName(), user.getIntroduction(), "1");
-                        redisTemplate.opsForZSet().add(realUserFansListKey, realUserListDTO, time);
+                    // 先要判断目标用户Redis粉丝列表是否为空，为空需要先从Mysql中获取数据
+                    Long size = redisTemplate.opsForZSet().size(fansListKey);
+                    if(size==0){
+                        List<DyFollow> dyFollowList = dyFollowMapper.getFansInfoByUserAndFollow(authorId);
+                        if(dyFollowList.size()>0){
+                            for(DyFollow x: dyFollowList) {
+                                userListDTO = new UserListDTO(x.getUserId(), x.getDyUser().getIcon(), x.getDyUser().getUserName(), x.getDyUser().getIntroduction());
+                                redisTemplate.opsForZSet().add(fansListKey, userListDTO, x.getFollowCreateTime().getTime());
+                            }
+                        }
                     }
+                    userListDTO = new UserListDTO(realUser.getId(), realUser.getIcon(), realUser.getUserName(), realUser.getIntroduction());
+                    redisTemplate.opsForZSet().add(fansListKey, userListDTO, time);
                 }
             }
         }else{
@@ -109,26 +109,14 @@ public class FollowServiceImpl implements FollowService {
             log.info("用户关注列表更新：{}", user);
             if(user != null) {
                 // Redis关注者列表
-                UserListDTO userListDTO = new UserListDTO(user.getId(), user.getIcon(), user.getUserName(), user.getIntroduction(),"1");
+                UserListDTO userListDTO = new UserListDTO(user.getId(), user.getIcon(), user.getUserName(), user.getIntroduction());
                 redisTemplate.opsForZSet().remove(followListKey, userListDTO);
                 // Redis粉丝列表
                 DyUser realUser = dyUserMapper.getEdit(userId);
                 if(user != null) {
                     // 更新真实用户Redis粉丝列表
-                    userListDTO = new UserListDTO(realUser.getId(), realUser.getIcon(), realUser.getUserName(), realUser.getIntroduction(), "0");
+                    userListDTO = new UserListDTO(realUser.getId(), realUser.getIcon(), realUser.getUserName(), realUser.getIntroduction());
                     redisTemplate.opsForZSet().remove(fansListKey, userListDTO);
-                    userListDTO = new UserListDTO(realUser.getId(), realUser.getIcon(), realUser.getUserName(), realUser.getIntroduction(), "1");
-                    redisTemplate.opsForZSet().remove(fansListKey, userListDTO);
-                    // 更新真实用户Redis粉丝列表
-                    // 更新真实用户Redis粉丝列表 (真实用户粉丝列表中的目标用户 是否已关注的标签跟新)
-                    // 判断目标用户是否已在真实用户粉丝列表中
-                    List<String> fansIdList = dyFollowMapper.getFansIdIdByFollowId(authorId);
-                    if(fansIdList.contains(authorId)) {
-                        UserListDTO realUserListDTO = new UserListDTO(user.getId(), user.getIcon(), user.getUserName(), user.getIntroduction(), "1");
-                        redisTemplate.opsForZSet().remove(realUserFansListKey, realUserListDTO);
-                        realUserListDTO = new UserListDTO(user.getId(), user.getIcon(), user.getUserName(), user.getIntroduction(), "0");
-                        redisTemplate.opsForZSet().add(realUserFansListKey, realUserListDTO, time);
-                    }
                 }
             }
         }

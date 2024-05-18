@@ -14,5 +14,4 @@ public interface FollowListService {
 
     BaseResponse getFollowList(GetListVo getListVo);
 
-    BaseResponse getotherUserFollowList(GetListVo getListVo);
 }
