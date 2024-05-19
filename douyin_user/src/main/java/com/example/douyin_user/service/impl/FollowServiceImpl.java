@@ -60,9 +60,42 @@ public class FollowServiceImpl implements FollowService {
         String followListKey = RedisConstants.USER_FOLLOW_INFO_LIST_KEY + userId;
         String fansListKey = RedisConstants.USER_FANS_INFO_LIST_KEY + authorId;
         String realUserFansListKey = RedisConstants.USER_FANS_INFO_LIST_KEY + userId;
-        if(isFollow.equals("-1")){
+        if(isFollow.equals("-1")|| userId.equals(authorId)){
             return BaseResponse.fail("不可以关注自己");
         }
+        // follow前需要判断Redis是否为空，如果为空需要从mysql获取数据
+        Long size = redisTemplate.opsForZSet().size(key);
+        if(size.equals(0L)) {
+            List<DyFollow> followByUserIdList = dyFollowMapper.getFollowByUserId(userId);
+            for(DyFollow x: followByUserIdList) {
+               redisTemplate.opsForZSet().add(key, x.getFollowerId(), x.getFollowCreateTime().getTime());
+            }
+        }
+        size = redisTemplate.opsForZSet().size(fansKey);
+        if(size.equals(0L)) {
+            List<DyFollow> followByUserIdList = dyFollowMapper.getFollowByUserId(authorId);
+            for(DyFollow x: followByUserIdList) {
+                redisTemplate.opsForZSet().add(fansKey, x.getUserId(), x.getFollowCreateTime().getTime());
+            }
+        }
+        size = redisTemplate.opsForZSet().size(followListKey);
+        if(size.equals(0L)) {
+            List<DyFollow> followInfoByUserAndFollowList = dyFollowMapper.getFollowInfoByUserAndFollow(userId);
+            for(DyFollow x: followInfoByUserAndFollowList) {
+                UserListDTO userListDTO = new UserListDTO(x.getFollowerId(), x.getDyUser().getIcon(), x.getDyUser().getUserName(), x.getDyUser().getIntroduction());
+                redisTemplate.opsForZSet().add(followListKey, userListDTO, x.getFollowCreateTime().getTime());
+            }
+        }
+        size = redisTemplate.opsForZSet().size(fansListKey);
+        if(size.equals(0L)) {
+            List<DyFollow> fansInfoByUserAndFollowList = dyFollowMapper.getFansInfoByUserAndFollow(authorId);
+            for(DyFollow x: fansInfoByUserAndFollowList) {
+                UserListDTO userListDTO = new UserListDTO(x.getUserId(), x.getDyUser().getIcon(), x.getDyUser().getUserName(), x.getDyUser().getIntroduction());
+                redisTemplate.opsForZSet().add(fansListKey, userListDTO, x.getFollowCreateTime().getTime());
+            }
+        }
+
+        // 执行follow动作
         long time = System.currentTimeMillis();
         log.info("isFollow:{}",isFollow);
         if("0".equals(isFollow)){
@@ -84,7 +117,7 @@ public class FollowServiceImpl implements FollowService {
                 if(user != null) {
                     // 更新目标用户Redis粉丝列表 (目标用户粉丝列表增加真实用户信息)
                     // 先要判断目标用户Redis粉丝列表是否为空，为空需要先从Mysql中获取数据
-                    Long size = redisTemplate.opsForZSet().size(fansListKey);
+                    size = redisTemplate.opsForZSet().size(fansListKey);
                     if(size==0){
                         List<DyFollow> dyFollowList = dyFollowMapper.getFansInfoByUserAndFollow(authorId);
                         if(dyFollowList.size()>0){

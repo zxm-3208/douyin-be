@@ -50,7 +50,7 @@ public class LikeServiceImpl implements LikeService {
         String userLikeMediaListKey = RedisConstants.USER_LIKE_MEDIA_LIST_KEY + userId;
         String userLikeMediaCoverListKey = RedisConstants.LIKE_USER_COVER_KEY + userId;
         String publistUserCoverKey = RedisConstants.PUBLIST_USER_COVER_KEY + userId;
-        // 首先判断用户是否已经点过赞
+        // 判断用户是否已经点过赞
         Double score = redisTemplate.opsForZSet().score(mediaUserLikeKey, userId);
         log.info("当前用户是否存在：{}", score);
         // 没有，则添加

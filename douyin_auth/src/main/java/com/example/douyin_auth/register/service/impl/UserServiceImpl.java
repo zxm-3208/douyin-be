@@ -79,7 +79,7 @@ public class UserServiceImpl extends ServiceImpl<DyUserMapper, DyUser> implement
         // 4. 发送验证码       (搁置，接入云平台短信验证码需要网站备案)
         log.debug("发送短信验证码成功，验证码：{}", code);
 
-        return BaseResponse.success();
+        return BaseResponse.success(code);
     }
 
     @Override

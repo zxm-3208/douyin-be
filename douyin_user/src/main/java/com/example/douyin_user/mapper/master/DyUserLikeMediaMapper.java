@@ -18,7 +18,7 @@ import java.util.List;
  */
 public interface DyUserLikeMediaMapper extends BaseMapper<DyUserLikeMedia> {
 
-        @Insert("INSERT INTO dy_user_like_media (userId, mediaId, updateTime)  VALUES (#{userId}, #{mediaId}, #{time});")
+        @Insert("INSERT INTO dy_user_like_media (userId, mediaId, likeUpdateTime)  VALUES (#{userId}, #{mediaId}, #{time});")
         Integer addLikeMeida(String userId, String mediaId, Date time);
 
         @Delete("DELETE FROM dy_user_like_media u WHERE u.userId = #{userId} and u.mediaId = #{mediaId};")

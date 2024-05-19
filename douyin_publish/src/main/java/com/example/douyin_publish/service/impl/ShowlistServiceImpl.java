@@ -80,8 +80,8 @@ public class ShowlistServiceImpl implements ShowlistService {
 //                        continue;
 //                    }
                     // 记录到Redis中
-                    String tempCoverUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_files).object(temp_num[i].getImgUrl()).method(Method.GET).build());
-                    CoverPublistDTO coverPublistDTO = new CoverPublistDTO(temp_num[i].getMediaId(),tempCoverUrl);
+//                    String tempCoverUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_files).object(temp_num[i].getImgUrl()).method(Method.GET).build());
+                    CoverPublistDTO coverPublistDTO = new CoverPublistDTO(temp_num[i].getMediaId(),temp_num[i].getImgUrl());
                     zSetUtils.addObjectToZSet(RedisConstants.PUBLIST_USER_COVER_KEY + publistVO.getUserId(), coverPublistDTO, scope);
 //                    redisTemplate.opsForZSet().add(RedisConstants.PUBLIST_USER_COVER_KEY + publistVO.getUserId(), tempCoverUrl, temp_num[i].getUpdateTime().getTime());
                 }catch (Exception e){
@@ -112,7 +112,8 @@ public class ShowlistServiceImpl implements ShowlistService {
         for (ZSetOperations.TypedTuple<CoverPublistDTO> tuple : imgUrl) {
             try {
                 mediaId.add(tuple.getValue().getMediaId());
-                url.add(tuple.getValue().getCoverUrl());
+                String tempCoverUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_files).object(tuple.getValue().getCoverUrl()).method(Method.GET).build());
+                url.add(tempCoverUrl);
             }catch (Exception e){
                 e.printStackTrace();
                 return BaseResponse.fail("获取外链失败");
@@ -194,7 +195,11 @@ public class ShowlistServiceImpl implements ShowlistService {
         for (ZSetOperations.TypedTuple<CoverPublistDTO> tuple : imgUrl) {
             try {
                 mediaId.add(tuple.getValue().getMediaId());
-                String tempCoverUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_files).object(tuple.getValue().getCoverUrl()).method(Method.GET).build());
+                String tempCoverUrl = null;
+                if(tuple.getValue().getCoverUrl()!=null){
+                    tempCoverUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_files).object(tuple.getValue().getCoverUrl()).method(Method.GET).build());
+
+                }
                 url.add(tempCoverUrl);
             }catch (Exception e){
                 e.printStackTrace();
