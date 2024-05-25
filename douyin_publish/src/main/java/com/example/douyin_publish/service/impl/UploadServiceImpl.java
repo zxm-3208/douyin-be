@@ -493,15 +493,9 @@ public class UploadServiceImpl implements UploadService {
         if (update < 0) {
             MsgException.cast("保存文件信息失败");
         }
-        // 将发布的视频推送给Redis
-        CoverPublistDTO coverPublistDTO = new CoverPublistDTO(editVo.getMediaId(), editVo.getCoverUrl());
-        MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(editVo.getMediaId(), editVo.getMediaUrl(), editVo.getUserId(), editVo.getTitle());
-
-        zSetUtils.addObjectToZSet(RedisConstants.PUBLIST_USER_COVER_KEY + editVo.getUserId(), coverPublistDTO, scope);
-        redisTemplate.expire(RedisConstants.PUBLIST_USER_COVER_KEY + editVo.getUserId(), RedisConstants.PUBLIST_USER_COVER_TTL, TimeUnit.DAYS);
-
-        zSetUtils.addObjectToZSet(RedisConstants.PUBLIST_USER_MEDIA_KEY + editVo.getUserId(), mediaPublistDTO, scope);
-        redisTemplate.expire(RedisConstants.PUBLIST_USER_MEDIA_KEY + editVo.getUserId(), RedisConstants.PUBLIST_USER_MEDIA_TTL, TimeUnit.DAYS);
+        // 删除相应的Redis缓存
+        redisTemplate.opsForZSet().removeRangeByScore(RedisConstants.PUBLIST_USER_COVER_KEY + editVo.getUserId(),0,System.currentTimeMillis());
+        redisTemplate.opsForZSet().removeRangeByScore(RedisConstants.PUBLIST_USER_MEDIA_KEY + editVo.getUserId(),0,System.currentTimeMillis());
 
         return UploadFileResultDTO.success();
     }
@@ -712,8 +706,9 @@ public class UploadServiceImpl implements UploadService {
         String mediaId = String.valueOf(mediaFilesMapper.getMediaIdByMd5(fileMd5));
         HashMap<String, Object> map = new HashMap<>();
         map.put("mediaId", mediaId);
-        map.put("url", url);
-        log.info("获得得外链为:{}",map.get("url"));
+        map.put("outerUrl", url);
+        map.put("url", objectName);
+        log.info("获得得外链为:{}",map.get("outerUrl"));
         return BaseResponse.success(map);
     }
 
@@ -753,7 +748,10 @@ public class UploadServiceImpl implements UploadService {
             return BaseResponse.fail("获取外链失败");
         }
         log.info("封面的外链为：{}",url);
-        return BaseResponse.success(url);
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("outerUrl", url);
+        map.put("url", objectName);
+        return BaseResponse.success(map);
     }
 
     private String getFileFolder(Date date, boolean year, boolean month, boolean day) {

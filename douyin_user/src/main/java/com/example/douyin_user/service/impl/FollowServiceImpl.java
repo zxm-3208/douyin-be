@@ -63,37 +63,6 @@ public class FollowServiceImpl implements FollowService {
         if(isFollow.equals("-1")|| userId.equals(authorId)){
             return BaseResponse.fail("不可以关注自己");
         }
-        // follow前需要判断Redis是否为空，如果为空需要从mysql获取数据
-        Long size = redisTemplate.opsForZSet().size(key);
-        if(size.equals(0L)) {
-            List<DyFollow> followByUserIdList = dyFollowMapper.getFollowByUserId(userId);
-            for(DyFollow x: followByUserIdList) {
-               redisTemplate.opsForZSet().add(key, x.getFollowerId(), x.getFollowCreateTime().getTime());
-            }
-        }
-        size = redisTemplate.opsForZSet().size(fansKey);
-        if(size.equals(0L)) {
-            List<DyFollow> followByUserIdList = dyFollowMapper.getFollowByUserId(authorId);
-            for(DyFollow x: followByUserIdList) {
-                redisTemplate.opsForZSet().add(fansKey, x.getUserId(), x.getFollowCreateTime().getTime());
-            }
-        }
-        size = redisTemplate.opsForZSet().size(followListKey);
-        if(size.equals(0L)) {
-            List<DyFollow> followInfoByUserAndFollowList = dyFollowMapper.getFollowInfoByUserAndFollow(userId);
-            for(DyFollow x: followInfoByUserAndFollowList) {
-                UserListDTO userListDTO = new UserListDTO(x.getFollowerId(), x.getDyUser().getIcon(), x.getDyUser().getUserName(), x.getDyUser().getIntroduction());
-                redisTemplate.opsForZSet().add(followListKey, userListDTO, x.getFollowCreateTime().getTime());
-            }
-        }
-        size = redisTemplate.opsForZSet().size(fansListKey);
-        if(size.equals(0L)) {
-            List<DyFollow> fansInfoByUserAndFollowList = dyFollowMapper.getFansInfoByUserAndFollow(authorId);
-            for(DyFollow x: fansInfoByUserAndFollowList) {
-                UserListDTO userListDTO = new UserListDTO(x.getUserId(), x.getDyUser().getIcon(), x.getDyUser().getUserName(), x.getDyUser().getIntroduction());
-                redisTemplate.opsForZSet().add(fansListKey, userListDTO, x.getFollowCreateTime().getTime());
-            }
-        }
 
         // 执行follow动作
         long time = System.currentTimeMillis();
@@ -101,58 +70,19 @@ public class FollowServiceImpl implements FollowService {
         if("0".equals(isFollow)){
             Integer isSuccess = dyFollowMapper.addFollow(userId, authorId, new Timestamp(time));
             log.info("用户关注是否成功：{}", isSuccess);
-            if (isSuccess != 0) {
-                redisTemplate.opsForZSet().add(key, authorId, time);
-                redisTemplate.opsForZSet().add(fansKey, userId, time);
-            }
             DyUser user = dyUserMapper.getEdit(authorId);
             log.info("用户关注列表更新：{}", user);
-            if(user != null) {
-                // Redis关注者列表
-                // 更新真实用户Redis关注者列表
-                UserListDTO userListDTO = new UserListDTO(user.getId(), user.getIcon(), user.getUserName(), user.getIntroduction());
-                redisTemplate.opsForZSet().add(followListKey, userListDTO, time);
-                // Redis粉丝列表
-                DyUser realUser = dyUserMapper.getEdit(userId);
-                if(user != null) {
-                    // 更新目标用户Redis粉丝列表 (目标用户粉丝列表增加真实用户信息)
-                    // 先要判断目标用户Redis粉丝列表是否为空，为空需要先从Mysql中获取数据
-                    size = redisTemplate.opsForZSet().size(fansListKey);
-                    if(size==0){
-                        List<DyFollow> dyFollowList = dyFollowMapper.getFansInfoByUserAndFollow(authorId);
-                        if(dyFollowList.size()>0){
-                            for(DyFollow x: dyFollowList) {
-                                userListDTO = new UserListDTO(x.getUserId(), x.getDyUser().getIcon(), x.getDyUser().getUserName(), x.getDyUser().getIntroduction());
-                                redisTemplate.opsForZSet().add(fansListKey, userListDTO, x.getFollowCreateTime().getTime());
-                            }
-                        }
-                    }
-                    userListDTO = new UserListDTO(realUser.getId(), realUser.getIcon(), realUser.getUserName(), realUser.getIntroduction());
-                    redisTemplate.opsForZSet().add(fansListKey, userListDTO, time);
-                }
-            }
         }else{
             Integer isSuccess = dyFollowMapper.delFollow(userId, authorId);
             log.info("用户取关是否成功：{}", isSuccess);
-            if(isSuccess != 0){
-                redisTemplate.opsForZSet().remove(key, authorId);
-                redisTemplate.opsForZSet().remove(fansKey, userId);
-            }
             DyUser user = dyUserMapper.getEdit(authorId);
             log.info("用户关注列表更新：{}", user);
-            if(user != null) {
-                // Redis关注者列表
-                UserListDTO userListDTO = new UserListDTO(user.getId(), user.getIcon(), user.getUserName(), user.getIntroduction());
-                redisTemplate.opsForZSet().remove(followListKey, userListDTO);
-                // Redis粉丝列表
-                DyUser realUser = dyUserMapper.getEdit(userId);
-                if(user != null) {
-                    // 更新真实用户Redis粉丝列表
-                    userListDTO = new UserListDTO(realUser.getId(), realUser.getIcon(), realUser.getUserName(), realUser.getIntroduction());
-                    redisTemplate.opsForZSet().remove(fansListKey, userListDTO);
-                }
-            }
         }
+        redisTemplate.opsForZSet().removeRangeByScore(key, 0, System.currentTimeMillis());
+        redisTemplate.opsForZSet().removeRangeByScore(fansKey, 0, System.currentTimeMillis());
+        redisTemplate.opsForZSet().removeRangeByScore(followListKey, 0, System.currentTimeMillis());
+        redisTemplate.opsForZSet().removeRangeByScore(fansListKey, 0, System.currentTimeMillis());
+        redisTemplate.opsForZSet().removeRangeByScore(realUserFansListKey, 0, System.currentTimeMillis());
         return BaseResponse.success();
     }
 

@@ -49,7 +49,6 @@ public class LikeServiceImpl implements LikeService {
         String mediaUserLikeKey = RedisConstants.MEDIA_USER_LIKE_KEY + mediaId;
         String userLikeMediaListKey = RedisConstants.USER_LIKE_MEDIA_LIST_KEY + userId;
         String userLikeMediaCoverListKey = RedisConstants.LIKE_USER_COVER_KEY + userId;
-        String publistUserCoverKey = RedisConstants.PUBLIST_USER_COVER_KEY + userId;
         // 判断用户是否已经点过赞
         Double score = redisTemplate.opsForZSet().score(mediaUserLikeKey, userId);
         log.info("当前用户是否存在：{}", score);
@@ -64,45 +63,34 @@ public class LikeServiceImpl implements LikeService {
             // 更新用户点赞的视频列表
             isSuccess = dyUserLikeMediaMapper.addLikeMeida(userId, mediaId, new Timestamp(System.currentTimeMillis()));
             log.info("用户点赞的视频列表添加是否成功：{}", isSuccess);
-            if (isSuccess != 0) {
-                DyMedia dyMedia = mediaFilesMapper.findMediaUrlAndUpdateTimeByUserIdAndMediaId(mediaId);
-                if(dyMedia!=null) {
-                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(mediaId, dyMedia.getMediaUrl(), dyMedia.getDyPublish().getAuthor(), dyMedia.getDyPublish().getTitle(), dyMedia.getDyUser().getUserName(), dyMedia.getDyUser().getIcon());
-                    redisTemplate.opsForZSet().add(userLikeMediaListKey, mediaPublistDTO, System.currentTimeMillis());
-                }
-                // 更新用户点赞的视频列表封面
-                DyPublish dPublish = publishMapper.getCoverUrlByMediaId(mediaId);
-                if(dPublish!=null) {
-                    CoverPublistDTO coverPublistDTO = new CoverPublistDTO(mediaId, dPublish.getImgUrl());
-                    redisTemplate.opsForZSet().add(userLikeMediaCoverListKey, coverPublistDTO, System.currentTimeMillis());
-                }
-            }
         // 有则删除
         }else {
             // 更新点赞数量以及视频的用户点赞列表
             Integer isSuccess = mediaFilesMapper.delMediaLikeById(mediaId);
             log.info("视频的用户点赞列表删除是否成功：{}", isSuccess);
             if (isSuccess != 0) {
-                redisTemplate.opsForZSet().remove(mediaUserLikeKey, userId.toString());
+                redisTemplate.opsForZSet().remove(mediaUserLikeKey, userId);
             }
             // 更新用户点赞的视频列表
             isSuccess = dyUserLikeMediaMapper.delLikeMeida(userId, mediaId);
             log.info("用户点赞的视频列表删除是否成功：{}", isSuccess);
-            if (isSuccess != 0) {
-                DyMedia dyMedia = mediaFilesMapper.findMediaUrlAndUpdateTimeByUserIdAndMediaId(mediaId);
-                if(dyMedia!=null) {
-                    MediaPublistDTO mediaPublistDTO = new MediaPublistDTO(mediaId, dyMedia.getMediaUrl(), dyMedia.getDyPublish().getAuthor(), dyMedia.getDyPublish().getTitle(), dyMedia.getDyUser().getUserName(), dyMedia.getDyUser().getIcon());
-                    redisTemplate.opsForZSet().remove(userLikeMediaListKey, mediaPublistDTO);
-                }
-                // 更新用户点赞的视频列表封面
-                DyPublish dPublish = publishMapper.getCoverUrlByMediaId(mediaId);
-                if(dPublish!=null) {
-                    CoverPublistDTO coverPublistDTO = new CoverPublistDTO(mediaId, dPublish.getImgUrl());
-                    redisTemplate.opsForZSet().remove(userLikeMediaCoverListKey, coverPublistDTO);
-                }
+        }
+        redisTemplate.opsForZSet().removeRangeByScore(userLikeMediaListKey,0,System.currentTimeMillis());
+        redisTemplate.opsForZSet().removeRangeByScore(userLikeMediaCoverListKey,0,System.currentTimeMillis());
+        log.info("Redis点赞缓存已删除");
+
+        // 读取Redis
+        Long size = redisTemplate.opsForZSet().size(mediaUserLikeKey);
+        if(size.equals(0L)) {
+            log.info("mediaId:{}", mediaId);
+            List<DyUserLikeMedia> dyUserLikeMediaList = dyUserLikeMediaMapper.getMediaLikeCountBymediaId(mediaId);
+            for(DyUserLikeMedia x: dyUserLikeMediaList) {
+                redisTemplate.opsForZSet().add(mediaUserLikeKey, x.getUserid(), System.currentTimeMillis());
             }
         }
-        return null;
+        log.info("视频:{}的点赞数量：{}",mediaId, size);
+
+        return BaseResponse.success();
     }
 
     @Override
@@ -111,11 +99,13 @@ public class LikeServiceImpl implements LikeService {
         String key = RedisConstants.MEDIA_USER_LIKE_KEY + mediaId;
         Long size = redisTemplate.opsForZSet().size(key);
         if(size.equals(0L)) {
+            log.info("mediaId:{}", mediaId);
             List<DyUserLikeMedia> dyUserLikeMediaList = dyUserLikeMediaMapper.getMediaLikeCountBymediaId(mediaId);
             for(DyUserLikeMedia x: dyUserLikeMediaList) {
                 redisTemplate.opsForZSet().add(key, x.getUserid(), System.currentTimeMillis());
             }
         }
+
         log.info("视频:{}的点赞数量：{}",mediaId, size);
         return BaseResponse.success(size);
     }

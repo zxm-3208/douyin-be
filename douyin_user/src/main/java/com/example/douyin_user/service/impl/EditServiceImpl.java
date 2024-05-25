@@ -63,7 +63,15 @@ public class EditServiceImpl implements EditService {
             DyUser edit = dyUserMapper.getEdit(userId);
             if(edit!=null){
                 log.info("查询用户信息成功:{}",edit);
-                map.put("icon", edit.getIcon());
+                String iconUrl = null;
+                try {
+                    if(edit.getIcon()!=null)
+                        iconUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_icon_files).object(edit.getIcon()).method(Method.GET).build());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return BaseResponse.fail("获取外链失败");
+                }
+                map.put("icon", iconUrl);
                 map.put("editName", edit.getUserName());
                 map.put("userId", edit.getId());
                 map.put("editIntro", edit.getIntroduction());
@@ -89,7 +97,6 @@ public class EditServiceImpl implements EditService {
         String birthday = submitEditVO.getBirthday();
         String defaultIcon = submitEditVO.getDefaultIcon();
         byte[] bytes = null;
-        String iconUrl = null;
         String objectName = null;
         // 1. 存储icon
         if ("0".equals(defaultIcon)){
@@ -108,19 +115,8 @@ public class EditServiceImpl implements EditService {
             // 对象名称
             objectName = folder + objectName;
             addMediaFilesToMinIO(bytes, objectName, bucket_icon_files, file.getContentType());
-
-            // 2. 获取外链
-            try {
-                iconUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_icon_files).object(objectName).method(Method.GET).build());
-            } catch (Exception e) {
-                e.printStackTrace();
-                return BaseResponse.fail("获取外链失败");
-            }
-        }else{
-            iconUrl = defaultIcon;
         }
 
-        log.info("icon:{}",iconUrl);
 
         // 3. 存入Mysql
         Integer i = dyUserMapper.updateByUserId(userId, objectName, editName, editIntro, gender, new Date(Long.parseLong(birthday)));
@@ -129,19 +125,10 @@ public class EditServiceImpl implements EditService {
             return BaseResponse.fail("数据插入mysql失败！");
         }
         log.info("mysql数据更新:{}条", i);
-
-        // 4. 存储Redis
         String key = RedisConstants.USER_EDIT_KEY + userId;
-        Map map = new HashMap<String, String>();
-        map.put("icon", iconUrl);
-        map.put("editName", editName);
-        map.put("userId", userId);
-        map.put("editIntro", editIntro);
-        map.put("gender", gender);
-        map.put("birthday", birthday);
-        redisTemplate.opsForHash().putAll(key, map);
-        redisTemplate.expire(key, RedisConstants.USER_EDIT_TTL, TimeUnit.DAYS);
-        return BaseResponse.success(map);
+        redisTemplate.opsForHash().delete(key, "birthday", "userId", "icon", "gender", "editIntro", "editName");
+        log.info("redis缓存删除:{}", key);
+        return BaseResponse.success();
     }
 
     private String getFileFolder(Date date, boolean year, boolean month, boolean day) {

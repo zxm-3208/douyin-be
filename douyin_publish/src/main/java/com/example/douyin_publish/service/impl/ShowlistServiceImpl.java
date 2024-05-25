@@ -75,15 +75,8 @@ public class ShowlistServiceImpl implements ShowlistService {
             for(int i=0;i<temp_num.length;i++){
                 try {
                     long scope = temp_num[i].getUpdateTime().getTime();
-                    // 判断该数据是否已存在与redis
-//                    if(redisTemplate.opsForZSet().count(RedisConstants.PUBLIST_USER_COVER_KEY+publistVO.getUserId(), scope, scope+1)>0){
-//                        continue;
-//                    }
-                    // 记录到Redis中
-//                    String tempCoverUrl = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder().bucket(bucket_files).object(temp_num[i].getImgUrl()).method(Method.GET).build());
                     CoverPublistDTO coverPublistDTO = new CoverPublistDTO(temp_num[i].getMediaId(),temp_num[i].getImgUrl());
                     zSetUtils.addObjectToZSet(RedisConstants.PUBLIST_USER_COVER_KEY + publistVO.getUserId(), coverPublistDTO, scope);
-//                    redisTemplate.opsForZSet().add(RedisConstants.PUBLIST_USER_COVER_KEY + publistVO.getUserId(), tempCoverUrl, temp_num[i].getUpdateTime().getTime());
                 }catch (Exception e){
                     e.printStackTrace();
                     return BaseResponse.fail("获取外链失败");

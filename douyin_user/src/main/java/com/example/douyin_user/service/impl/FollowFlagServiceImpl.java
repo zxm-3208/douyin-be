@@ -44,23 +44,11 @@ public class FollowFlagServiceImpl implements FollowFlagService {
         if(getListVo.getIsFollow().equals("1")) {
             // 目标用户
             Set<ZSetOperations.TypedTuple<UserListDTO>> userList = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(userIdFollowsListKey, 0, Long.valueOf(getListVo.getLastId()), Long.valueOf(getListVo.getOffset()), 100);
-//            // 如果为空则从mysql中获取
-//            if(userList.size()==0){
-//                List<DyFollow> dyFollowList = dyFollowMapper.getFollowInfoByUserAndFollow(getListVo.getUserId());
-//                log.info("mapperSize:{}", dyFollowList.size());
-//                if(dyFollowList.size()>0){
-//                    for(DyFollow x: dyFollowList) {
-//                        UserListDTO userListDTO = new UserListDTO(x.getFollowerId(), x.getDyUser().getIcon(), x.getDyUser().getUserName(), x.getDyUser().getIntroduction());
-//                        redisTemplate.opsForZSet().add(userIdFollowsListKey, userListDTO, x.getFollowCreateTime().getTime());
-//                    }
-//                }
-//            }
-//            userList = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(userIdFollowsListKey, 0, Long.valueOf(getListVo.getLastId()), Long.valueOf(getListVo.getOffset()), 100);
             // 真实用户
             Set<ZSetOperations.TypedTuple<UserListDTO>> realUserList = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(realUserIdFollowsListKey, 0, Long.valueOf(getListVo.getLastId()), Long.valueOf(getListVo.getOffset()), 100);
             // 如果为空则从mysql中获取
             if(realUserList.size()==0){
-                List<DyFollow> dyFollowList = dyFollowMapper.getFollowInfoByUserAndFollow(getListVo.getUserId());
+                List<DyFollow> dyFollowList = dyFollowMapper.getFollowInfoByUserAndFollow(getListVo.getRealUserId());
                 if(dyFollowList.size()>0){
                     for(DyFollow x: dyFollowList) {
                         UserListDTO userListDTO = new UserListDTO(x.getFollowerId(), x.getDyUser().getIcon(), x.getDyUser().getUserName(), x.getDyUser().getIntroduction());
@@ -90,22 +78,11 @@ public class FollowFlagServiceImpl implements FollowFlagService {
         }else{
             // 目标用户
             Set<ZSetOperations.TypedTuple<UserListDTO>> userList = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(userIdFansListKey, 0, Long.valueOf(getListVo.getLastId()), Long.valueOf(getListVo.getOffset()), 100);
-            // 如果为空则从mysql中获取
-//            if(userList.size()==0){
-//                List<DyFollow> dyFollowList = dyFollowMapper.getFansInfoByUserAndFollow(getListVo.getUserId());
-//                if(dyFollowList.size()>0){
-//                    for(DyFollow x: dyFollowList) {
-//                        UserListDTO userListDTO = new UserListDTO(x.getUserId(), x.getDyUser().getIcon(), x.getDyUser().getUserName(), x.getDyUser().getIntroduction());
-//                        redisTemplate.opsForZSet().add(userIdFollowsListKey, userListDTO, x.getFollowCreateTime().getTime());
-//                    }
-//                }
-//            }
-//            userList = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(userIdFansListKey, 0, Long.valueOf(getListVo.getLastId()), Long.valueOf(getListVo.getOffset()), 100);
             // 真实用户
             Set<ZSetOperations.TypedTuple<UserListDTO>> realUserList = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(realUserIdFollowsListKey, 0, Long.valueOf(getListVo.getLastId()), Long.valueOf(getListVo.getOffset()), 100);
             // 如果为空则从mysql中获取
             if(realUserList.size()==0){
-                List<DyFollow> dyFollowList = dyFollowMapper.getFollowInfoByUserAndFollow(getListVo.getUserId());
+                List<DyFollow> dyFollowList = dyFollowMapper.getFollowInfoByUserAndFollow(getListVo.getRealUserId());
                 log.info("mapperSize:{}", dyFollowList.size());
                 if(dyFollowList.size()>0){
                     for(DyFollow x: dyFollowList) {
