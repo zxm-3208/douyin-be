@@ -1,0 +1,85 @@
+syntax = "proto3";
+package com.example.douyin_chat.protocol.bean;
+message ProtoMsg{
+
+  enum HeadType{
+    LOGIN_REQUEST = 0; //登陆请求
+    LOGIN_RESPONSE = 1; //登录响应
+    LOGOUT_REQUEST = 2; //登出请求
+    LOGOUT_RESPONSE = 3;  //登出响应
+    KEEPALIVE_REQUEST = 4;  //心跳请求
+    KEEPALIVE_RESPONSE = 5;  //心跳响应
+    MESSAGE_REQUEST = 6; //聊天消息请求
+    MESSAGE_RESPONSE = 7;  //聊天消息响应
+    MESSAGE_NOTIFICATION = 8;  //服务器通知
+  }
+
+  /*登录请求信息*/
+  message LoginRequest {
+    string uid = 1;   // 用户唯一id
+    string deviceId = 2;  // 设备ID
+    string token = 3;    // 用户token
+    uint32 platform = 4; //客户端平台 windows、mac、android、ios、web
+    string app_version = 5;  // APP版本号
+  }
+
+  /*登录响应*/
+  message LoginResponse {
+    bool result = 1;
+    uint32 code = 2;
+    string info = 3;
+    uint32 expose = 4;
+  }
+
+  /*聊天消息请求*/
+  message MessageRequest {
+    uint64 msg_id = 1;
+    string from = 2;
+    string to = 3;
+    uint64 time = 4;
+    uint32 msg_type = 5;
+    string content = 6;
+    string url = 8;
+    string property = 9;
+    string from_nick = 10;
+    string json = 11;
+  }
+
+  /*聊天消息响应*/
+  message MessageResponse {
+    bool result = 1;
+    uint32 code = 2;
+    string info = 3;
+    uint32 expose = 4;
+    bool last_block = 5;
+    fixed32 block_index = 6;
+  }
+
+  /*服务器通知*/
+  message MessageNotification {
+    uint32 msg_type = 1;
+    bytes sender = 2;
+    string json = 3;
+    string timestamp = 4;
+  }
+
+  /*心跳*/
+  message MessageHeartBeat {
+    uint32   seq = 1;
+    string   uid = 2;
+    string   json =3;
+  }
+
+  message Message {   // 字段及唯一的数字标识符
+    HeadType type = 1;
+    uint64 sequence = 2;
+    string session_id = 3;
+    LoginRequest loginRequest = 4;
+    LoginResponse loginResponse = 5;
+    MessageRequest messageRequest = 6;
+    MessageResponse messageResponse = 7;
+    MessageNotification notification = 8;
+    MessageHeartBeat heartBeat = 9;  //心跳
+  }
+
+}

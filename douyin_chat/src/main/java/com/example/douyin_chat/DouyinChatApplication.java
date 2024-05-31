@@ -14,8 +14,8 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 @EnableAspectJAutoProxy(exposeProxy = true)
 public class DouyinChatApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(DouyinChatApplication.class, args);
-    }
+	public static void main(String[] args) {
+		SpringApplication.run(DouyinChatApplication.class, args);
+	}
 
 }
