@@ -1,5 +1,7 @@
 package com.example.douyin_chat.entity;
 
+import lombok.Data;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
@@ -10,6 +12,7 @@ import java.util.Objects;
  * @Description: IM节点的POJO类
  * @version: 1.0
  */
+@Data
 public class ImNode implements Comparable<ImNode>, Serializable {
     @Serial
     private static final long serialVersionUID = -5057956142938020649L;
@@ -20,6 +23,7 @@ public class ImNode implements Comparable<ImNode>, Serializable {
     // Netty 服务的连接数
     private Integer balance = 0;
 
+    // TODO: 这些配置放到nacos上
     // Netty 服务IP
     private String host = "127.0.0.1";
 

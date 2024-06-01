@@ -69,8 +69,9 @@
    8. 用户界面访问，以及关注 (√)
    9. Redis缓存更新时清空，第一次查询时从mysql中获取  (√)
 6. 即时通讯模块
-   1. 基于Google Protobuf 对结构化数据进行序列化
-   2. 
+   1. 基于Google Protobuf 对结构化数据进行序列化 (√)
+   2. 使用单例模式创建SessionManger (√)
+   3. 绑定user、session、channel, 使用原子变量 (√)
 7. 容器化
    1. 开发环境和生产环境配置文件区分
    2. 编排

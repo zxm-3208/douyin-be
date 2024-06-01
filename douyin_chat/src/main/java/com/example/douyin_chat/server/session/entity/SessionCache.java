@@ -1,5 +1,6 @@
-package com.example.douyin_chat.server.session.dao.entity;
+package com.example.douyin_chat.server.session.entity;
 
+import com.example.douyin_chat.entity.ImNode;
 import com.example.douyin_chat.server.session.ServerSession;
 import lombok.Builder;
 import lombok.Data;
@@ -33,10 +34,9 @@ public class SessionCache implements Serializable {
     }
 
     public SessionCache(
-            String sessionId, String userId, ImNode imNode)
-    {
+            String sessionId, String userId, ImNode imNode) {
         this.sessionId = sessionId;
         this.userId = userId;
         this.imNode = imNode;
-
+    }
 }

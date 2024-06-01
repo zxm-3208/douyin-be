@@ -68,4 +68,12 @@ public class RedisConstants {
 
     // 用户粉丝标志列表信息
     public static final String USER_FANS_FLAG_LIST_KEY = "fans:flag:user:";
+
+    // 用户缓存
+    public static final String USERCACHE_UID_KEY = "userCache:uid:";
+    public static final int USERCACHE_UID_TTL = 4;
+
+    // 会话缓存
+    public static final String SESSIONCACHE_ID_KEY = "sessionCache:id:";
+    public static final int SESSIONCACHE_ID_TTL = 4;
 }
