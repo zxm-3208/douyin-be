@@ -72,6 +72,7 @@
    1. 基于Google Protobuf 对结构化数据进行序列化 (√)
    2. 使用单例模式创建SessionManger (√)
    3. 绑定user、session、channel, 使用原子变量 (√)
+   4. 使用Redis对Session和User进行缓存    (√)
 7. 容器化
    1. 开发环境和生产环境配置文件区分
    2. 编排

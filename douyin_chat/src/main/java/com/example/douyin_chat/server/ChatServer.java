@@ -64,7 +64,6 @@ public class ChatServer {
                 // 管理pipeline中的Handler
                 ch.pipeline().addLast("deCoder", new ProtobufDecoder());
                 ch.pipeline().addLast("enCoder", new ProtobufEncoder());
-
             }
         });
 
