@@ -17,7 +17,7 @@ public class ImNode implements Comparable<ImNode>, Serializable {
     @Serial
     private static final long serialVersionUID = -5057956142938020649L;
 
-    // worker 的ID TODO: 由nacos负责生成
+    // worker 的ID (由zookeeper生成)
     private long id;
 
     // Netty 服务的连接数

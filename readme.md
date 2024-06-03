@@ -73,7 +73,8 @@
    2. 使用单例模式创建SessionManger (√)
    3. 绑定user、session、channel, 使用原子变量 (√)
    4. 使用Redis对Session和User进行缓存    (√)
-   5. 使用Zookeeper进行分布式协调服务
+   5. 创建client以及实现节点常用的curd   (√)
+   6. 使用单例模式基于ZK对ImNode的数据的进行curd
 7. 容器化
    1. 开发环境和生产环境配置文件区分
    2. 编排
@@ -174,3 +175,4 @@
    1. 用到设计模式：单例模式，建造者模式，代理模式，工厂模式
    2. zookeeper 安全认证
    3. zookeeper 与 etcd对比， etcd优于zookeeper,吸取了zookeeper的经验，更有前瞻性。但是相关教程较少，先用经典的zookeeper，后续用etcd重构。
+   4. 为什么ImWorker使用单例模式。
