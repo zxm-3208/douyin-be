@@ -95,7 +95,7 @@ public class ImWorker {
     /**
      * 取得IM节点编号
      */
-    private long getIdByPath(String path) {
+    public long getIdByPath(String path) {
         String sid = null;
         if(null == path){
             throw new RuntimeException("节点路径有误");
