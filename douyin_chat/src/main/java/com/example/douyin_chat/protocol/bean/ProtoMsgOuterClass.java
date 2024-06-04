@@ -127,44 +127,36 @@ public final class ProtoMsgOuterClass {
       LOGOUT_RESPONSE(3),
       /**
        * <pre>
-       *心跳请求
+       *心跳
        * </pre>
        *
-       * <code>KEEPALIVE_REQUEST = 4;</code>
+       * <code>HEART_BEAT = 4;</code>
        */
-      KEEPALIVE_REQUEST(4),
-      /**
-       * <pre>
-       *心跳响应
-       * </pre>
-       *
-       * <code>KEEPALIVE_RESPONSE = 5;</code>
-       */
-      KEEPALIVE_RESPONSE(5),
+      HEART_BEAT(4),
       /**
        * <pre>
        *聊天消息请求
        * </pre>
        *
-       * <code>MESSAGE_REQUEST = 6;</code>
+       * <code>MESSAGE_REQUEST = 5;</code>
        */
-      MESSAGE_REQUEST(6),
+      MESSAGE_REQUEST(5),
       /**
        * <pre>
        *聊天消息响应
        * </pre>
        *
-       * <code>MESSAGE_RESPONSE = 7;</code>
+       * <code>MESSAGE_RESPONSE = 6;</code>
        */
-      MESSAGE_RESPONSE(7),
+      MESSAGE_RESPONSE(6),
       /**
        * <pre>
        *服务器通知
        * </pre>
        *
-       * <code>MESSAGE_NOTIFICATION = 8;</code>
+       * <code>MESSAGE_NOTIFICATION = 7;</code>
        */
-      MESSAGE_NOTIFICATION(8),
+      MESSAGE_NOTIFICATION(7),
       UNRECOGNIZED(-1),
       ;
 
@@ -202,44 +194,36 @@ public final class ProtoMsgOuterClass {
       public static final int LOGOUT_RESPONSE_VALUE = 3;
       /**
        * <pre>
-       *心跳请求
+       *心跳
        * </pre>
        *
-       * <code>KEEPALIVE_REQUEST = 4;</code>
+       * <code>HEART_BEAT = 4;</code>
        */
-      public static final int KEEPALIVE_REQUEST_VALUE = 4;
-      /**
-       * <pre>
-       *心跳响应
-       * </pre>
-       *
-       * <code>KEEPALIVE_RESPONSE = 5;</code>
-       */
-      public static final int KEEPALIVE_RESPONSE_VALUE = 5;
+      public static final int HEART_BEAT_VALUE = 4;
       /**
        * <pre>
        *聊天消息请求
        * </pre>
        *
-       * <code>MESSAGE_REQUEST = 6;</code>
+       * <code>MESSAGE_REQUEST = 5;</code>
        */
-      public static final int MESSAGE_REQUEST_VALUE = 6;
+      public static final int MESSAGE_REQUEST_VALUE = 5;
       /**
        * <pre>
        *聊天消息响应
        * </pre>
        *
-       * <code>MESSAGE_RESPONSE = 7;</code>
+       * <code>MESSAGE_RESPONSE = 6;</code>
        */
-      public static final int MESSAGE_RESPONSE_VALUE = 7;
+      public static final int MESSAGE_RESPONSE_VALUE = 6;
       /**
        * <pre>
        *服务器通知
        * </pre>
        *
-       * <code>MESSAGE_NOTIFICATION = 8;</code>
+       * <code>MESSAGE_NOTIFICATION = 7;</code>
        */
-      public static final int MESSAGE_NOTIFICATION_VALUE = 8;
+      public static final int MESSAGE_NOTIFICATION_VALUE = 7;
 
 
       public final int getNumber() {
@@ -264,11 +248,10 @@ public final class ProtoMsgOuterClass {
           case 1: return LOGIN_RESPONSE;
           case 2: return LOGOUT_REQUEST;
           case 3: return LOGOUT_RESPONSE;
-          case 4: return KEEPALIVE_REQUEST;
-          case 5: return KEEPALIVE_RESPONSE;
-          case 6: return MESSAGE_REQUEST;
-          case 7: return MESSAGE_RESPONSE;
-          case 8: return MESSAGE_NOTIFICATION;
+          case 4: return HEART_BEAT;
+          case 5: return MESSAGE_REQUEST;
+          case 6: return MESSAGE_RESPONSE;
+          case 7: return MESSAGE_NOTIFICATION;
           default: return null;
         }
       }
@@ -6412,6 +6395,10 @@ public final class ProtoMsgOuterClass {
       com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageHeartBeatOrBuilder getHeartBeatOrBuilder();
     }
     /**
+     * <pre>
+     * 字段及唯一的数字标识符
+     * </pre>
+     *
      * Protobuf type {@code com.example.douyin_chat.protocol.bean.ProtoMsg.Message}
      */
     public  static final class Message extends
@@ -7052,6 +7039,10 @@ public final class ProtoMsgOuterClass {
         return builder;
       }
       /**
+       * <pre>
+       * 字段及唯一的数字标识符
+       * </pre>
+       *
        * Protobuf type {@code com.example.douyin_chat.protocol.bean.ProtoMsg.Message}
        */
       public static final class Builder extends
@@ -7539,7 +7530,7 @@ public final class ProtoMsgOuterClass {
          * <code>.com.example.douyin_chat.protocol.bean.ProtoMsg.LoginRequest loginRequest = 4;</code>
          */
         private com.google.protobuf.SingleFieldBuilderV3<
-            com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.LoginRequest, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.LoginRequest.Builder, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.LoginRequestOrBuilder>
+            com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.LoginRequest, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.LoginRequest.Builder, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.LoginRequestOrBuilder> 
             getLoginRequestFieldBuilder() {
           if (loginRequestBuilder_ == null) {
             loginRequestBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -7656,7 +7647,7 @@ public final class ProtoMsgOuterClass {
          * <code>.com.example.douyin_chat.protocol.bean.ProtoMsg.LoginResponse loginResponse = 5;</code>
          */
         private com.google.protobuf.SingleFieldBuilderV3<
-            com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.LoginResponse, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.LoginResponse.Builder, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.LoginResponseOrBuilder>
+            com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.LoginResponse, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.LoginResponse.Builder, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.LoginResponseOrBuilder> 
             getLoginResponseFieldBuilder() {
           if (loginResponseBuilder_ == null) {
             loginResponseBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -7773,7 +7764,7 @@ public final class ProtoMsgOuterClass {
          * <code>.com.example.douyin_chat.protocol.bean.ProtoMsg.MessageRequest messageRequest = 6;</code>
          */
         private com.google.protobuf.SingleFieldBuilderV3<
-            com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageRequest, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageRequest.Builder, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageRequestOrBuilder>
+            com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageRequest, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageRequest.Builder, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageRequestOrBuilder> 
             getMessageRequestFieldBuilder() {
           if (messageRequestBuilder_ == null) {
             messageRequestBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -7890,7 +7881,7 @@ public final class ProtoMsgOuterClass {
          * <code>.com.example.douyin_chat.protocol.bean.ProtoMsg.MessageResponse messageResponse = 7;</code>
          */
         private com.google.protobuf.SingleFieldBuilderV3<
-            com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageResponse, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageResponse.Builder, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageResponseOrBuilder>
+            com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageResponse, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageResponse.Builder, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageResponseOrBuilder> 
             getMessageResponseFieldBuilder() {
           if (messageResponseBuilder_ == null) {
             messageResponseBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -8007,7 +7998,7 @@ public final class ProtoMsgOuterClass {
          * <code>.com.example.douyin_chat.protocol.bean.ProtoMsg.MessageNotification notification = 8;</code>
          */
         private com.google.protobuf.SingleFieldBuilderV3<
-            com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageNotification, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageNotification.Builder, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageNotificationOrBuilder>
+            com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageNotification, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageNotification.Builder, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageNotificationOrBuilder> 
             getNotificationFieldBuilder() {
           if (notificationBuilder_ == null) {
             notificationBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -8160,7 +8151,7 @@ public final class ProtoMsgOuterClass {
          * <code>.com.example.douyin_chat.protocol.bean.ProtoMsg.MessageHeartBeat heartBeat = 9;</code>
          */
         private com.google.protobuf.SingleFieldBuilderV3<
-            com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageHeartBeat, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageHeartBeat.Builder, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageHeartBeatOrBuilder>
+            com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageHeartBeat, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageHeartBeat.Builder, com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass.ProtoMsg.MessageHeartBeatOrBuilder> 
             getHeartBeatFieldBuilder() {
           if (heartBeatBuilder_ == null) {
             heartBeatBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -8613,7 +8604,7 @@ public final class ProtoMsgOuterClass {
   static {
     java.lang.String[] descriptorData = {
       "\n\016ProtoMsg.proto\022%com.example.douyin_cha" +
-      "t.protocol.bean\"\317\013\n\010ProtoMsg\032c\n\014LoginReq" +
+      "t.protocol.bean\"\260\013\n\010ProtoMsg\032c\n\014LoginReq" +
       "uest\022\013\n\003uid\030\001 \001(\t\022\020\n\010deviceId\030\002 \001(\t\022\r\n\005t" +
       "oken\030\003 \001(\t\022\020\n\010platform\030\004 \001(\r\022\023\n\013app_vers" +
       "ion\030\005 \001(\t\032K\n\rLoginResponse\022\016\n\006result\030\001 \001" +
@@ -8645,12 +8636,12 @@ public final class ProtoMsgOuterClass {
       "yin_chat.protocol.bean.ProtoMsg.MessageN" +
       "otification\022S\n\theartBeat\030\t \001(\0132@.com.exa" +
       "mple.douyin_chat.protocol.bean.ProtoMsg." +
-      "MessageHeartBeat\"\316\001\n\010HeadType\022\021\n\rLOGIN_R" +
+      "MessageHeartBeat\"\257\001\n\010HeadType\022\021\n\rLOGIN_R" +
       "EQUEST\020\000\022\022\n\016LOGIN_RESPONSE\020\001\022\022\n\016LOGOUT_R" +
-      "EQUEST\020\002\022\023\n\017LOGOUT_RESPONSE\020\003\022\025\n\021KEEPALI" +
-      "VE_REQUEST\020\004\022\026\n\022KEEPALIVE_RESPONSE\020\005\022\023\n\017" +
-      "MESSAGE_REQUEST\020\006\022\024\n\020MESSAGE_RESPONSE\020\007\022" +
-      "\030\n\024MESSAGE_NOTIFICATION\020\010b\006proto3"
+      "EQUEST\020\002\022\023\n\017LOGOUT_RESPONSE\020\003\022\016\n\nHEART_B" +
+      "EAT\020\004\022\023\n\017MESSAGE_REQUEST\020\005\022\024\n\020MESSAGE_RE" +
+      "SPONSE\020\006\022\030\n\024MESSAGE_NOTIFICATION\020\007b\006prot" +
+      "o3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

@@ -62,6 +62,7 @@ public class ChatServer {
             @Override
             protected void initChannel(SocketChannel ch) throws Exception {
                 // 管理pipeline中的Handler
+                // TODO: 半包、黏包
                 ch.pipeline().addLast("deCoder", new ProtobufDecoder());
                 ch.pipeline().addLast("enCoder", new ProtobufEncoder());
             }

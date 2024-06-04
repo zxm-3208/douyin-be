@@ -1,4 +1,4 @@
-package com.example.douyin_chat.protocol.config;
+package com.example.douyin_chat.config;
 
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 

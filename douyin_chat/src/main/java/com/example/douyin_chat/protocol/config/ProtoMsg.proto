@@ -7,11 +7,10 @@ message ProtoMsg{
     LOGIN_RESPONSE = 1; //登录响应
     LOGOUT_REQUEST = 2; //登出请求
     LOGOUT_RESPONSE = 3;  //登出响应
-    KEEPALIVE_REQUEST = 4;  //心跳请求
-    KEEPALIVE_RESPONSE = 5;  //心跳响应
-    MESSAGE_REQUEST = 6; //聊天消息请求
-    MESSAGE_RESPONSE = 7;  //聊天消息响应
-    MESSAGE_NOTIFICATION = 8;  //服务器通知
+    HEART_BEAT = 4;  //心跳
+    MESSAGE_REQUEST = 5; //聊天消息请求
+    MESSAGE_RESPONSE = 6;  //聊天消息响应
+    MESSAGE_NOTIFICATION = 7;  //服务器通知
   }
 
   /*登录请求信息*/
