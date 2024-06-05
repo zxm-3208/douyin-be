@@ -1,5 +1,7 @@
 package com.example.douyin_chat.server.session.service;
 
+import com.example.douyin_chat.distributed.ImWorker;
+import com.example.douyin_chat.distributed.OnlineCounter;
 import com.example.douyin_chat.entity.ImNode;
 import com.example.douyin_chat.server.session.LocalSession;
 import com.example.douyin_chat.server.session.RemoteSession;
@@ -10,6 +12,7 @@ import com.example.douyin_chat.server.session.entity.SessionCache;
 import com.example.douyin_chat.server.session.entity.UserCache;
 import com.example.douyin_chat.util.JsonUtil;
 import com.example.douyin_chat.util.Notification;
+import com.example.douyin_chat.distributed.WorkerRouter;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.Data;
 import lombok.With;
@@ -60,7 +63,7 @@ public class SessionManger {
         String uid = session.getUser().getUserId();
 
         // 2. 缓存session到Redis
-        ImNode node = ImWorker.getInst().getLocalNodeInfo();
+        ImNode node = ImWorker.getInst().getLocalNode();
         SessionCache sessionCache = new SessionCache(sessionId, uid, node);
         sessionCacheDAO.save(sessionCache);     // key：sessionId, value: sessionCache pojo
 
@@ -135,7 +138,7 @@ public class SessionManger {
         int type = Notification.SESSION_OFF;
         Notification<Notification.ContentWrapper> notification = Notification.wrapContent(session.getSessionId());
         notification.setType(type);
-        WorkerRouter.getInst().sendNotification(JsonUtil.pojoToJson(notification));
+        WorkerRouter.getInstance().sendNotification(JsonUtil.pojoToJson(notification));
     }
 
     /**
@@ -146,7 +149,7 @@ public class SessionManger {
         int type = Notification.SESSION_ON;
         Notification<Notification.ContentWrapper> notification = Notification.wrapContent(session.getSessionId());
         notification.setType(type);
-        WorkerRouter.getInst().sendNotification(JsonUtil.pojoToJson(notification));
+        WorkerRouter.getInstance().sendNotification(JsonUtil.pojoToJson(notification));
     }
 
     /**
@@ -160,7 +163,7 @@ public class SessionManger {
         String uid = session.getUserId();
         // 减少用户数
         OnlineCounter.getInst().decrement();
-        log.info("本地session减少:{}下线了， 在线总数:{}", uid, OnlineCounter.getInst.getCurValue());
+        log.info("本地session减少:{}下线了， 在线总数:{}", uid, OnlineCounter.getInst().getCurValue());
         ImWorker.getInst().decrBalance();
 
         // 分布式: 分布式保存user和所有session

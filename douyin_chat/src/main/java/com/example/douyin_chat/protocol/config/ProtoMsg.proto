@@ -24,10 +24,10 @@ message ProtoMsg{
 
   /*登录响应*/
   message LoginResponse {
-    bool result = 1;
-    uint32 code = 2;
-    string info = 3;
-    uint32 expose = 4;
+    bool result = 1;    // true表示发送成功，false表示发送失败
+    uint32 code = 2;    // 错误码
+    string info = 3;    // 错误描述
+    uint32 expose = 4;  // 错误描述是否提示给用户:1 提示； 0: 不提示
   }
 
   /*聊天消息请求*/
@@ -70,9 +70,9 @@ message ProtoMsg{
   }
 
   message Message {   // 字段及唯一的数字标识符
-    HeadType type = 1;
-    uint64 sequence = 2;
-    string session_id = 3;
+    HeadType type = 1;  //通用字段: 消息类型
+    uint64 sequence = 2;   //通用字段：消息序列号
+    string session_id = 3;  //通用字段：会话id
     LoginRequest loginRequest = 4;
     LoginResponse loginResponse = 5;
     MessageRequest messageRequest = 6;

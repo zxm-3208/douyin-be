@@ -50,13 +50,14 @@ public class ChatUserDTO {
                 '}';
     }
 
-//    public static ChatUserDTO fromMsg(ProtoMsgOuterClass.ProtoMsg.LoginRequest info){
-//        ChatUserDTO user = new ChatUserDTO();
-//        user.setUserId(info.getUid());          // 用户ID
-//        user.setDevId(info.getDeviceId());      // 设备ID
-//        user.setToken(info.getToken());         // token
-//        user.setPlatform(info.getPlatform());   // 设备平台
-//        log.info("登录中：{}", user.toString());
-//        return user;
-//    }
+    // 根据info内的数据创建用户
+    public static ChatUserDTO fromMsg(ProtoMsgOuterClass.ProtoMsg.LoginRequest info){
+        ChatUserDTO user = new ChatUserDTO();
+        user.setUserId(info.getUid());          // 用户ID
+        user.setDevId(info.getDeviceId());      // 设备ID
+        user.setToken(info.getToken());         // token
+        user.setPlatform(info.getPlatform());   // 设备平台
+        log.info("登录中：{}", user.toString());
+        return user;
+    }
 }

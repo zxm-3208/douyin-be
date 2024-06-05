@@ -1,5 +1,7 @@
 package com.example.douyin_chat.server.session;
 
+import com.example.douyin_chat.distributed.PeerSender;
+import com.example.douyin_chat.distributed.WorkerRouter;
 import com.example.douyin_chat.entity.ImNode;
 import com.example.douyin_chat.server.session.entity.SessionCache;
 import lombok.AllArgsConstructor;
@@ -27,16 +29,24 @@ public class RemoteSession implements ServerSession, Serializable {
 
     private boolean valid = true;
 
+    // 构造函数
     public RemoteSession(SessionCache cache){
         this.cache = cache;
     }
 
     /**
-     * TODO: 通过远程节点，转发
+     * 通过远程节点，转发
      */
     @Override
     public void writeAndFlush(Object pkg) {
+        ImNode imNode = cache.getImNode();
+        long nodeId = imNode.getId();
+        // 获取转发的sender
+        PeerSender sender = WorkerRouter.getInstance().route(nodeId);
 
+        if(null!=sender) {
+            sender.writeAndFlush(pkg);
+        }
     }
 
     @Override
