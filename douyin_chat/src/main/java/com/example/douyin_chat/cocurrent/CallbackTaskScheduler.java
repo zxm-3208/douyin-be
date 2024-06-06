@@ -1,18 +1,18 @@
 package com.example.douyin_chat.cocurrent;
 
+
 import com.example.douyin_chat.util.ThreadUtil;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import io.netty.handler.codec.http2.Http2NoMoreStreamIdsException;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.security.auth.callback.Callback;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.Executors;
 
 /**
  * @author : zxm
@@ -44,18 +44,19 @@ public class CallbackTaskScheduler {
                 R r = executeTask.execute();
                 return r;
             }
-
         });
 
         Futures.addCallback(future, new FutureCallback<R>() {
+            @Override
             public void onSuccess(R r) {
                 executeTask.onBack(r);
             }
 
+            @Override
             public void onFailure(Throwable t) {
                 executeTask.onException(t);
             }
-        });
+        }, gPool);
 
     }
 

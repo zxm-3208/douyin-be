@@ -1,5 +1,6 @@
 package com.example.douyin_chat.server.session.service;
 
+import cn.hutool.core.lang.Singleton;
 import com.example.douyin_chat.distributed.ImWorker;
 import com.example.douyin_chat.distributed.OnlineCounter;
 import com.example.douyin_chat.entity.ImNode;
@@ -43,10 +44,17 @@ public class SessionManger {
     @Autowired
     SessionCacheDAO sessionCacheDAO;
 
-    // 饿汉式单例
-    private static SessionManger singleInstance = new SessionManger();
+    // 双重校验锁单例
+    private volatile  static SessionManger singleInstance;
 
     public static SessionManger inst(){
+        if(singleInstance == null){
+            synchronized (SessionManger.class) {
+                if (singleInstance == null) {
+                    singleInstance = new SessionManger();
+                }
+            }
+        }
         return singleInstance;
     }
 

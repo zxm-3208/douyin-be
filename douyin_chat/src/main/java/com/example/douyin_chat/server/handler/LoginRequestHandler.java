@@ -7,6 +7,7 @@ import com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass;
 import com.example.douyin_chat.protocol.constant.ProtoInstant;
 import com.example.douyin_chat.server.process.LoginProcesser;
 import com.example.douyin_chat.server.session.LocalSession;
+import com.example.douyin_chat.server.session.service.SessionManger;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandler;
@@ -15,6 +16,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 /**
  * @author : zxm
@@ -25,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Slf4j
 @Data
 @ChannelHandler.Sharable
+@Service
 public class LoginRequestHandler extends ChannelInboundHandlerAdapter {
 
     @Autowired
@@ -55,19 +58,31 @@ public class LoginRequestHandler extends ChannelInboundHandlerAdapter {
 
             @Override
             public Boolean execute() throws Exception {
-                return null;
+                return loginProcesser.action(session, pkg);     // 用户验证，绑定，通知
             }
 
+            // 异步任务返回
             @Override
-            public void onBack(Boolean aBoolean) {
-
+            public void onBack(Boolean r) {
+                if(r){
+                    log.info("登录成功:{}", session.getUser());
+                    // 异步处理的时候如果添加相同名称的处理器会报错
+                    ctx.pipeline().addAfter("login", "heartBeat", new HeartBeatServerHandler());    // 在login处理器之后加一个心跳处理器
+                    ctx.pipeline().remove("login");     // 登录成功删除login处理器
+                }else{
+                    SessionManger.inst().closeSession(ctx);
+                    log.info("登录失败:{}", session.getUser());
+                }
             }
 
+            // 异步任务异常
             @Override
             public void onException(Throwable t) {
-
+                t.printStackTrace();
+                log.info("登录失败:{}", session.getUser());
+                SessionManger.inst().closeSession(ctx);
             }
-        })
+        });
 
     }
 
