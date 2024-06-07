@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.3.0</version>
+		<version>3.2.5</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
@@ -15,6 +15,8 @@
 	<description>douyin_chat</description>
 	<properties>
 		<java.version>17</java.version>
+		<alibaba.version>2023.0.0.0-RC1</alibaba.version>
+		<maven.test.skip>true</maven.test.skip>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -45,6 +47,12 @@
 			<groupId>org.apache.zookeeper</groupId>
 			<artifactId>zookeeper</artifactId>
 			<version>3.6.2</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
@@ -77,12 +85,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<optional>true</optional>
-		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -106,5 +108,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
 </project>

@@ -39,7 +39,7 @@ import java.util.EventListener;
 public class ChatServer {
 
     // 服务器端口
-    @Value("${server.port}")
+    @Value("${chat.server.port}")
     private int port;
 
     // 通过NIO方式来接收和处理连接

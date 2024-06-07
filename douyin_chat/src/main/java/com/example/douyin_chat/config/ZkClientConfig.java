@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ZkClientConfig implements ApplicationContextAware {
 
-    @Value("zookerper.connect.url")
+    @Value("${zookeeper.connect.url}")
     private String zkConnect;
 
     @Value("${zookeeper.connect.SessionTimeout}")

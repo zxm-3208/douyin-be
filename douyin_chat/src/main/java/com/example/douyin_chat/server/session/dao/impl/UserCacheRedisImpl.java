@@ -8,6 +8,7 @@ import com.example.douyin_commons.constant.RedisConstants;
 import io.micrometer.common.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Repository;
 
 import java.util.concurrent.TimeUnit;
 
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit;
  * @Description: com.example.douyin_chat.server.session.dao.impl
  * @version: 1.0
  */
+@Repository
 public class UserCacheRedisImpl implements UserCacheDAO {
 
     @Autowired
