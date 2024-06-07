@@ -23,8 +23,8 @@ public class ClientController {
     ClientService clientService;
 
     @PostMapping("/login")
-    public BaseResponse startCommandThread(@RequestBody ChatUser chatUser){
-        return clientService.startCommandThread(chatUser);
+    public BaseResponse login(@RequestBody ChatUser chatUser){
+        return clientService.login(chatUser);
     }
 
 }

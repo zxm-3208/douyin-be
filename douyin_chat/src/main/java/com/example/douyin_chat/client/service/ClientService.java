@@ -12,5 +12,5 @@ import com.example.douyin_commons.core.domain.BaseResponse;
 public interface ClientService {
 
 
-    BaseResponse startCommandThread(ChatUser chatUser);
+    BaseResponse login(ChatUser chatUser);
 }
