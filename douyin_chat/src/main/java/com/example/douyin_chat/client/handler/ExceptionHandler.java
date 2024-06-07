@@ -1,6 +1,6 @@
 package com.example.douyin_chat.client.handler;
 
-import com.example.douyin_chat.client.client.CommandController;
+import com.example.douyin_chat.client.controller.CommandController;
 import com.example.douyin_chat.exception.BusinessException;
 import com.example.douyin_chat.exception.InvalidFrameException;
 import io.netty.channel.ChannelHandler;

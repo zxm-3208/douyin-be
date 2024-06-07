@@ -1,15 +1,13 @@
 package com.example.douyin_chat.client.handler;
 
 import com.example.douyin_chat.client.client.ClientSession;
-import com.example.douyin_chat.client.client.CommandController;
+import com.example.douyin_chat.client.controller.CommandController;
 import com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass;
 import com.example.douyin_chat.protocol.constant.ProtoInstant;
-import com.example.douyin_chat.server.handler.HeartBeatServerHandler;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

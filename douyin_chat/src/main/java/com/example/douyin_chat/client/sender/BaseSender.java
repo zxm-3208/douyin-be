@@ -1,7 +1,7 @@
 package com.example.douyin_chat.client.sender;
 
 import com.example.douyin_chat.client.client.ClientSession;
-import com.example.douyin_chat.client.client.CommandController;
+import com.example.douyin_chat.client.controller.CommandController;
 import com.example.douyin_chat.cocurrent.CallbackTask;
 import com.example.douyin_chat.cocurrent.CallbackTaskScheduler;
 import com.example.douyin_chat.entity.ChatUserDTO;

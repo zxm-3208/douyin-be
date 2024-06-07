@@ -29,11 +29,8 @@ public class DouyinChatApplication {
 		ApplicationContext context =
 				SpringApplication.run(DouyinChatApplication.class, args);
 
-		/**
-		 * 启动服务
-		 */
-		ChatServer nettyServer = context.getBean(ChatServer.class);
-		nettyServer.run();
+		// 启动服务
+		chatServer.run();
 
 
 	}
