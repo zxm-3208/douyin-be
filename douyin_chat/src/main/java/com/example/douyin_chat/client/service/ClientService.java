@@ -1,6 +1,7 @@
 package com.example.douyin_chat.client.service;
 
 import com.example.douyin_chat.client.domain.vo.ChatUser;
+import com.example.douyin_chat.client.domain.vo.SendChat;
 import com.example.douyin_commons.core.domain.BaseResponse;
 
 /**
@@ -13,4 +14,10 @@ public interface ClientService {
 
 
     BaseResponse login(ChatUser chatUser);
+
+    public void startConnectServer();
+
+    public void setConnectFlag(Boolean x);
+
+    void sendChat(SendChat sendChat);
 }

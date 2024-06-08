@@ -48,14 +48,19 @@ public class SessionManger {
     private volatile  static SessionManger singleInstance;
 
     public static SessionManger inst(){
-        if(singleInstance == null){
-            synchronized (SessionManger.class) {
-                if (singleInstance == null) {
-                    singleInstance = new SessionManger();
-                }
-            }
-        }
+//        if(singleInstance == null){
+//            synchronized (SessionManger.class) {
+//                if (singleInstance == null) {
+//                    singleInstance = new SessionManger();
+//                }
+//            }
+//        }
         return singleInstance;
+    }
+
+    public static void setSingleInstance(SessionManger singleInstance)
+    {
+        SessionManger.singleInstance = singleInstance;
     }
 
     // 会话清单： 含本地会话、远程会话

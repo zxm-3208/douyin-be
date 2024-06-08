@@ -1,6 +1,7 @@
 package com.example.douyin_chat.client.controller;
 
 import com.example.douyin_chat.client.domain.vo.ChatUser;
+import com.example.douyin_chat.client.domain.vo.SendChat;
 import com.example.douyin_chat.client.service.ClientService;
 import com.example.douyin_commons.core.domain.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,11 @@ public class ClientController {
     @PostMapping("/login")
     public BaseResponse login(@RequestBody ChatUser chatUser){
         return clientService.login(chatUser);
+    }
+
+    @PostMapping("sendChat")
+    public void sendChat(@RequestBody SendChat sendChat){
+        clientService.sendChat(sendChat);
     }
 
 }

@@ -1,7 +1,6 @@
 package com.example.douyin_chat.client.sender;
 
 import com.example.douyin_chat.client.client.ClientSession;
-import com.example.douyin_chat.client.controller.CommandController;
 import com.example.douyin_chat.cocurrent.CallbackTask;
 import com.example.douyin_chat.cocurrent.CallbackTaskScheduler;
 import com.example.douyin_chat.entity.ChatUserDTO;
@@ -24,9 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 public abstract class BaseSender {
     private ChatUserDTO user;
     private ClientSession session;
-
-    @Autowired
-    protected CommandController commandClient;
 
     public boolean isConnected(){
         if(null == session){

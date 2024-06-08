@@ -21,6 +21,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.stereotype.Service;
+
 import java.util.HashMap;
 
 /**
@@ -29,7 +31,7 @@ import java.util.HashMap;
  * @Description: com.example.be.register.security.service.impl
  * @version: 1.0
  */
-@Component
+@Service("TokenService")
 @Slf4j
 public class TokenServiceImpl implements TokenService {
 

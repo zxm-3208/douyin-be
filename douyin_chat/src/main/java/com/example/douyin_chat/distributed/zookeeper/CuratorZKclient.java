@@ -28,6 +28,7 @@ public class CuratorZKclient {
     public CuratorZKclient(String zkConnect, String zkSessionTimeout){
         this.zkAddress = zkConnect;
         this.zkSessionTimeout = zkSessionTimeout;
+        log.info("zkAddress:{}", this.zkAddress);
         init();
     }
 
@@ -37,7 +38,6 @@ public class CuratorZKclient {
         }
         // 创建客户端
         client = ClientFactory.createSimple(zkAddress, zkSessionTimeout);
-
         // 启动客户端实例，连接服务器
         client.start();
         instance = this;

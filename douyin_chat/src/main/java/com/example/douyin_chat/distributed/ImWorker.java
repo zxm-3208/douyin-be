@@ -52,11 +52,15 @@ public class ImWorker {
             return;
         }
         inited = true;
+        log.info("client:{}", this.client);
         if(null == client){
             this.client = CuratorZKclient.instance.getClient();
+            log.info("client:{}", this.client);
         }
+        log.info("localNode:{}", localNode);
         if(null == localNode){
             localNode = new ImNode();
+            log.info("localNode:{}", localNode);
         }
         // 没有子节点就删除,就删除该工作节点的父节点
         deleteWhenHasNoChildren(ServerConstants.MANAGE_PATH);
@@ -67,6 +71,7 @@ public class ImWorker {
         // 节点的payload 为当前worker实例
         try{
             byte[] payload = JsonUtil.object2JsonBytes(localNode);
+            log.info("payload:{}", payload);
             pathRegistered = client.create()
                     .creatingParentsIfNeeded()
                     .withMode(CreateMode.EPHEMERAL_SEQUENTIAL)
@@ -118,6 +123,7 @@ public class ImWorker {
     private void createdParentIfNeeded(String managePath){
         try{
             Stat stat = client.checkExists().forPath(managePath);
+            log.info("stat:{}", stat);
             if(null == stat){
                 client.create()
                         .creatingParentsIfNeeded()
@@ -131,7 +137,6 @@ public class ImWorker {
 
 
     public void deleteWhenHasNoChildren(String path){
-
         int index = path.lastIndexOf("/");
 
         String parent = path.substring(0, index);
@@ -151,7 +156,7 @@ public class ImWorker {
     public boolean isNodeExist(String zkPath){
         try{
             Stat stat = client.checkExists().forPath(zkPath);
-            if(null != stat){
+            if(null == stat){
                 log.info("节点不存在：{}", zkPath);
                 return false;
             }else{

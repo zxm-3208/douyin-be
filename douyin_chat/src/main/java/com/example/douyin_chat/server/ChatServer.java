@@ -106,11 +106,12 @@ public class ChatServer {
         }
 
         ImWorker.getInst().setLocalNode(ip, port);
-
         FutureTaskScheduler.add(()->{
             // 启动节点
+            log.info("启动节点");
             ImWorker.getInst().init();
             // 启动节点的管理
+            log.info("启动节点的管理");
             WorkerRouter.getInstance().init();
         });
 

@@ -1,7 +1,6 @@
 package com.example.douyin_chat.client.handler;
 
 import com.example.douyin_chat.client.client.ClientSession;
-import com.example.douyin_chat.client.controller.CommandController;
 import com.example.douyin_chat.protocol.bean.ProtoMsgOuterClass;
 import com.example.douyin_chat.protocol.constant.ProtoInstant;
 import io.netty.channel.ChannelHandler;
@@ -21,8 +20,6 @@ import org.springframework.stereotype.Service;
 @ChannelHandler.Sharable
 @Service
 public class LoginResponceHandler extends ChannelInboundHandlerAdapter {
-    @Autowired
-    CommandController commandController;
     @Autowired
     HeartBeatClientHandler heartBeatClientHandler;
 
@@ -55,7 +52,7 @@ public class LoginResponceHandler extends ChannelInboundHandlerAdapter {
             session.setSessionId(pkg.getSessionId());
             session.setLogin(true);
             log.info("step3：登录Netty 服务节点成功");
-            commandController.notifyCommandThread();;
+//            commandController.notifyCommandThread();;
             ctx.channel().pipeline().addAfter("loginResponseHandler", "heartBeatClientHandler", heartBeatClientHandler);
             heartBeatClientHandler.channelActive(ctx);
             ctx.channel().pipeline().remove("loginResponseHandler");

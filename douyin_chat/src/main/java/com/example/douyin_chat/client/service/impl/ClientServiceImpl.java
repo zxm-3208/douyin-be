@@ -2,8 +2,9 @@ package com.example.douyin_chat.client.service.impl;
 
 import com.example.douyin_chat.client.client.ClientSession;
 import com.example.douyin_chat.client.client.NettyClient;
-import com.example.douyin_chat.client.controller.CommandController;
 import com.example.douyin_chat.client.domain.vo.ChatUser;
+import com.example.douyin_chat.client.domain.vo.SendChat;
+import com.example.douyin_chat.client.sender.ChatSender;
 import com.example.douyin_chat.client.sender.LoginSender;
 import com.example.douyin_chat.client.service.ClientService;
 import com.example.douyin_chat.cocurrent.FutureTaskScheduler;
@@ -22,6 +23,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoop;
 import io.netty.util.concurrent.GenericFutureListener;
 import jodd.util.StringUtil;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,12 +56,16 @@ public class ClientServiceImpl implements ClientService {
     @Value("${token.secret}")
     private String secret;
 
+    @Autowired
+    private ChatSender chatSender;
+
     private int reConnectCount = 0;
     private boolean connectFlag = false;
     private ChatUserDTO user;
     private Channel channel;
     private ClientSession session;
 
+    // TODO: 该线程是否循环
     @Override
     public BaseResponse login(ChatUser userVO) {
         Thread.currentThread().setName("命令线程");
@@ -149,6 +155,22 @@ public class ClientServiceImpl implements ClientService {
             nettyClient.setConnectedListener(connectedListener);
             nettyClient.doConnect();
         });
+    }
+
+    @Override
+    public void setConnectFlag(Boolean x) {
+        connectFlag = x;
+    }
+
+    @Override
+    public void sendChat(SendChat sendChat) {
+        if (null == session)
+        {
+            log.info("session is null");
+        }
+        chatSender.setSession(session);
+        chatSender.setUser(user);
+        chatSender.sendChatMsg(sendChat.getToUserId(), sendChat.getMessage());
     }
 
     GenericFutureListener<ChannelFuture> closeListener = (ChannelFuture f) ->{

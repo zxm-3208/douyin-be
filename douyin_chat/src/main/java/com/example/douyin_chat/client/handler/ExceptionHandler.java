@@ -1,6 +1,6 @@
 package com.example.douyin_chat.client.handler;
 
-import com.example.douyin_chat.client.controller.CommandController;
+import com.example.douyin_chat.client.service.ClientService;
 import com.example.douyin_chat.exception.BusinessException;
 import com.example.douyin_chat.exception.InvalidFrameException;
 import io.netty.channel.ChannelHandler;
@@ -21,8 +21,8 @@ import org.springframework.stereotype.Service;
 @ChannelHandler.Sharable
 public class ExceptionHandler extends ChannelInboundHandlerAdapter {
 
-    @Autowired
-    private CommandController commandController;
+//    @Autowired
+//    private ClientService clientService;
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
@@ -36,9 +36,9 @@ public class ExceptionHandler extends ChannelInboundHandlerAdapter {
             log.error(cause.getMessage());
             ctx.close();
 
-            //开始重连
-            commandController.setConnectFlag(false);
-            commandController.startConnectServer();
+//            //开始重连
+//            clientService.setConnectFlag(false);
+//            clientService.startConnectServer();
         }
     }
 

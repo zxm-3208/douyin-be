@@ -20,17 +20,20 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 @SpringBootApplication(exclude = DataSourceAutoConfiguration.class)		// 网关服务不需要配置数据源
 public class DouyinChatApplication {
 
-	@Autowired
-	static ChatServer chatServer;
-
 	public static void main(String[] args)
 	{
 		// 启动并初始化 Spring 环境及其各 Spring 组件
-		ApplicationContext context =
-				SpringApplication.run(DouyinChatApplication.class, args);
+		ApplicationContext context = SpringApplication.run(DouyinChatApplication.class, args);
+
+		/**
+		 * 将SessionManger 单例设置为spring bean
+		 */
+		SessionManger sessionManger = context.getBean(SessionManger.class);
+		SessionManger.setSingleInstance(sessionManger);
 
 		// 启动服务
-		chatServer.run();
+		ChatServer nettyServer = context.getBean(ChatServer.class);
+		nettyServer.run();
 
 
 	}
