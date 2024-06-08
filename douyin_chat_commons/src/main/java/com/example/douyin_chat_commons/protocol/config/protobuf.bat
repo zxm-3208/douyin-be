@@ -1,0 +1,1 @@
+.\protoc3.6.1.exe --java_out ../../../../../ ProtoMsg.proto

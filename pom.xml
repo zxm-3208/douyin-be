@@ -24,7 +24,9 @@
         <module>douyin_publish</module>
         <module>douyin_feed</module>
         <module>douyin_user</module>
-        <module>douyin_chat</module>
+        <module>douyin_chat_commons</module>
+        <module>douyin_chat_client</module>
+        <module>douyin_chat_server</module>
     </modules>
     <packaging>pom</packaging>
 
