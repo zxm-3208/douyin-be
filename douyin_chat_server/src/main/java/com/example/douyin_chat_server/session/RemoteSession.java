@@ -3,7 +3,7 @@ package com.example.douyin_chat_server.session;
 
 import com.example.douyin_chat_server.distributed.PeerSender;
 import com.example.douyin_chat_server.distributed.WorkerRouter;
-import com.example.douyin_chat_commons.entity.ImNode;
+import com.example.douyin_chat_commons.domain.po.ImNode;
 import com.example.douyin_chat_server.session.entity.SessionCache;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

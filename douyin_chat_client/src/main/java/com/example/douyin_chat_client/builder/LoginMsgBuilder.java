@@ -2,7 +2,7 @@ package com.example.douyin_chat_client.builder;
 
 
 import com.example.douyin_chat_client.client.ClientSession;
-import com.example.douyin_chat_commons.entity.ChatUserDTO;
+import com.example.douyin_chat_commons.domain.DTO.ChatUserDTO;
 import com.example.douyin_chat_commons.protocol.bean.ProtoMsgOuterClass;
 
 /**

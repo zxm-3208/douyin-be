@@ -1,18 +1,17 @@
 package com.example.douyin_chat_client.service.impl;
 
-
 import com.example.douyin_chat_client.client.ClientSession;
 import com.example.douyin_chat_client.client.NettyClient;
-import com.example.douyin_chat_client.domain.vo.ChatUser;
-import com.example.douyin_chat_client.domain.vo.SendChat;
 import com.example.douyin_chat_client.sender.ChatSender;
 import com.example.douyin_chat_client.sender.LoginSender;
-import com.example.douyin_chat_client.service.ClientService;
 import com.example.douyin_chat_commons.cocurrent.FutureTaskScheduler;
-import com.example.douyin_chat_commons.entity.ChatUserDTO;
-import com.example.douyin_chat_commons.entity.ImNode;
-import com.example.douyin_chat_commons.entity.LoginBack;
+import com.example.douyin_chat_commons.domain.DTO.ChatUserDTO;
+import com.example.douyin_chat_commons.domain.po.ImNode;
+import com.example.douyin_chat_commons.domain.po.LoginBack;
 import com.example.douyin_chat_commons.util.JsonUtil;
+import com.example.douyin_chat_commons.domain.vo.ChatUserVo;
+import com.example.douyin_chat_commons.domain.vo.SendChat;
+import com.example.douyin_chat_client.service.ChatService;
 import com.example.douyin_commons.core.domain.BaseResponse;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -30,16 +29,13 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @author : zxm
- * @date: 2024/6/7 - 17:08
- * @Description: com.example.douyin_chat.client.service.impl
+ * @date: 2024/6/9 - 16:29
+ * @Description: com.example.douyin_chat_gate.service.impl
  * @version: 1.0
  */
 @Service
 @Slf4j
-public class ClientServiceImpl implements ClientService {
-
-    @Autowired
-    private ImLoadBalance imLoadBalance;
+public class ChatServiceImpl implements ChatService {
 
     @Autowired
     private NettyClient nettyClient;
@@ -61,25 +57,11 @@ public class ClientServiceImpl implements ClientService {
 
     // TODO: 该线程是否循环
     @Override
-    public BaseResponse login(ChatUser userVO) {
+    public BaseResponse login(String str) {
         Thread.currentThread().setName("命令线程");
         if(connectFlag == false){
-            ChatUserDTO user = new ChatUserDTO();
-            user.setUserId(userVO.getUserName());
-            user.setToken(userVO.getToken());
-            user.setDevId(userVO.getDevId());
-            user.setUserName(userVO.getUserName());
-
-            log.info("step1: 开始登录WEB GATE");
-            LoginBack back = new LoginBack();
-            /**
-             * 取得所有的节点
-             */
-            List<ImNode> allWorker = imLoadBalance.getWorkers();
-            back.setImNodeList(allWorker);
-            back.setUserDTO(user);
-            back.setToken(userVO.getToken());
-
+            LoginBack back = JsonUtil.jsonToPojo(str, LoginBack.class);
+            ChatUserDTO user = back.getUserDTO();
             //获取服务器节点信息，选择负载最低的节点连接(客户端选择，选择的节点可能已经挂掉，但是zk超时的原因节点信息还在，连接不了，需要重试其他节点)
             List<ImNode> nodeList = back.getImNodeList();
             log.info("step1 zookeeper中的node节点列表是：{}", JsonUtil.pojoToJson(nodeList));
@@ -151,10 +133,6 @@ public class ClientServiceImpl implements ClientService {
         });
     }
 
-    @Override
-    public void setConnectFlag(Boolean x) {
-        connectFlag = x;
-    }
 
     @Override
     public void sendChat(SendChat sendChat) {
@@ -209,5 +187,4 @@ public class ClientServiceImpl implements ClientService {
         //唤醒，命令收集程
         this.notify();
     }
-
 }

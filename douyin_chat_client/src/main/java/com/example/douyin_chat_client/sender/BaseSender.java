@@ -4,14 +4,13 @@ package com.example.douyin_chat_client.sender;
 import com.example.douyin_chat_client.client.ClientSession;
 import com.example.douyin_chat_commons.cocurrent.CallbackTask;
 import com.example.douyin_chat_commons.cocurrent.CallbackTaskScheduler;
-import com.example.douyin_chat_commons.entity.ChatUserDTO;
+import com.example.douyin_chat_commons.domain.DTO.ChatUserDTO;
 import com.example.douyin_chat_commons.protocol.bean.ProtoMsgOuterClass;
 import io.netty.channel.ChannelFuture;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author : zxm

@@ -3,7 +3,7 @@ package com.example.douyin_chat_server.distributed;
 
 import com.example.douyin_chat_commons.constants.ServerConstants;
 import com.example.douyin_chat_commons.distributed.CuratorZKclient;
-import com.example.douyin_chat_commons.entity.ImNode;
+import com.example.douyin_chat_commons.domain.po.ImNode;
 import com.example.douyin_chat_commons.protocol.bean.ProtoMsgOuterClass;
 import com.example.douyin_chat_server.protoBuilder.NotificationMsgBuilder;
 import com.example.douyin_chat_commons.util.JsonUtil;

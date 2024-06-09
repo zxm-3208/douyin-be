@@ -76,4 +76,8 @@ public class RedisConstants {
     // 会话缓存
     public static final String SESSIONCACHE_ID_KEY = "sessionCache:id:";
     public static final int SESSIONCACHE_ID_TTL = 4;
+
+    // chat用户是否登录
+    public static final String CHAT_USER_LOGIN_KEY = "chat:userId:";
+    public static final int CHAT_USER_LOGIN_TTL = 24;
 }

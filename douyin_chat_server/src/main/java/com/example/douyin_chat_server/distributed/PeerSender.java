@@ -2,8 +2,8 @@ package com.example.douyin_chat_server.distributed;
 
 
 
-import com.example.douyin_chat_commons.entity.ChatUserDTO;
-import com.example.douyin_chat_commons.entity.ImNode;
+import com.example.douyin_chat_commons.domain.DTO.ChatUserDTO;
+import com.example.douyin_chat_commons.domain.po.ImNode;
 import com.example.douyin_chat_commons.protocol.bean.ProtoMsgOuterClass;
 import com.example.douyin_chat_commons.protocol.codec.ProtobufDecoder;
 import com.example.douyin_chat_commons.protocol.codec.ProtobufEncoder;

@@ -1,4 +1,4 @@
-package com.example.douyin_chat_commons.entity;
+package com.example.douyin_chat_commons.domain.po;
 
 
 import lombok.Data;

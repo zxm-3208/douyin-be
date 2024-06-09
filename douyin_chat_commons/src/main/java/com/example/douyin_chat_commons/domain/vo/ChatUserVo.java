@@ -1,4 +1,4 @@
-package com.example.douyin_chat_client.domain.vo;
+package com.example.douyin_chat_commons.domain.vo;
 
 import lombok.Data;
 
@@ -9,7 +9,7 @@ import lombok.Data;
  * @version: 1.0
  */
 @Data
-public class ChatUser {
+public class ChatUserVo {
     String userId;
     String userName;
     String devId;

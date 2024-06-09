@@ -2,7 +2,7 @@ package com.example.douyin_chat_server.session;
 
 
 import com.example.douyin_chat_commons.constants.ServerConstants;
-import com.example.douyin_chat_commons.entity.ChatUserDTO;
+import com.example.douyin_chat_commons.domain.DTO.ChatUserDTO;
 import com.example.douyin_chat_commons.util.JsonUtil;
 import com.example.douyin_chat_server.session.service.SessionManger;
 import io.netty.channel.Channel;

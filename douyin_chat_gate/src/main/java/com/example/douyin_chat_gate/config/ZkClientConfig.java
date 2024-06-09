@@ -1,8 +1,9 @@
-package com.example.douyin_chat_commons.config;
+package com.example.douyin_chat_gate.config;
 
 
 import com.example.douyin_chat_commons.distributed.CuratorZKclient;
 import com.example.douyin_chat_commons.util.SpringContextUtil;
+import com.example.douyin_chat_gate.balance.ImLoadBalance;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;

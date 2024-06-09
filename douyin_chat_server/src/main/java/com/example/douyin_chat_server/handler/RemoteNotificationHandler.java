@@ -2,7 +2,7 @@ package com.example.douyin_chat_server.handler;
 
 
 import com.example.douyin_chat_commons.constants.ServerConstants;
-import com.example.douyin_chat_commons.entity.ImNode;
+import com.example.douyin_chat_commons.domain.po.ImNode;
 import com.example.douyin_chat_commons.protocol.bean.ProtoMsgOuterClass;
 import com.example.douyin_chat_commons.util.JsonUtil;
 import com.example.douyin_chat_commons.util.Notification;

@@ -1,4 +1,4 @@
-package com.example.douyin_chat_commons.entity;
+package com.example.douyin_chat_commons.domain.DTO;
 
 
 import com.example.douyin_chat_commons.protocol.bean.ProtoMsgOuterClass;

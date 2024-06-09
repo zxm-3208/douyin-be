@@ -4,7 +4,7 @@ package com.example.douyin_chat_server.session.service;
 import com.example.douyin_chat_server.distributed.ImWorker;
 import com.example.douyin_chat_server.distributed.OnlineCounter;
 import com.example.douyin_chat_server.distributed.WorkerRouter;
-import com.example.douyin_chat_commons.entity.ImNode;
+import com.example.douyin_chat_commons.domain.po.ImNode;
 import com.example.douyin_chat_commons.util.JsonUtil;
 import com.example.douyin_chat_commons.util.Notification;
 import com.example.douyin_chat_server.session.LocalSession;

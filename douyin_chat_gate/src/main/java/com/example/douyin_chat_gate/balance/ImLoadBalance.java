@@ -1,9 +1,9 @@
-package com.example.douyin_chat_client.service.impl;
+package com.example.douyin_chat_gate.balance;
 
 
 import com.example.douyin_chat_commons.constants.ServerConstants;
 import com.example.douyin_chat_commons.distributed.CuratorZKclient;
-import com.example.douyin_chat_commons.entity.ImNode;
+import com.example.douyin_chat_commons.domain.po.ImNode;
 import com.example.douyin_chat_commons.util.JsonUtil;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

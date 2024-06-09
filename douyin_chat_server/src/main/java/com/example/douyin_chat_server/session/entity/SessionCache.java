@@ -1,7 +1,7 @@
 package com.example.douyin_chat_server.session.entity;
 
 
-import com.example.douyin_chat_commons.entity.ImNode;
+import com.example.douyin_chat_commons.domain.po.ImNode;
 import lombok.Builder;
 import lombok.Data;
 

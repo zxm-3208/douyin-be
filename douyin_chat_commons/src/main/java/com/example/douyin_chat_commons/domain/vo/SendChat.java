@@ -1,4 +1,4 @@
-package com.example.douyin_chat_client.domain.vo;
+package com.example.douyin_chat_commons.domain.vo;
 
 import lombok.Data;
 

@@ -1,6 +1,6 @@
 package com.example.douyin_chat_server.process;
 
-import com.example.douyin_chat_commons.entity.ChatUserDTO;
+import com.example.douyin_chat_commons.domain.DTO.ChatUserDTO;
 import com.example.douyin_chat_commons.protocol.bean.ProtoMsgOuterClass;
 import com.example.douyin_chat_commons.protocol.constant.ProtoInstant;
 import com.example.douyin_chat_server.protoBuilder.LoginResponceBuilder;

@@ -4,7 +4,7 @@ package com.example.douyin_chat_client.client;
 import com.example.douyin_chat_client.handler.ChatMsgHandler;
 import com.example.douyin_chat_client.handler.ExceptionHandler;
 import com.example.douyin_chat_client.handler.LoginResponceHandler;
-import com.example.douyin_chat_commons.entity.ChatUserDTO;
+import com.example.douyin_chat_commons.domain.DTO.ChatUserDTO;
 import com.example.douyin_chat_commons.protocol.codec.ProtobufDecoder;
 import com.example.douyin_chat_commons.protocol.codec.ProtobufEncoder;
 import io.netty.bootstrap.Bootstrap;

@@ -2,7 +2,7 @@ package com.example.douyin_chat_client.sender;
 
 
 import com.example.douyin_chat_client.builder.ChatMsgBuilder;
-import com.example.douyin_chat_commons.entity.ChatMsg;
+import com.example.douyin_chat_commons.domain.po.ChatMsg;
 import com.example.douyin_chat_commons.protocol.bean.ProtoMsgOuterClass;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
