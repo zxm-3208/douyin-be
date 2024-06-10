@@ -12,7 +12,7 @@ import org.apache.ibatis.annotations.Select;
  */
 public interface ChatMapper extends BaseMapper<DyUser> {
 
-    @Select("select * from dy_auth u where u.id = #{id}")
+    @Select("select * from dy_user u where u.id = #{id}")
     DyUser selectByUserId(String id);
 
 }

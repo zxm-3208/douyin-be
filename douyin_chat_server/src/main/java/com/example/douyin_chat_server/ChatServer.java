@@ -67,6 +67,7 @@ public class ChatServer {
         serverBootstrap.channel(NioServerSocketChannel.class);
         // 3. 设置监听端口
         String ip = IOUtil.getHostAddress();
+        log.info("ip:{}",ip);
         serverBootstrap.localAddress(new InetSocketAddress(ip, port));
         // 4. 设置通道选项
         serverBootstrap.option(ChannelOption.SO_KEEPALIVE, true);

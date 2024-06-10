@@ -58,7 +58,7 @@ public class ChatServiceImpl implements ChatService {
     // TODO: 该线程是否循环
     @Override
     public BaseResponse login(String str) {
-        Thread.currentThread().setName("命令线程");
+//        Thread.currentThread().setName("命令线程");
         if(connectFlag == false){
             LoginBack back = JsonUtil.jsonToPojo(str, LoginBack.class);
             ChatUserDTO user = back.getUserDTO();
@@ -72,7 +72,6 @@ public class ChatServiceImpl implements ChatService {
             {
                 // 根据balance值由小到大排序
                 Collections.sort(nodeList);
-
             } else
             {
                 log.error("step2-1：服务器节点为空，无法连接");
@@ -86,7 +85,7 @@ public class ChatServiceImpl implements ChatService {
                 nettyClient.setHost(bestNode.getHost());
                 nettyClient.setPort(bestNode.getPort());
                 nettyClient.doConnect();
-//                waitCommandThread();
+                waitCommandThread();
                 if (connectFlag) {
                     break;
                 }
@@ -103,26 +102,22 @@ public class ChatServiceImpl implements ChatService {
             loginSender.setUser(user);
             loginSender.setSession(session);
             loginSender.sendLoginMsg();
-//            waitCommandThread();
-
             connectFlag = true;
         }
         return BaseResponse.success("登录成功！");
     }
 
-//    public synchronized void waitCommandThread()
-//    {
-//
-//        //休眠，命令收集线程
-//        try
-//        {
-//            this.wait();
-//        } catch (InterruptedException e)
-//        {
-//            e.printStackTrace();
-//        }
-//
-//    }
+    public synchronized void waitCommandThread()
+    {
+        //休眠，命令收集线程
+        try
+        {
+            this.wait();
+        } catch (InterruptedException e)
+        {
+            e.printStackTrace();
+        }
+    }
 
     public void startConnectServer()
     {

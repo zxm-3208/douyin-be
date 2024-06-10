@@ -1,5 +1,6 @@
 package com.example.douyin_chat_commons.distributed;
 
+import com.example.douyin_chat_commons.util.SpringContextUtil;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
@@ -23,6 +24,18 @@ public class CuratorZKclient {
     private String zkAddress = "139.9.214.194:2181";
 
     public static CuratorZKclient instance = null;
+
+    private static CuratorZKclient singleton = null;
+
+    public static CuratorZKclient getSingleton()
+    {
+        if (null == singleton)
+        {
+            singleton = SpringContextUtil.getBean("curatorZKClient");
+
+        }
+        return singleton;
+    }
 
     public CuratorZKclient(String zkConnect, String zkSessionTimeout){
         this.zkAddress = zkConnect;

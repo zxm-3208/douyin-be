@@ -1,5 +1,6 @@
 package com.example.douyin_chat_gate.service;
 
+import com.example.douyin_chat_commons.domain.vo.BackVo;
 import com.example.douyin_chat_commons.domain.vo.ChatUserVo;
 import com.example.douyin_chat_commons.domain.vo.SendChat;
 import com.example.douyin_commons.core.domain.BaseResponse;
@@ -15,8 +16,8 @@ import org.springframework.web.bind.annotation.*;
 @FeignClient("douyinChatClient")
 public interface ChatOpenFeignService {
 
-    @GetMapping("/chat/login{back}")
-    BaseResponse login(@PathVariable("back") String back);
+    @PostMapping("/douyin_chat_client/chat/login")
+    BaseResponse login(@RequestBody BackVo backVo);
 
     @PostMapping("/chat/sendChat")
     void sendChat(@RequestBody SendChat sendChat);

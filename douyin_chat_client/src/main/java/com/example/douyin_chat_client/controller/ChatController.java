@@ -1,6 +1,7 @@
 package com.example.douyin_chat_client.controller;
 
 import com.example.douyin_chat_client.service.ChatService;
+import com.example.douyin_chat_commons.domain.vo.BackVo;
 import com.example.douyin_chat_commons.domain.vo.ChatUserVo;
 import com.example.douyin_chat_commons.domain.vo.SendChat;
 import com.example.douyin_commons.core.domain.BaseResponse;
@@ -22,9 +23,9 @@ public class ChatController {
     @Autowired
     ChatService chatService;
 
-    @GetMapping("/login/{back}")
-    public BaseResponse login(@PathVariable("back") String back){
-        return chatService.login(back);
+    @PostMapping("/login")
+    public BaseResponse login(@RequestBody BackVo backVo){
+        return chatService.login(backVo.getBack());
     }
 
     @PostMapping("sendChat")

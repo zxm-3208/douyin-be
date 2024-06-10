@@ -4,6 +4,7 @@ import com.example.douyin_chat_commons.domain.DTO.ChatUserDTO;
 import com.example.douyin_chat_commons.domain.po.DyUser;
 import com.example.douyin_chat_commons.domain.po.ImNode;
 import com.example.douyin_chat_commons.domain.po.LoginBack;
+import com.example.douyin_chat_commons.domain.vo.BackVo;
 import com.example.douyin_chat_commons.domain.vo.ChatUserVo;
 import com.example.douyin_chat_commons.domain.vo.SendChat;
 import com.example.douyin_chat_commons.util.JsonUtil;
@@ -74,8 +75,10 @@ public class GateServiceImpl implements GateService {
         String r = JsonUtil.pojoToJson(back);
 
         // 4. 远程调用
-        BaseResponse response = chatOpenFeignService.login(r);
-
+        BackVo backVo = new BackVo();
+        backVo.setBack(r);
+        log.info("backVo:{}", backVo);
+        BaseResponse response = chatOpenFeignService.login(backVo);
         return response;
     }
 

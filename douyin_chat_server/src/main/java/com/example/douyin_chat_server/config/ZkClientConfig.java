@@ -1,9 +1,8 @@
-package com.example.douyin_chat_gate.config;
+package com.example.douyin_chat_server.config;
 
 
 import com.example.douyin_chat_commons.distributed.CuratorZKclient;
 import com.example.douyin_chat_commons.util.SpringContextUtil;
-import com.example.douyin_chat_gate.balance.ImLoadBalance;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -38,11 +37,6 @@ public class ZkClientConfig implements ApplicationContextAware {
     {
         return new CuratorZKclient(zkConnect,zkSessionTimeout);
     }
-
-    @Bean(name = "imLoadBalance")
-    public ImLoadBalance imLoadBalance(CuratorZKclient curatorZKClient)
-    {
-        return new ImLoadBalance( curatorZKClient);
-    }
+    
 }
 

@@ -18,7 +18,6 @@ import java.util.List;
  * @version: 1.0
  */
 @Slf4j
-@ChannelHandler.Sharable
 public class ProtobufDecoder extends ByteToMessageDecoder {
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf byteBuf, List<Object> list) throws Exception {
