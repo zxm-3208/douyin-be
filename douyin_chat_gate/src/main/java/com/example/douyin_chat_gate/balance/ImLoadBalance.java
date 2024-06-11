@@ -8,6 +8,7 @@ import com.example.douyin_chat_commons.util.JsonUtil;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -79,7 +80,6 @@ public class ImLoadBalance {
         }
 
         for(String child: children){
-            log.info("child:{}", child);
             byte[] payload = null;
             try{
                 payload = client.getData().forPath(managerPath + "/" +child);

@@ -15,6 +15,8 @@ public interface GateService {
 
     BaseResponse login(ChatUserVo chatUser);
 
+    BaseResponse login2(ChatUserVo chatUser);
+
     void sendChat(SendChat sendChat);
 
 }
